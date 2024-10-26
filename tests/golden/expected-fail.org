@@ -1,0 +1,15 @@
+#+title: Test
+
+#+begin_src bash
+date
+#+end_src
+
+#+RESULTS:
+: Sun Sep 22 07:25:33 PM EDT 2024
+
+#+begin_src elisp
+(message "hi")
+#+end_src
+
+#+RESULTS:
+: hi

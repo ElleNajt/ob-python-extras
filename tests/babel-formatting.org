@@ -1,0 +1,369 @@
+#+title: Tests
+
+* Timer formatting
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session timer_formatting_tests
+:END:
+
+Rounds by default, and shows by default:
+
+#+begin_src python
+print(1)
+import time
+time.sleep(3)
+#+end_src
+
+Turn off timer-show to hide it
+
+#+begin_src python :timer-show no
+print(1)
+#+end_src
+
+#+RESULTS:
+:results:
+1
+:end:
+
+Set :timer-rounded to no to get the full timer.
+(Also modifying the timer string here so that my expect tests will skip it.)
+
+#+begin_src python :timer-rounded no :timer-string %expect_skip Cell Timer:
+print(1)
+#+end_src
+
+#+RESULTS:
+:results:
+1
+%expect_skip Cell Timer: 0:00:00.002674
+:end:
+
+* Table formatting
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session table_formatting :timer-show no
+:END:
+
+Dataframes are printed as org tables
+
+#+begin_src python :results drawer
+import pandas as pd
+data = {
+'Name': ['Joe', 'Eva', 'Charlie', 'David', 'Eva'],
+'Age': [44, 32, 33,33, 22],
+'City': ['New York', 'San Francisco', 'Boston', 'Paris', 'Tokyo'],
+'Score': [92.5, 88.0, 95.2, 78.9, 90.11111]}
+df = pd.DataFrame(data)
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx | Name    | Age | City          |    Score |
+|-----+---------+-----+---------------+----------|
+|   0 | Joe     |  44 | New York      |     92.5 |
+|   1 | Eva     |  32 | San Francisco |     88.0 |
+|   2 | Charlie |  33 | Boston        |     95.2 |
+|   3 | David   |  33 | Paris         |     78.9 |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+:end:
+
+
+To not print the index as idx, set something else as to be the index.
+
+#+begin_src python
+print(df.set_index("Name"))
+#+end_src
+
+#+RESULTS:
+:results:
+| Name    | Age | City          |    Score |
+|---------+-----+---------------+----------|
+| Joe     |  44 | New York      |     92.5 |
+| Eva     |  32 | San Francisco |     88.0 |
+| Charlie |  33 | Boston        |     95.2 |
+| David   |  33 | Paris         |     78.9 |
+| Eva     |  22 | Tokyo         | 90.11111 |
+:end:
+
+This respects various pandas options:
+*** Float formatting
+
+
+#+begin_src python
+pd.options.display.float_format = '{:.1f}'.format
+print(df.set_index("Name"))
+#+end_src
+
+#+RESULTS:
+:results:
+| Name    | Age | City          | Score |
+|---------+-----+---------------+-------|
+| Joe     |  44 | New York      |  92.5 |
+| Eva     |  32 | San Francisco |  88.0 |
+| Charlie |  33 | Boston        |  95.2 |
+| David   |  33 | Paris         |  78.9 |
+| Eva     |  22 | Tokyo         |  90.1 |
+:end:
+
+*** Max rows
+#+begin_src python
+pd.options.display.max_rows = 10
+long_df = pd.DataFrame({'A': range(200)})
+print(long_df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx | A |
+|-----+---|
+|   0 | 0 |
+|   1 | 1 |
+|   2 | 2 |
+|   3 | 3 |
+|   4 | 4 |
+|   5 | 5 |
+|   6 | 6 |
+|   7 | 7 |
+|   8 | 8 |
+|   9 | 9 |
+:end:
+** Problem -- hangs when printing large dataframes.
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session table_formatting_large_dtfs :timer-show no
+:END:
+
+print_org_df sets max_rows to be 20 by default to avoid this issue.
+
+#+begin_src python :tables-auto-align no
+import pandas as pd
+long_df = pd.DataFrame({'A': range(200)})
+print(long_df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx |  A |
+|-----+----|
+|   0 |  0 |
+|   1 |  1 |
+|   2 |  2 |
+|   3 |  3 |
+|   4 |  4 |
+|   5 |  5 |
+|   6 |  6 |
+|   7 |  7 |
+|   8 |  8 |
+|   9 |  9 |
+|  10 | 10 |
+|  11 | 11 |
+|  12 | 12 |
+|  13 | 13 |
+|  14 | 14 |
+|  15 | 15 |
+|  16 | 16 |
+|  17 | 17 |
+|  18 | 18 |
+|  19 | 19 |
+:end:
+
+If we make the max_rows even modestly large, we run into it, depending on computing resources.
+
+#+begin_src python :tables-auto-align no
+pd.options.display.max_rows = 60
+long_df = pd.DataFrame({'A': range(60)})
+print(long_df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx |  A |
+|-----+----|
+|   0 |  0 |
+|   1 |  1 |
+|   2 |  2 |
+|   3 |  3 |
+|   4 |  4 |
+|   5 |  5 |
+|   6 |  6 |
+|   7 |  7 |
+|   8 |  8 |
+|   9 |  9 |
+|  10 | 10 |
+|  11 | 11 |
+|  12 | 12 |
+|  13 | 13 |
+|  14 | 14 |
+|  15 | 15 |
+|  16 | 16 |
+|  17 | 17 |
+|  18 | 18 |
+|  19 | 19 |
+|  20 | 20 |
+|  21 | 21 |
+|  22 | 22 |
+|  23 | 23 |
+|  24 | 24 |
+|  25 | 25 |
+|  26 | 26 |
+|  27 | 27 |
+|  28 | 28 |
+|  29 | 29 |
+|  30 | 30 |
+|  31 | 31 |
+|  32 | 32 |
+|  33 | 33 |
+|  34 | 34 |
+|  35 | 35 |
+|  36 | 36 |
+|  37 | 37 |
+|  38 | 38 |
+|  39 | 39 |
+|  40 | 40 |
+|  41 | 41 |
+|  42 | 42 |
+|  43 | 43 |
+|  44 | 44 |
+|  45 | 45 |
+|  46 | 46 |
+|  47 | 47 |
+|  48 | 48 |
+|  49 | 49 |
+|  50 | 50 |
+|  51 | 51 |
+|  52 | 52 |
+|  53 | 53 |
+|  54 | 54 |
+|  55 | 55 |
+|  56 | 56 |
+|  57 | 57 |
+|  58 | 58 |
+|  59 | 59 |
+:end:
+
+** Printing multiple dataframes:
+
+#+begin_src python
+print(df)
+print("Space between dataframes")
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx | Name    | Age | City          |    Score |
+|-----+---------+-----+---------------+----------|
+|   0 | Joe     |  44 | New York      |     92.5 |
+|   1 | Eva     |  32 | San Francisco |     88.0 |
+|   2 | Charlie |  33 | Boston        |     95.2 |
+|   3 | David   |  33 | Paris         |     78.9 |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+Space between dataframes
+| idx | Name    | Age | City          |    Score |
+|-----+---------+-----+---------------+----------|
+|   0 | Joe     |  44 | New York      |     92.5 |
+|   1 | Eva     |  32 | San Francisco |     88.0 |
+|   2 | Charlie |  33 | Boston        |     95.2 |
+|   3 | David   |  33 | Paris         |     78.9 |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+:end:
+
+In general space between dataframes requires ones below to be aligned.
+I have advise ( adjust-org-babel-results ) that does this, but it can be slow if there are many tables in the org file, so it can be disabled like this.
+
+#+begin_src python :tables-auto-align no
+print(df)
+print("Space between dataframes")
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+| idx | Name    | Age | City          |    Score |
+|-----+---------+-----+---------------+----------|
+|   0 | Joe     |  44 | New York      |     92.5 |
+|   1 | Eva     |  32 | San Francisco |     88.0 |
+|   2 | Charlie |  33 | Boston        |     95.2 |
+|   3 | David   |  33 | Paris         |     78.9 |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+Space between dataframes
+| idx  |Name|Age|City|Score |
+|---------------------------|
+| 0|Joe|44|New York|92.5 |
+| 1|Eva|32|San Francisco|88.0 |
+| 2|Charlie|33|Boston|95.2 |
+| 3|David|33|Paris|78.9 |
+| 4|Eva|22|Tokyo|90.11111 |
+:end:
+
+* Images
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no
+:END:
+
+mocks out python plotting to allow plots to be interspersed with printing, and allows multiple to be made. :)
+
+#+begin_src python :results drawer
+import pandas as pd
+import matplotlib.pyplot as plt
+print("look!")
+df = pd.DataFrame({"x": [1, 2, 3, 4, 5,6,7,], "y": [10, 11, 12, 13, 14,15,16]})
+print(df)
+df.plot(x="x", y="y", kind="line")
+plt.show()
+print("tada!")
+#+end_src
+
+#+RESULTS:
+:results:
+look!
+| idx | x |  y |
+|-----+---+----|
+|   0 | 1 | 10 |
+|   1 | 2 | 11 |
+|   2 | 3 | 12 |
+|   3 | 4 | 13 |
+|   4 | 5 | 14 |
+|   5 | 6 | 15 |
+|   6 | 7 | 16 |
+[[file:plots/babel-formatting/plot_20241025_204455_6076104.png]]
+tada!
+:end:
+
+* DONE Make : Alerts on finishing
+* Alerts on finishing
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session alerts_on_finish :timer-show no
+:END:
+
+When this finishes, it alerts you in an emacs minibuffer, with a link back.
+You also get a system alert. (This requires libnotify to be installed.)
+
+#+begin_src python :alert yes
+import time
+print("waiting")
+time.sleep(1)
+print("finished")
+#+end_src
+
+#+RESULTS:
+:results:
+waiting
+finished
+:end:
+
+#+begin_src python
+import time
+print("waiting")
+time.sleep(1)
+print("finished")
+#+end_src
+
+#+RESULTS:
+:results:
+waiting
+finished
+:end:
+
+I also have it configured to send an alert for any cell that takes more than 10 seconds.
+
+This parses the cell timer, so requires it to be enabled for that part to be on to work.
+** TODO Change the cell timer display to leave it up for the parsing and delete the timer afterwards.
