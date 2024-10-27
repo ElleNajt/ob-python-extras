@@ -8,9 +8,9 @@
 
 This package adds additional features to ob-python that I found lacking.
 
-** It makes it possible to arbitrarily mix images and text in the output of cells.
+** mix images and text in the output of cells.
 This works by mocking out matplotlib and instead saving the images and returning text that refers to the saved images. These images are garbage collected regularly.
-** It causes pandas dataframes to be printed as org tables, always.
+** pandas dataframes printed as org tables, always.
 This works by overwriting the dunder repr method.
 
 For instance, a cell like this is not possible (as far as the author is aware) with vanilla ob-python.
@@ -18,7 +18,7 @@ For instance, a cell like this is not possible (as far as the author is aware) w
 #+begin_src python :results drawer
 import pandas as pd
 import matplotlib.pyplot as plt
-print("look!")
+print("looky looky! 🤡")
 df = pd.DataFrame({"x": [1, 2, 3, 4, 5,6,7,], "y": [10, 11, 12, 13, 14,15,16]})
 print(df)
 df.plot(x="x", y="y", kind="line")
@@ -28,7 +28,7 @@ print("tada!")
 
 #+RESULTS:
 :results:
-look!
+looky looky! 🤡
 | idx | x |  y |
 |-----+---+----|
 |   0 | 1 | 10 |
@@ -38,39 +38,41 @@ look!
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/babel-formatting/plot_20241025_204455_6076104.png]]
+[[file:plots/Readme/plot_20241025_213533_3495794.png]]
 tada!
 :end:
 
-** It adds an optional cell timer.
-** It captures traceback and shows that it in the results, reducing the need for navigating to the python buffer.
+** Cell timer
+** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer.
 ** Configurable alerts that tell you when long running cells finish.
 *** TODO These are disabled by default, since some users might find them annoying.
 ** It also add shortcuts for things like cell-interruption and adding new cells.
 
-
 * Installation
+** With straight.el
 
 #+begin_src emacs-lisp :tangle yes
 (package! ob-python-extras
   :recipe (:host github
            :repo "ElleNajt/ob-python-extras"
-           :files ("ob-python-extras.el" "python")))
-
-#+end_src
-
-Or, optionally, include "keybindings.el" if you want my keybindings also. (Optional so that you can import the tools without it interfering with your keybinding preferences.)
-
-You can also clone it locally and use this. This
-
-#+begin_src emacs-lisp :tangle yes
-(package! ob-python-extras
-  :recipe (:local-repo "~/code/ob-python-extras"
            :files ("*.el" "python")))
-#+end_src
 
-Then add to config.el
+#+end_src
 
 #+begin_src emacs-lisp :tangle yes
 (use-package! ob-python-extras)
 #+end_src
+
+* Setup:
+** Keybindings:
+
+If you want my suggested keybindings, run:
+
+#+begin_src emacs-lisp :tangle yes
+(ob-python-extras/map-suggested-keyindings)
+#+end_src
+
+
+* Future work:
+** TODO Replacing hacky advice with hooks
+** TODO tqdm
