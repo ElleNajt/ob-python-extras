@@ -23,20 +23,20 @@
 
 ;;;; Navigation
 
-
-(defun org-babel-goto-src-block-results ()
+(defun ob-python-extras/org-babel-goto-src-block-results ()
+  "Go to the results of the current source block."
   (interactive)
-  (goto-char (org-babel-where-is-src-block-result))
-  )
+  (goto-char (org-babel-where-is-src-block-result)))
 
-(defun org-src-block-end-header (&optional element)
+(defun ob-python-extras/org-src-block-end-header (&optional element)
+
   (let ((element (or element (org-element-at-point))))
     (save-excursion
       (goto-char (org-element-end element))
       (re-search-backward (rx (and bol "#+END_SRC")))
       (point))))
 
-(defun org-src-block-results-end (src-block)
+(defun ob-python-extras/org-src-block-results-end (src-block)
   (save-excursion
     (goto-char (org-element-begin src-block))
     (when-let (results-loc (org-babel-where-is-src-block-result))
@@ -45,11 +45,12 @@
       (skip-chars-backward " \t\n")
       (point))))
 
-(defun insert-new-src-block ()
+(defun ob-python-extras/insert-new-src-block ()
+  "Create a new org babel source block beow the current one."
   (interactive)
   (let* ((current-src-block (org-element-at-point))
          (point-to-insert
-          (or (org-src-block-results-end current-src-block)
+          (or (ob-python-extras/org-src-block-results-end current-src-block)
               (save-excursion
                 (goto-char (org-element-end current-src-block))
                 (skip-chars-backward " \t\n")
@@ -69,18 +70,17 @@
       (insert "\n#+end_src\n")
       (goto-char contents))))
 
-(defun run-cell-and-advance () (interactive) (org-babel-execute-src-block) (org-babel-next-src-block) )
+(defun ob-python-extras/run-cell-and-advance () (interactive) (org-babel-execute-src-block) (org-babel-next-src-block) )
 
 ;;;; Cell timing and error handling
 
 
-(defun wrap-org-babel-execute-python (orig body params &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python (orig body params &rest args)
   (let* ( (exec-file (make-temp-file "execution-code"))
           (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
           (timer-string (cdr (assq :timer-string params)))
           (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
-          (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params)))))
-          )
+          (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
@@ -115,12 +115,12 @@ finally:
 (advice-add
  'org-babel-execute:python
  :around
- #'wrap-org-babel-execute-python)
+ #'ob-python-extras/wrap-org-babel-execute-python)
 
 
 ;;;; Interruption
 
-(defun org-babel-get-session ()
+(defun ob-python-extras/org-babel-get-session ()
   (interactive)
   (let* ((src-info (org-babel-get-src-block-info))
          (headers (nth 2 src-info))
@@ -128,9 +128,9 @@ finally:
     session))
 
 
-(defun interrupt-org-babel-session ()
+(defun ob-python-extras/interrupt-org-babel-session ()
   (interactive)
-  (let* ((current-session (org-babel-get-session))
+  (let* ((current-session (ob-python-extras/org-babel-get-session))
          (session-buffer (and current-session
                               (concat "*" current-session "*"))))
     (when session-buffer
@@ -139,11 +139,13 @@ finally:
           (interrupt-process proc)
           (message "Interrupted session: %s" current-session))))))
 
-;;;; mix printing images and text
+
+;;;; Better output handling
+;;;;; mix printing images and text
 ;; TODO add handling for if python environment doesnt have matplotlib
 
 
-(defun wrap-org-babel-execute-python-mock-plt (orig body &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
   (let* ( (exec-file (make-temp-file "execution-code"))
           (pymockbabel-script-location (concat doom-user-dir "/python/pymockbabel")))
     (with-temp-file exec-file (insert body))
@@ -172,11 +174,11 @@ finally:
 (advice-add
  'org-babel-execute:python
  :around
- #'wrap-org-babel-execute-python-mock-plt)
+ #'ob-python-extras/wrap-org-babel-execute-python-mock-plt)
 
-;;;;;; Garbage collection
+;;;;;; Image Garbage collection
 
-(defun find-org-file-references ()
+(defun ob-python-extras/find-org-file-references ()
   "Find all file names referenced within [[]] in the current org buffer and return them as a list."
   (let (file-references)
     (save-excursion
@@ -186,14 +188,14 @@ finally:
           (push file-name file-references))))
     file-references))
 
-(defun delete-unused-pngs-in-buffer (buffer)
+(defun ob-python-extras/delete-unused-pngs-in-buffer (buffer)
   "Delete .png files in the /plots/ directory that are not referenced in the org file corresponding to BUFFER."
   (with-current-buffer buffer
     (when (and (eq major-mode 'org-mode) (buffer-file-name))
       (let* ((org-file (buffer-file-name))
              (org-file-name (file-name-sans-extension (file-name-nondirectory org-file)))
              (plots-dir (concat (file-name-directory org-file) "plots/" org-file-name))
-             (referenced-files (find-org-file-references))
+             (referenced-files (ob-python-extras/find-org-file-references))
              (png-files (when (and (file-directory-p plots-dir) (file-exists-p plots-dir))
                           (directory-files plots-dir t "\\.png$"))))
         (when png-files
@@ -203,17 +205,17 @@ finally:
                 (delete-file png-file)
                 (message "Deleted: %s" png-file)))))))))
 
-(defun delete-unused-pngs-in-all-org-files ()
+(defun ob-python-extras/delete-unused-pngs-in-all-org-files ()
   "Delete unused .png files in all open org files."
   (interactive)
   (dolist (buffer (buffer-list))
-    (delete-unused-pngs-in-buffer buffer)))
+    (ob-python-extras/delete-unused-pngs-in-buffer buffer)))
 
-(run-at-time 300 300 'delete-unused-pngs-in-all-org-files)
+(run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
 
-;;;; Pandas dataframe plotting
+;;;;; Pandas dataframe printing
 
-(defun wrap-org-babel-execute-python-mock-table (orig body &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body &rest args)
   (let* ( (exec-file (make-temp-file "execution-code"))
           (pymockbabel-script-location (concat straight-base-dir straight-build-dir "/ob-python-extras/python")))
     (with-temp-file exec-file (insert body))
@@ -241,11 +243,9 @@ finally:
 (advice-add
  'org-babel-execute:python
  :around
- #'wrap-org-babel-execute-python-mock-table)
+ #'ob-python-extras/wrap-org-babel-execute-python-mock-table)
 
-;; (advice-remove 'org-babel-execute:python nil)
-
-(defun my-align-advice-function (args)
+(defun ob-python-extras/my-align-advice-function (args)
   (let ((top-of-src-block (nth 5 args)))
     (save-excursion
       (with-current-buffer (current-buffer)
@@ -259,28 +259,48 @@ finally:
                 (org-table-align))
               (setq in-table at-table-line))))))))
 
-;;;; Timestamps
 
-;; Adding a space because otherwise it breaks org mode
 
-(defun org-time-stamp-advice (orig-fun &rest args)
-  "Ensure a space is inserted before the Org timestamp."
-  (unless (or (bolp) (eq (char-before) ?\s))
-    (insert " "))
-  (apply orig-fun args))
 
-(advice-add 'org-time-stamp :around #'org-time-stamp-advice)
+;;;;; aligning and displaying iamges after output
 
+(defun ob-python-extras/adjust-org-babel-results (orig-fun params &rest args)
+  (let*
+
+      (( options (nth 2 (car args)))
+       ( auto-align (if (string= "no" (cdr (assq :tables-auto-align options))) nil t)))
+
+    ;; this is a terrible hack
+    ;; it happens to be that this argument is populated for the hash insert
+    ;; and not for the content insert
+    ;; I should refactor this to depend on hooks instead
+    (if (not (nth 2 args))
+        (progn
+          (if auto-align
+              (ob-python-extras/my-align-advice-function (nth 0 args))
+            ;; this is a built in that accomplishes the same task
+            ;; but it operates on the entire org file,
+            ;; which is slow
+            ;; I tried narrowing the buffer, but it didn't work
+            ;; (org-table-map-tables 'org-table-align)
+            ))
+      ())
+    ())
+
+
+  (org-display-inline-images))
+
+(advice-add 'org-babel-insert-result :after #'ob-python-extras/adjust-org-babel-results)
+
+
+(provide 'ob-python-extras)
 
 ;;;; Alerts
 
-
-;;;;; alerts
-;; Define a major mode for our alerts buffer
 (define-derived-mode cell-alerts-mode special-mode "Cell Alerts"
   "Major mode for displaying cell completion alerts.")
 
-(defun my-cell-finished-alert ()
+(defun ob-python-extras/my-cell-finished-alert ()
   "Create an alert with an Emacs-native clickable link in a pop-up buffer when a code cell finishes."
   (let* ((buffer-name (buffer-name))
          (buffer-file (buffer-file-name))
@@ -329,7 +349,7 @@ finally:
         :n [escape] #'quit-window))
 
 ;; Function to close the alerts buffer
-(defun close-cell-alerts-buffer ()
+(defun ob-python-extras/close-cell-alerts-buffer ()
   "Close the Cell Completion Alerts buffer from anywhere."
   (interactive)
   (when-let ((buffer (get-buffer "*Cell Completion Alerts*")))
@@ -340,7 +360,7 @@ finally:
 (defadvice! my-universal-esc-handler (&rest _)
   :before #'keyboard-quit
   (when (get-buffer-window "*Cell Completion Alerts*" t)
-    (close-cell-alerts-buffer)))
+    (ob-python-extras/close-cell-alerts-buffer)))
 
 ;; Set up the display rules for the alerts buffer
 (set-popup-rule! "^\\*Cell Completion Alerts\\*$"
@@ -349,9 +369,9 @@ finally:
   :select nil
   :quit t)
 
-;;;;; cell timer based
+;;;;; Alerts for long running cells
 
-(defun notify-if-took-a-while (alert-threshold)
+(defun ob-python-extras/notify-if-took-a-while (alert-threshold)
   "Scan through a results block to find a 'Cell Timer:' line and parse the time in seconds."
   (interactive)
   (save-excursion
@@ -366,23 +386,13 @@ finally:
                     (minutes (string-to-number (match-string 2)))
                     (seconds (string-to-number (match-string 3))))
                 (+ (* hours 3600) (* minutes 60) seconds)
-
                 (if (>= seconds alert-threshold)
-                    (my-cell-finished-alert)
-                  ()
-
-
-                  )
-
-
-                )))
+                    (ob-python-extras/my-cell-finished-alert)
+                  ()))))
         (message "No results block found.")
         nil))))
 
-(defun cell-timer-above (params args lower_bound)
-  "Display an alert if the cell timer is above lower_bound")
-
-(defun alert-advice-after-org-babel-results (orig-fun params &rest args)
+(defun ob-python-extras/alert-advice-after-org-babel-results (orig-fun params &rest args)
   (let*
       (( options (nth 2 (car args)))
        ( alert-finish (if (string= "yes" (cdr (assq :alert options))) t nil)))
@@ -394,59 +404,43 @@ finally:
     ;; if cell took a while always alert
     (if (not (nth 2 args))
         (if alert-finish
-            (my-cell-finished-alert)
+            (ob-python-extras/my-cell-finished-alert)
           ;; (message "alert finish!")
 
-          ;; always alerts if the cell took a while (more than 30 seconds)
-          (notify-if-took-a-while 10))
+          ;; always alerts if the cell took a while
+          (ob-python-extras/notify-if-took-a-while 10))
       ()
       ()) ()))
 
-(advice-add 'org-babel-insert-result :after #'alert-advice-after-org-babel-results)
+(advice-add 'org-babel-insert-result :after #'ob-python-extras/alert-advice-after-org-babel-results)
 ;; (setq debug-on-message "Code block evaluation complete\\.")
 
 
-;;;; Post execution
-
-
-;;;;; aligning and displaying iamges after output
+;;; Keybindings
 
 
 
-(defun adjust-org-babel-results (orig-fun params &rest args)
-  (let*
+(defun ob-python-extras/+org-insert-item (orig direction)
+  (interactive)
+  (if (and (org-in-src-block-p)
+           (equal direction 'below))
+      (ob-python-extras/insert-new-src-block)
+    (funcall orig direction)))
 
-      (
-       ( options (nth 2 (car args)))
-       ( auto-align (if (string= "no" (cdr (assq :tables-auto-align options))) nil t))
-       )
+(defun ob-python-extras/map-suggested-keyindings ()
+  "Map suggested keybindings for ob-python."
 
-    ;; this is a terrible hack
-    ;; it happens to be that this argument is populated for the hash insert
-    ;; and not for the content insert
-    ;; I should refactor this to depend on hooks instead
-    (if (not (nth 2 args))
-        (progn
-          (if auto-align
-              (my-align-advice-function (nth 0 args))
-            ;; this is a built in that accomplishes the same task
-            ;; but it operates on the entire org file,
-            ;; which is slow and breaks hermeticism in a way I don't like
-            ;; I tried narrowing the buffer, but it didn't work
-            ;; (org-table-map-tables 'org-table-align)
-            )
-          )
-      ())
-    ())
+  (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
+  (map! (:mode org-mode
+         :n "<S-return>" #'ob-python-extras/run-cell-and-advance
+         :n "SPC S" #'jupyter-org-split-src-block
+         :n "SPC M" #'jupyter-org-merge-blocks
+         :n "g SPC" #'org-babel-execute-buffer
+         :n "C-c C-k" #'ob-python-extras/interrupt-org-babel-session
+         :n "SPC f i"  #'org-toggle-inline-images
+         :n "SPC f I"  #'org-display-inline-images
+         :n "g s"  #'org-edit-special)))
 
+(ob-python-extras/map-suggested-keyindings )
 
-  (org-display-inline-images))
-
-(advice-add 'org-babel-insert-result :after #'adjust-org-babel-results)
-;; (setq debug-on-message "Code block evaluation complete\\.")
-;; (setq debug-on-message nil)
-;; does async have a hook?
-
-
-(provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
