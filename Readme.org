@@ -68,9 +68,10 @@ ZeroDivisionError: division by zero
 :end:
 
 ** Configurable alerts that tell you when long running cells finish.
-*** TODO These are disabled by default, since some users might find them annoying.
-*** TODO Currently these only are tested in doom emacs
-** It also add shortcuts for things like cell-interruption and adding new cells.
+These are disabled by default, since some users might find them annoying.
+Currently these only are tested in doom emacs
+** Additional features:
+- shortcuts for things like cell-interruption and adding new cells.
 
 * Installation
 ** With straight.el
@@ -97,8 +98,3 @@ If you want my suggested keybindings, run:
 #+end_src
 
 
-* Future work:
-** TODO Replacing hacky advice with hooks
-** TODO tqdm
-** TODO llm integrations
-** TODO
