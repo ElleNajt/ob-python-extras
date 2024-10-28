@@ -38,14 +38,38 @@ looky looky! 🤡
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/Readme/plot_20241025_213533_3495794.png]]
+[[file:plots/Readme/plot_20241028_193534_8864151.png]]
 tada!
 :end:
 
 ** Cell timer
+#+begin_src python :timer-show
+import time
+time.sleep(1)
+#+end_src
+
+#+RESULTS:
+:results:
+Cell Timer: 0:00:01
+:end:
+
 ** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer.
+
+#+begin_src python
+print(1/0)
+#+end_src
+
+#+RESULTS:
+:results:
+Traceback (most recent call last):
+File "<org babel source block>", line 9, in <module>
+File "<org babel source block>", line 1, in <module>
+ZeroDivisionError: division by zero
+:end:
+
 ** Configurable alerts that tell you when long running cells finish.
 *** TODO These are disabled by default, since some users might find them annoying.
+*** TODO Currently these only are tested in doom emacs
 ** It also add shortcuts for things like cell-interruption and adding new cells.
 
 * Installation
@@ -76,3 +100,5 @@ If you want my suggested keybindings, run:
 * Future work:
 ** TODO Replacing hacky advice with hooks
 ** TODO tqdm
+** TODO llm integrations
+** TODO
