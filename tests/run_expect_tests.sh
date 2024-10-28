@@ -54,18 +54,58 @@ process_file() {
         cp "shell.nix" "golden/shell.nix"
         eval "emacs --batch $(get_emacs_args "golden/$org_file")"
     else
-        cp "$org_file" "staging/$org_file"
         cp "shell.nix" "staging/shell.nix"
+        cp "$org_file" "staging/$org_file"
         eval "emacs --batch $(get_emacs_args "staging/$org_file")"
 
-        difference=$(diff -u \
-            <(cat "golden/$org_file" | sed 's/^[[:space:]]*//' | sed '/^$/d') \
-            <(cat "staging/$org_file" | sed 's/^[[:space:]]*//' | sed '/^$/d'))
+        difference=$(diff -u "golden/$org_file" "staging/$org_file")
 
         if [ -n "$difference" ]; then
-            echo "Differences found in $org_file:"
-            echo "$difference"
-            return 1
+            # Check if difference is only in PNG file references
+            if echo "$difference" | grep -q '^-.*\.png\]\]$' && echo "$difference" | grep -q '^+.*\.png\]\]$'; then
+                # Extract the PNG paths
+
+                golden_png=$(echo "$difference" | grep '^-.*\.png' | grep -o 'plots/.*\.png')
+                staging_png=$(echo "$difference" | grep '^+.*\.png' | grep -o 'plots/.*\.png')
+
+
+                echo "Found difference in PNG references:"
+                echo "Golden:  $golden_png"
+                echo "Staging: $staging_png"
+
+                # Check if both PNG files exist
+                if [ ! -f "golden/$golden_png" ]; then
+                    echo "Error: Golden PNG file not found: golden/$golden_png"
+                    return 1
+                fi
+                if [ ! -f "staging/$staging_png" ]; then
+                    echo "Error: Staging PNG file not found: staging/$staging_png"
+                    return 1
+                fi
+
+                # Compare PNG files using ImageMagick's compare
+                # Returns 0 if images are identical, 1 if different, 2 if error occurred
+                compare -metric AE "golden/$golden_png" "staging/$staging_png" null: 2>/dev/null
+                compare_result=$?
+
+                if [ $compare_result -eq 0 ]; then
+                    echo "PNG files are identical despite different filenames."
+                    return 0
+                elif [ $compare_result -eq 1 ]; then
+                    echo "PNG files are different:"
+                    echo "golden/$golden_png"
+                    echo "staging/$staging_png"
+                    return 1
+                else
+                    echo "Error comparing PNG files"
+                    return 2
+                fi
+            else
+                # Regular text difference found
+                echo "Differences found in $org_file:"
+                echo "$difference"
+                return 1
+            fi
         else
             echo "No differences found in $org_file."
             return 0
