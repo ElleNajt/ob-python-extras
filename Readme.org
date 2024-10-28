@@ -18,17 +18,15 @@ For instance, a cell like this is not possible (as far as the author is aware) w
 #+begin_src python :results drawer
 import pandas as pd
 import matplotlib.pyplot as plt
-print("looky looky! 🤡")
 df = pd.DataFrame({"x": [1, 2, 3, 4, 5,6,7,], "y": [10, 11, 12, 13, 14,15,16]})
 print(df)
 df.plot(x="x", y="y", kind="line")
 plt.show()
-print("tada!")
+print("...tada!")
 #+end_src
 
 #+RESULTS:
 :results:
-looky looky! 🤡
 | idx | x |  y |
 |-----+---+----|
 |   0 | 1 | 10 |
@@ -38,8 +36,8 @@ looky looky! 🤡
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/Readme/plot_20241028_193534_8864151.png]]
-tada!
+[[file:plots/Readme/plot_20241028_194825_8829674.png]]
+...tada!
 :end:
 
 ** Cell timer
