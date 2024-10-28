@@ -1,9 +1,10 @@
 #+title: Readme
 
 
+
 * Overview:
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
 :END:
 
 This package adds additional features to ob-python that I found lacking.
@@ -15,7 +16,7 @@ This works by overwriting the dunder repr method.
 
 For instance, a cell like this is not possible (as far as the author is aware) with vanilla ob-python.
 
-#+begin_src python :results drawer
+#+begin_src python :results drawer :exports both
 import pandas as pd
 import matplotlib.pyplot as plt
 df = pd.DataFrame({"x": [1, 2, 3, 4, 5,6,7,], "y": [10, 11, 12, 13, 14,15,16]})
@@ -41,7 +42,7 @@ print("...tada!")
 :end:
 
 ** Cell timer
-#+begin_src python :timer-show
+#+begin_src python :timer-show :exports both
 import time
 time.sleep(1)
 #+end_src
@@ -53,7 +54,7 @@ Cell Timer: 0:00:01
 
 ** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer.
 
-#+begin_src python
+#+begin_src python :exports both
 print(1/0)
 #+end_src
 
