@@ -21,6 +21,32 @@
 
 (require 'org)
 
+;;;; Helpers
+(defun ob-python-extras/find-python-scripts-dir ()
+  "Find the directory containing Python scripts for ob-python-extras."
+  (or
+   ;; Check if path explicitly set (e.g. for tests/batch mode)
+   (bound-and-true-p ob-python-extras-python-path)
+
+   ;; Check straight.el installation
+   (when (bound-and-true-p straight-base-dir)
+     (let ((straight-python-dir
+            (expand-file-name (concat straight-build-dir "/ob-python-extras/python")
+                              straight-base-dir)))
+       (when (file-directory-p straight-python-dir)
+         straight-python-dir)))
+
+   ;; Check package.el installation
+   (when-let ((lib-path (locate-library "ob-python-extras")))
+     (let ((package-python-dir
+            (expand-file-name "python"
+                              (file-name-directory lib-path))))
+       (when (file-directory-p package-python-dir)
+         package-python-dir)))
+
+   ;; Error if nothing found
+   (error "Cannot find ob-python-extras Python scripts directory. Please set ob-python-extras-python-path")))
+
 ;;;; Navigation
 
 (defun ob-python-extras/org-babel-goto-src-block-results ()
@@ -142,12 +168,10 @@ finally:
 
 ;;;; Better output handling
 ;;;;; mix printing images and text
-;; TODO add handling for if python environment doesnt have matplotlib
-
 
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
-  (let* ( (exec-file (make-temp-file "execution-code"))
-          (pymockbabel-script-location (concat doom-user-dir "/python/pymockbabel")))
+  (let* ((exec-file (make-temp-file "execution-code"))
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
@@ -215,9 +239,10 @@ finally:
 
 ;;;;; Pandas dataframe printing
 
+
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body &rest args)
-  (let* ( (exec-file (make-temp-file "execution-code"))
-          (pymockbabel-script-location (concat straight-base-dir straight-build-dir "/ob-python-extras/python")))
+  (let* ((exec-file (make-temp-file "execution-code"))
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"

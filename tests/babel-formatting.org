@@ -1,8 +1,25 @@
 #+title: Tests
 
+* Testing sessions:
+:PROPERTIES:
+:header-args: :results output drawer :tangle :session timer_formatting_tests
+:END:
+
+#+begin_src python
+x = 1
+
+#+end_src
+
+
+#+begin_src python
+print(x)
+#+end_src
+
+
+
 * Timer formatting
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session timer_formatting_tests
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session timer_formatting_tests
 :END:
 
 Rounds by default, and shows by default:
@@ -39,7 +56,7 @@ print(1)
 
 * Table formatting
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session table_formatting :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting :timer-show no
 :END:
 
 Dataframes are printed as org tables
@@ -128,7 +145,7 @@ print(long_df)
 :end:
 ** Problem -- hangs when printing large dataframes.
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session table_formatting_large_dtfs :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting_large_dtfs :timer-show no
 :END:
 
 print_org_df sets max_rows to be 20 by default to avoid this issue.
@@ -296,7 +313,7 @@ Space between dataframes
 
 * Images
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project :timer-show no
 :END:
 
 mocks out python plotting to allow plots to be interspersed with printing, and allows multiple to be made. :)
@@ -324,14 +341,14 @@ look!
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/babel-formatting/plot_20241025_204455_6076104.png]]
+[[file:plots/babel-formatting/plot_20241027_151340_220235.png]]
 tada!
 :end:
 
 * DONE Make : Alerts on finishing
 * Alerts on finishing
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session alerts_on_finish :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session alerts_on_finish :timer-show no
 :END:
 
 When this finishes, it alerts you in an emacs minibuffer, with a link back.

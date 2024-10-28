@@ -21,16 +21,42 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+
+get_emacs_args() {
+    local target_file=$1
+    cat << EOF
+--batch \
+--eval "(setq debug-on-error t)" \
+--eval "(defmacro map! (&rest _) nil)" \
+--eval "(setq ob-python-extras-python-path (expand-file-name \"../python\"))" \
+-l ob \
+-l ob-python \
+--load "../ob-python-extras.el" \
+--eval "
+(progn
+  (setq org-confirm-babel-evaluate nil)
+  (setq python-shell-prompt-detect-enabled nil)
+  (setq python-shell-completion-native-enable nil)
+  (with-current-buffer (find-file-noselect \"$target_file\")
+    (message \"Executing %s...\" \"$target_file\")
+    (org-babel-execute-buffer)
+    (save-buffer)))" \
+"$target_file"
+EOF
+}
+
 process_file() {
     local org_file="$1"
     echo "Processing $org_file..."
 
     if $update_goldens; then
         cp "$org_file" "golden/$org_file"
-        evaluate-org-buffer "./golden/$org_file"
+        cp "shell.nix" "golden/shell.nix"
+        eval "emacs --batch $(get_emacs_args "golden/$org_file")"
     else
         cp "$org_file" "staging/$org_file"
-        evaluate-org-buffer "./staging/$org_file"
+        cp "shell.nix" "staging/shell.nix"
+        eval "emacs --batch $(get_emacs_args "staging/$org_file")"
 
         difference=$(diff -u \
             <(cat "golden/$org_file" | sed 's/^[[:space:]]*//' | sed '/^$/d') \
