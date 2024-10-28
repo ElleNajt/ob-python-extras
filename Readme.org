@@ -7,7 +7,7 @@
 :header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
 :END:
 
-This package adds additional features to ob-python that I found lacking.
+This package adds additional features to ob-python that I found lacking when trying to use it as a serious replacement for jupyter notebooks.
 
 ** mix images and text in the output of cells.
 This works by mocking out matplotlib and instead saving the images and returning text that refers to the saved images. These images are garbage collected regularly.
@@ -90,10 +90,37 @@ Currently these only are tested in doom emacs
 * Setup:
 ** Keybindings:
 
-If you want my suggested keybindings, run:
+If you want my keybindings, run:
 
 #+begin_src emacs-lisp :tangle yes
 (ob-python-extras/map-suggested-keyindings)
 #+end_src
 
+* Other things:
 
+In my personal config I use the following keybindings as well, based on a vendored version guilt-dolphin's org-evil with keybindings stripped, of which make it easier to manipulate source blocks:
+
+#+begin_src emacs-lisp :tangle yes
+
+(org-evil--define-key 'motion 'org-evil-motion-mode
+                      "[[" 'org-evil-motion-backward-block-begin
+                      "]]" 'org-evil-motion-forward-block-begin)
+
+(add-hook! 'org-mode-hook 'org-evil-mode)
+
+(undefine-key! evil-motion-state-map "[ s" "] s")
+
+(map! (:mode org-mode
+       :n "] r" #'org-babel-goto-src-block-results
+       :n "[ s" 'org-evil-block-beginning-of-block
+       :n "] s" 'org-evil-block-end-of-block))
+
+(org-evil--define-key 'motion 'org-evil-block-mode
+                      "[ s" 'org-evil-block-beginning-of-block
+                      "] s" 'org-evil-block-end-of-block)
+
+(dolist (mode '(operator visual))
+  (org-evil--define-key mode 'org-evil-block-mode
+                        "ib" 'org-evil-block-inner-block
+                        "ab" 'org-evil-block-a-block))
+#+end_src
