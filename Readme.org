@@ -42,6 +42,8 @@ print("...tada!")
 :end:
 
 ** Cell timer
+Configurable with :timer-show block option, for instance :timer-show no.
+
 #+begin_src python :timer-show :exports both
 import time
 time.sleep(1)
@@ -51,6 +53,7 @@ time.sleep(1)
 :results:
 Cell Timer: 0:00:01
 :end:
+
 
 ** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer.
 
