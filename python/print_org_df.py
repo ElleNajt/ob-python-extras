@@ -41,11 +41,11 @@ def org_repr(obj):
     table[0] = "|".join(header)
 
 
-    table = [f"| {line.strip()} |" for line in table]
+    table = [f"DF_FLAG:| {line.strip()} |" for line in table]
 
     if len(table) > 1:
         header_width = len(table[0])
-        hline = f"|{'-' * (header_width - 2)}|"
+        hline = f"DF_FLAG:|{'-' * (header_width - 2)}|"
         table.insert(1, hline)
 
     # TODO Add the head and tail printing like jupyter does

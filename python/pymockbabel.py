@@ -31,6 +31,9 @@ class Writer:
     def flush(self):
         pass
 
+    def isatty(self):
+        return True
+
 
 def start_capturing(outputs_and_file_paths, output_types):
     writer = Writer(outputs_and_file_paths, output_types)
@@ -84,6 +87,13 @@ def display(outputs_and_file_paths, output_types, list_writer):
     org_babel_output = []
     for item, item_type in zip(outputs_and_file_paths, output_types):
         if item_type == "Text":
+            if item.startswith("DF_FLAG:"):
+                item = item.replace("DF_FLAG:", "")
+            else:
+                # If not printing a dataframe, then replace pipes with a slash
+                # this is important for printing, e.g. the printSchema method of
+                # a spark dataframe
+                item = item.replace("|", "\\")
             org_babel_output.append(f"{item}")
         elif item_type == "Image":
             org_babel_output.append(f"[[file:{item}]]")
