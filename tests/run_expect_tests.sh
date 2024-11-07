@@ -58,12 +58,17 @@ process_file() {
         cp "$org_file" "staging/$org_file"
         eval "emacs --batch $(get_emacs_args "staging/$org_file")"
 
-        difference=$(diff -u "golden/$org_file" "staging/$org_file")
+        # Filter out %expect_skip lines from both files before diffing
+        difference=$(diff -u <(sed '/%expect_skip/d' "golden/$org_file") <(sed '/%expect_skip/d' "staging/$org_file") | sed '/^---/d; /^+++/d')
 
+        echo $difference
+
+        # Flag to track if we need to return failure
+        has_failure=0
+
+        # Check PNG differences
         if [ -n "$difference" ]; then
-            # Check if difference is only in PNG file references
             if echo "$difference" | grep -q '^-.*\.png\]\]$' && echo "$difference" | grep -q '^+.*\.png\]\]$'; then
-                # Extract the PNG paths
 
                 golden_png=$(echo "$difference" | grep '^-.*\.png' | grep -o 'plots/.*\.png')
                 staging_png=$(echo "$difference" | grep '^+.*\.png' | grep -o 'plots/.*\.png')
@@ -90,22 +95,38 @@ process_file() {
 
                 if [ $compare_result -eq 0 ]; then
                     echo "PNG files are identical despite different filenames."
-                    return 0
                 elif [ $compare_result -eq 1 ]; then
                     echo "PNG files are different:"
                     echo "golden/$golden_png"
                     echo "staging/$staging_png"
-                    return 1
+                    has_failure=1
                 else
                     echo "Error comparing PNG files"
                     return 2
                 fi
-            else
-                # Regular text difference found
-                echo "Differences found in $org_file:"
-                echo "$difference"
-                return 1
             fi
+        fi
+
+
+        # Now check for any other differences
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^@@ ]]; then
+                context=$(echo "$line" | sed -E 's/^@@ .* @@ (.*)/\1/')
+                context=$line
+                new_context=1
+            elif ! [[ "$line" =~ \.png\]\]$ ]] && [[ "$line" =~ ^[+-] ]]; then
+                if [ $new_context -eq 1 ]; then
+                    echo "$context"
+                    new_context=0
+                fi
+                echo "$line"
+                has_failure=1
+            fi
+        done <<< "$difference"
+
+        if [ $has_failure -eq 1 ]; then
+            echo "Found differences in $org_file."
+            return 1
         else
             echo "No differences found in $org_file."
             return 0
