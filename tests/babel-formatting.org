@@ -313,7 +313,7 @@ Space between dataframes
 
 * Images
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no
 :END:
 
 mocks out python plotting to allow plots to be interspersed with printing, and allows multiple to be made. :)
@@ -332,16 +332,16 @@ print("tada!")
 #+RESULTS:
 :results:
 look!
-| idx | x |  y |
-|-----+---+----|
-|   0 | 1 | 10 |
-|   1 | 2 | 11 |
-|   2 | 3 | 12 |
-|   3 | 4 | 13 |
-|   4 | 5 | 14 |
-|   5 | 6 | 15 |
-|   6 | 7 | 16 |
-[[file:plots/babel-formatting/plot_20241027_151340_220235.png]]
+| idx  |x|y |
+|-------------------|
+| 0|1|10 |
+| 1|2|11 |
+| 2|3|12 |
+| 3|4|13 |
+| 4|5|14 |
+| 5|6|15 |
+| 6|7|16 |
+[[file:plots/babel-formatting/plot_20241107_101320_9503231.png]]
 tada!
 :end:
 

@@ -69,7 +69,7 @@ print(1)
 #+RESULTS:
 :results:
 1
-%expect_skip Cell Timer: 0:00:00.000624
+%expect_skip Cell Timer: 0:00:00.000785
 :end:
 
 * Table formatting
@@ -293,7 +293,7 @@ print(df)
 |   4 | Eva     |  22 | Tokyo         |  90.1 |
 Space between dataframes
 | idx  |Name|Age|City|Score |
-|---------------------------|
+|-----------------------------------|
 | 0|Joe|44|New York|92.5 |
 | 1|Eva|32|San Francisco|88.0 |
 | 2|Charlie|33|Boston|95.2 |
@@ -321,7 +321,7 @@ print(df)
 |   4 | Eva     |  22 | Tokyo         |  90.1 |
 Space between dataframes
 | idx  |Name|Age|City|Score |
-|---------------------------|
+|-----------------------------------|
 | 0|Joe|44|New York|92.5 |
 | 1|Eva|32|San Francisco|88.0 |
 | 2|Charlie|33|Boston|95.2 |
@@ -331,7 +331,7 @@ Space between dataframes
 
 * Images
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project :timer-show no
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no
 :END:
 
 mocks out python plotting to allow plots to be interspersed with printing, and allows multiple to be made. :)
@@ -351,7 +351,7 @@ print("tada!")
 :results:
 look!
 | idx  |x|y |
-|-----------|
+|-------------------|
 | 0|1|10 |
 | 1|2|11 |
 | 2|3|12 |
@@ -359,7 +359,7 @@ look!
 | 4|5|14 |
 | 5|6|15 |
 | 6|7|16 |
-[[file:plots/babel-formatting/plot_20241028_191807_1142437.png]]
+[[file:plots/babel-formatting/plot_20241107_102627_8873931.png]]
 tada!
 :end:
 
