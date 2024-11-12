@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'org)
+(require 'doom-keybinds)
 
 ;;;; Helpers
 (defun ob-python-extras/find-python-scripts-dir ()
@@ -332,17 +333,19 @@ finally:
 
 (defun ob-python-extras/map-suggested-keyindings ()
   "Map suggested keybindings for ob-python."
+  (interactive)
 
   (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
-  (map! (:mode org-mode
-         :n "<S-return>" #'ob-python-extras/run-cell-and-advance
-         :n "SPC S" #'jupyter-org-split-src-block
-         :n "SPC M" #'jupyter-org-merge-blocks
-         :n "g SPC" #'org-babel-execute-buffer
-         :n "C-c C-k" #'ob-python-extras/interrupt-org-babel-session
-         :n "SPC f i"  #'org-toggle-inline-images
-         :n "SPC f I"  #'org-display-inline-images
-         :n "g s"  #'org-edit-special)))
+  (after! org-mode
+    (map! :mode (org-mode)
+          :n "<S-return>" #'ob-python-extras/run-cell-and-advance
+          :n "SPC S" #'jupyter-org-split-src-block
+          :n "SPC M" #'jupyter-org-merge-blocks
+          :n "g SPC" #'org-babel-execute-buffer
+          :n "C-c C-k" #'ob-python-extras/interrupt-org-babel-session
+          :n "SPC f i"  #'org-toggle-inline-images
+          :n "SPC f I"  #'org-display-inline-images
+          :n "g s"  #'org-edit-special)))
 
 (ob-python-extras/map-suggested-keyindings )
 
