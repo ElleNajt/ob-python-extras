@@ -311,6 +311,35 @@ Space between dataframes
 | 4|Eva|22|Tokyo|90.11111 |
 :end:
 
+* Testing Tabulate
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python"  :tangle :session test_tabulate :timer-show no
+:END:
+
+If Tabulate is available we can use it directly to formate the dataframe. This is built into pandas and the safer option.
+
+#+begin_src python :results drawer
+import pandas as pd
+data = {
+'Name': ['Joe', 'Eva', 'Charlie', 'David', 'Eva'],
+'Age': [44, 32, 33,33, 22],
+'City': ['New York', 'San Francisco', 'Boston', 'Paris', 'Tokyo'],
+'Score': [92.5, 88.0, 95.2, 78.9, 90.11111]}
+df = pd.DataFrame(data)
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+|   | Name    | Age | City          |   Score |
+|---+---------+-----+---------------+---------|
+| 0 | Joe     |  44 | New York      |    92.5 |
+| 1 | Eva     |  32 | San Francisco |      88 |
+| 2 | Charlie |  33 | Boston        |    95.2 |
+| 3 | David   |  33 | Paris         |    78.9 |
+| 4 | Eva     |  22 | Tokyo         | 90.1111 |
+:end:
+
 * Images
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no

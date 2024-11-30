@@ -37,9 +37,11 @@ print("...tada!")
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/Readme/plot_20241028_194825_8829674.png]]
+[[file:plots/Readme/plot_20241112_201256_2165943.png]]
 ...tada!
 :end:
+
+For best behavior, have Tabulate installed in your python environment. When Tabulate is available, this can use a pandas built into format the dataframe directly to markdown. Otherwise, it falls back on some somewhat janky code.
 
 ** Cell timer
 Configurable with :timer-show block option, for instance :timer-show no.

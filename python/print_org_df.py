@@ -12,9 +12,24 @@ try:
     pd.options.display.max_rows = 20
     PANDAS_AVAILABLE = True
 except ImportError:
+    PANDAS_AVAILABLE = False
     pass
 
-def org_repr(obj):
+try:
+    import tabulate
+    TABULATE_AVAILABLE = True
+
+except ImportError:
+    TABULATE_AVAILABLE = False
+    pass
+
+def org_repr(obj : pd.DataFrame | pd.Series):
+    # The DF_FLAG: business is to prevent |'s from being replaced with \, which
+    # we do elsewhere to prevent things accidentally being parsed as org tables.
+    if TABULATE_AVAILABLE:
+        markdown = obj.to_markdown()
+        lines = [f"DF_FLAG:{line}" for line in markdown.split('\n')]
+        return '\n'.join(lines)
 
     float_format = pd.get_option('display.float_format')
     output = io.StringIO()
@@ -27,8 +42,6 @@ def org_repr(obj):
     elif isinstance(obj, pd.Series):
         pd.DataFrame(obj).to_csv(output, sep="|", index=True, header=[obj.name or ''], float_format = float_format,)
     output.seek(0)
-
-
 
 
     table = output.read().strip().split("\n")
