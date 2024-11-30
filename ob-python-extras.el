@@ -318,6 +318,30 @@ finally:
 
 (advice-add 'org-babel-insert-result :after #'ob-python-extras/adjust-org-babel-results)
 
+;;; Enlarging images
+
+(defun org-view-image-full-size ()
+  "Enlarge an image in an org buffer to a new buffer at full size."
+  (interactive)
+  (when (eq major-mode 'org-mode)
+    (when-let* ((link (org-element-context))
+                ((eq (org-element-type link) 'link))
+                (path (org-element-property :path link))
+                (full-path (expand-file-name path))
+                ((file-exists-p full-path))
+                ((string-match-p "\\.\\(png\\|jpeg\\|jpg\\|gif\\)$" full-path)))
+      (find-file-other-window full-path)
+      (image-mode)
+      (image-transform-fit-to-height)
+      t)))
+
+(defun org-dispatch-C-c-C-c (arg)
+  "Helper function that wraps the usual C-c-C-c behavior in org to add image viewing as well."
+  (interactive "P")
+  (if (eq major-mode 'org-mode)
+      (unless (org-view-image-full-size)
+        (org-ctrl-c-ctrl-c))))
+
 
 
 ;;; Keybindings
@@ -336,18 +360,20 @@ finally:
   (interactive)
 
   (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
-  (after! org-mode
-    (map! :mode (org-mode)
-          :n "<S-return>" #'ob-python-extras/run-cell-and-advance
-          :n "SPC S" #'jupyter-org-split-src-block
-          :n "SPC M" #'jupyter-org-merge-blocks
-          :n "g SPC" #'org-babel-execute-buffer
-          :n "C-c C-k" #'ob-python-extras/interrupt-org-babel-session
-          :n "SPC f i"  #'org-toggle-inline-images
-          :n "SPC f I"  #'org-display-inline-images
-          :n "g s"  #'org-edit-special)))
 
-(ob-python-extras/map-suggested-keyindings )
+  (map! :map org-mode-map
+        :after org
+        :n "<S-return>" #'ob-python-extras/run-cell-and-advance
+        :n "SPC S" #'jupyter-org-split-src-block
+        :n "SPC M" #'jupyter-org-merge-blocks
+        :n "g SPC" #'org-babel-execute-buffer
+        :n "C-c C-k" #'ob-python-extras/interrupt-org-babel-session
+        :n "SPC f i"  #'org-toggle-inline-images
+        :n "SPC f I"  #'org-display-inline-images
+        :nvi "C-c C-c" #'org-dispatch-C-c-C-c
+        :n "g s"  #'org-edit-special))
+
+(ob-python-extras/map-suggested-keyindings)
 
 
 (provide 'ob-python-extras)

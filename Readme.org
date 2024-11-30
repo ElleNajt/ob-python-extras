@@ -11,6 +11,9 @@ This package adds additional features to ob-python that I found lacking when try
 
 ** mix images and text in the output of cells.
 This works by mocking out matplotlib and instead saving the images and returning text that refers to the saved images. These images are garbage collected regularly.
+
+*** Press C-c C-c over an image to open it full size in another buffer. (This dispatches to org-view-image-full-size)
+
 ** pandas dataframes printed as org tables, always.
 This works by overwriting the dunder repr method.
 
