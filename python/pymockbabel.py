@@ -9,6 +9,7 @@ from datetime import datetime
 from functools import partial
 from unittest.mock import patch
 
+MATPLOTLIB_AVAILABLE = False
 try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
