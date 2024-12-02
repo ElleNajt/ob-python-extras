@@ -77,8 +77,20 @@ ZeroDivisionError: division by zero
 ** Configurable alerts that tell you when long running cells finish.
 These are disabled by default, since some users might find them annoying.
 Currently these only are tested in doom emacs
+
+** Gptel integrations:
+
+I added functions patch-gptel-blocks, and send-block-to-gptel to send the contents of a block and its returned valued to a gptel buffer, and get a diff patch. This is useful for fixing quick mistakes.
+
+This requires, since it expects an org block in the response.
+
+#+begin_src emacs-lisp :tangle yes
+(gptel-default-mode 'org-mode)
+#+end_src
+
 ** Additional features:
 - shortcuts for things like cell-interruption and adding new cells.
+
 
 * Installation
 ** With straight.el
@@ -132,3 +144,37 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ib" 'org-evil-block-inner-block
                         "ab" 'org-evil-block-a-block))
 #+end_src
+
+* Todos:
+** TODO Inheriting lsp stuff in special mode
+** TODO The same magic as elisp has to not need special mode
+
+** TODO add more verbose errors, e.g. options ot use stuff like:
+
+import sys
+import traceback
+from pprint import pprint
+
+def verbose_excepthook(type, value, tb):
+    print("\n=== DETAILED ERROR REPORT ===")
+    print(f"Error Type: {type.__name__}")
+    print(f"Error Message: {str(value)}")
+    print("\nFull traceback:")
+
+    # Print each frame of the traceback
+    for frame in traceback.extract_tb(tb):
+        print(f"\nFile: {frame.filename}, Line {frame.lineno}")
+        print(f"Function: {frame.name}")
+        print(f"Code: {frame.line}")
+
+        # Print local variables in this frame
+        try:
+            local_vars = frame.frame_locals.items()
+            print("\nLocal variables:")
+            pprint(local_vars)
+        except:
+            pass
+
+    print("\n=== END ERROR REPORT ===")
+
+sys.excepthook = verbose_excepthook
