@@ -82,11 +82,19 @@ Currently these only are tested in doom emacs
 
 I added functions patch-gptel-blocks, and send-block-to-gptel to send the contents of a block and its returned valued to a gptel buffer, and get a diff patch. This is useful for fixing quick mistakes.
 
-This requires, since it expects an org block in the response.
+This requires gptel-default-mode to be set to org-mode to work, since it expects an org block in the response.
 
 #+begin_src emacs-lisp :tangle yes
 (gptel-default-mode 'org-mode)
 #+end_src
+
+The conversation happens in the *CELL ERRORS* buffer.
+
+| Key         | Command              | Description          |
+|-------------+----------------------+----------------------|
+| ~SPC o c s~ | ~send-block-to-gptel~ | Send block to GPTel, and ask for a fix. |
+| ~SPC o c p~ | ~patch-gptel-blocks~ | Apply the fix |
+| ~SPC o c f~ | ~gptel-fix-block~    | Do the two things at once  |
 
 ** Additional features:
 - shortcuts for things like cell-interruption and adding new cells.

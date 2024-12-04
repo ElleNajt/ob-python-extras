@@ -139,13 +139,14 @@
                       (forward-line 1)
                       (delete-region (point) (org-babel-get-src-block-end))
                       (insert gpt-block)
+                      (quit-window)
                       (pop-to-buffer original-buffer)
-                      (kill-buffer diff-buffer))))
+                      )))
       (define-key map (kbd "C-c C-k")
                   (lambda ()
                     (interactive)
-                    (pop-to-buffer original-buffer)
-                    (kill-buffer diff-buffer)))
+                    (quit-window)
+                    (pop-to-buffer original-buffer)))
       (use-local-map (make-composed-keymap map (current-local-map)))
       (display-buffer diff-buffer)
       (pop-to-buffer diff-buffer))))
@@ -158,7 +159,10 @@
   (when gptel-fix-block-buffer
     (with-current-buffer gptel-fix-block-buffer
       (patch-gptel-blocks))
+    (pop-to-buffer "*GPT Block Diff*")
     (setq gptel-fix-block-buffer nil)))
+
+(add-hook 'gptel-post-response-functions #'gptel-fix-block-response)
 
 (defun gptel-fix-block ()
   "Send block to GPT and patch when response is received."
@@ -166,7 +170,6 @@
   (setq gptel-fix-block-buffer (current-buffer))
   (send-block-to-gptel))
 
-(add-hook 'gptel-post-response-functions #'gptel-fix-block-response)
 
 (provide 'ob-python-extras-gptel-integration)
 ;;; ob-python-extras-gptel-integration.el ends here

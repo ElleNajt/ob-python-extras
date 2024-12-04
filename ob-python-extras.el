@@ -371,6 +371,10 @@ finally:
         :n "SPC f i"  #'org-toggle-inline-images
         :n "SPC f I"  #'org-display-inline-images
         :nvi "C-c C-c" #'org-dispatch-C-c-C-c
+        :nv "SPC o g f" 'gptel-fix-block
+        :nv "SPC o g s" 'send-block-to-gptel
+        :nv "SPC o g p" 'patch-gptel-blocks
+        :nv "SPC o g d" 'patch-gptel-blocks
         :n "g s"  #'org-edit-special))
 
 (ob-python-extras/map-suggested-keyindings)
