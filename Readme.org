@@ -60,177 +60,38 @@ Cell Timer: 0:00:01
 :end:
 
 
-** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer.
+** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer. :ATTACH:
+:PROPERTIES:
+:ID:       92ba9430-04f9-4afb-9652-6395a2f9736b
+:END:
 
-#+begin_src python :exports both
-print(1/0)
-#+end_src
-
-#+RESULTS:
-:results:
-Traceback (most recent call last):
-File "<org babel source block>", line 9, in <module>
-File "<org babel source block>", line 1, in <module>
-ZeroDivisionError: division by zero
-:end:
+[[attachment:_20241206_183956screenshot.png]]
 
 Additionally, with the :errors rich parameter tracebacks are displayed using rich. Requires the rich library.
 
-#+begin_src python :errors "rich" :exports both
+
+#+begin_src python :errors "rich"
 print(1/0)
 #+end_src
 
-#+RESULTS:
-:results:
-╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ in <module>:8                                                                │
-│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │                bad_function = <function bad_function at 0xffff8fc23380>  │ │
-│ │                     Console = <class 'rich.console.Console'>             │ │
-│ │                     console = <console width=93 None>                    │ │
-│ │                   exec_file = '/tmp/execution-codeVcXhmi'                │ │
-│ │                        file = <_io.TextIOWrapper                         │ │
-│ │                               name='/tmp/execution-codeVcXhmi' mode='r'  │ │
-│ │                               encoding='UTF-8'>                          │ │
-│ │  org_babel_wrapper_datetime = <class 'datetime.datetime'>                │ │
-│ │                          os = <module 'os' (frozen)>                     │ │
-│ │                print_org_df = <module 'print_org_df' from                │ │
-│ │                               '/home/elle/.emacs.d/.local/straight/buil… │ │
-│ │ pymockbabel_script_location = '/home/elle/.emacs.d/.local/straight/buil… │ │
-│ │                rich_console = <console width=80 None>                    │ │
-│ │                Rich_Console = <class 'rich.console.Console'>             │ │
-│ │           rich_markdown_box = Box(...)                                   │ │
-│ │              Rich_Traceback = <class 'rich.traceback.Traceback'>         │ │
-│ │                       start = datetime.datetime(2024, 12, 6, 17, 17, 50, │ │
-│ │                               947294)                                    │ │
-│ │                         sys = <module 'sys' (built-in)>                  │ │
-│ │                          tb = Trace(                                     │ │
-│ │                               │   stacks=[                               │ │
-│ │                               │   │   Stack(                             │ │
-│ │                               │   │   │   exc_type='ZeroDivisionError',  │ │
-│ │                               │   │   │   exc_value='division by zero',  │ │
-│ │                               │   │   │   syntax_error=None,             │ │
-│ │                               │   │   │   is_cause=False,                │ │
-│ │                               │   │   │   frames=[                       │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=8,              │ │
-│ │                               │   │   │   │   │   name='<module>',       │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   ),                         │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=6,              │ │
-│ │                               │   │   │   │   │   name='<module>',       │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   ),                         │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=5,              │ │
-│ │                               │   │   │   │   │   name='bad_function',   │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   )                          │ │
-│ │                               │   │   │   ]                              │ │
-│ │                               │   │   )                                  │ │
-│ │                               │   ]                                      │ │
-│ │                               )                                          │ │
-│ │                        time = <module 'time' (built-in)>                 │ │
-│ │                   Traceback = <class 'rich.traceback.Traceback'>         │ │
-│ │                   traceback = <module 'traceback' from                   │ │
-│ │                               '/nix/store/2m1ym6djbpczvwh4fbqph6k6hl1dy… │ │
-│ ╰──────────────────────────────────────────────────────────────────────────╯ │
-│ in <module>:1                                                                │
-│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │                bad_function = <function bad_function at 0xffff8fc23380>  │ │
-│ │                     Console = <class 'rich.console.Console'>             │ │
-│ │                     console = <console width=93 None>                    │ │
-│ │                   exec_file = '/tmp/execution-codeVcXhmi'                │ │
-│ │                        file = <_io.TextIOWrapper                         │ │
-│ │                               name='/tmp/execution-codeVcXhmi' mode='r'  │ │
-│ │                               encoding='UTF-8'>                          │ │
-│ │  org_babel_wrapper_datetime = <class 'datetime.datetime'>                │ │
-│ │                          os = <module 'os' (frozen)>                     │ │
-│ │                print_org_df = <module 'print_org_df' from                │ │
-│ │                               '/home/elle/.emacs.d/.local/straight/buil… │ │
-│ │ pymockbabel_script_location = '/home/elle/.emacs.d/.local/straight/buil… │ │
-│ │                rich_console = <console width=80 None>                    │ │
-│ │                Rich_Console = <class 'rich.console.Console'>             │ │
-│ │           rich_markdown_box = Box(...)                                   │ │
-│ │              Rich_Traceback = <class 'rich.traceback.Traceback'>         │ │
-│ │                       start = datetime.datetime(2024, 12, 6, 17, 17, 50, │ │
-│ │                               947294)                                    │ │
-│ │                         sys = <module 'sys' (built-in)>                  │ │
-│ │                          tb = Trace(                                     │ │
-│ │                               │   stacks=[                               │ │
-│ │                               │   │   Stack(                             │ │
-│ │                               │   │   │   exc_type='ZeroDivisionError',  │ │
-│ │                               │   │   │   exc_value='division by zero',  │ │
-│ │                               │   │   │   syntax_error=None,             │ │
-│ │                               │   │   │   is_cause=False,                │ │
-│ │                               │   │   │   frames=[                       │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=8,              │ │
-│ │                               │   │   │   │   │   name='<module>',       │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   ),                         │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=6,              │ │
-│ │                               │   │   │   │   │   name='<module>',       │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   ),                         │ │
-│ │                               │   │   │   │   Frame(                     │ │
-│ │                               │   │   │   │   │   filename='<org babel   │ │
-│ │                               source block>',                            │ │
-│ │                               │   │   │   │   │   lineno=5,              │ │
-│ │                               │   │   │   │   │   name='bad_function',   │ │
-│ │                               │   │   │   │   │   line='',               │ │
-│ │                               │   │   │   │   │   locals=None            │ │
-│ │                               │   │   │   │   )                          │ │
-│ │                               │   │   │   ]                              │ │
-│ │                               │   │   )                                  │ │
-│ │                               │   ]                                      │ │
-│ │                               )                                          │ │
-│ │                        time = <module 'time' (built-in)>                 │ │
-│ │                   Traceback = <class 'rich.traceback.Traceback'>         │ │
-│ │                   traceback = <module 'traceback' from                   │ │
-│ │                               '/nix/store/2m1ym6djbpczvwh4fbqph6k6hl1dy… │ │
-│ ╰──────────────────────────────────────────────────────────────────────────╯ │
-╰──────────────────────────────────────────────────────────────────────────────╯
-ZeroDivisionError: division by zero
-:end:
+
+[[attachment:_20241206_184156screenshot.png]]
+
+
+
 
 Add no-locals to turn off locals, frames to control the number of frames and extras to control the number of extra lines.
 
-#+begin_src python :errors "rich no-locals frames 0 extra 5" :exports both
-print(1/0)
-def bad_function():
-    a = 1
-    b = 1
-    denominator = 0
-    print(1/denominator)
-bad_function()
+#+begin_src python :errors "rich no-locals frames 3 extra 5" :exports both
+def function(x):
+    while x > 0:
+        x = x-1
+        function(x)
+    print(1 / x)
+function(100)
 #+end_src
 
-#+RESULTS:
-:results:
-╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ in <module>:8                                                                │
-│ in <module>:1                                                                │
-╰──────────────────────────────────────────────────────────────────────────────╯
-ZeroDivisionError: division by zero
-:end:
+[[attachment:_20241206_184412screenshot.png]]
 
 ** Configurable alerts that tell you when long running cells finish.
 These are disabled by default, since some users might find them annoying.
