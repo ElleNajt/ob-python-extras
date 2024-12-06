@@ -107,8 +107,23 @@
           (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
           (timer-string (cdr (assq :timer-string params)))
           (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
+          (error-options (when-let ((err (cdr (assq :errors params))))
+                           (split-string err " " t)))
+          (use-rich (member "rich" error-options))
+          (show-locals (not (member "no-locals" error-options)))
+          (show-full-paths (member "full-paths" error-options))
+
+          (extra-lines (or (and-let* ((extra (member "extra" error-options))
+                                      (num (cadr extra)))
+                             (string-to-number num))
+                           3))
+          (max-frames (or (and-let* ((max (member "frames" error-options))
+                                     (num (cadr max)))
+                            (string-to-number num))
+                          100))
           (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
     (with-temp-file exec-file (insert body))
+    (message "extra lines %s" extra-lines)
     (let* ((body (format "\
 exec_file = \"%s\"
 import time
@@ -119,8 +134,23 @@ try:
     with open(exec_file, 'r') as file:
         exec(compile(file.read(), '<org babel source block>', 'exec'))
 except:
-    import traceback
-    print(traceback.format_exc())
+    if %s:
+        try:
+            from rich.console import Console as Rich_Console
+            from rich.traceback import Traceback as Rich_Traceback
+            rich_console = Rich_Console()
+            rich_console.print(Rich_Traceback(
+                show_locals=%s,
+                max_frames=%d,
+                extra_lines=%d,
+                word_wrap=False,
+            ))
+        except ImportError:
+            import traceback
+            print(traceback.format_exc())
+    else:
+        import traceback
+        print(traceback.format_exc())
 finally:
     if %s:
         timerstring = \"%s\"
@@ -133,16 +163,20 @@ finally:
         os.remove(exec_file)
     except:
         pass" exec-file
+        (if use-rich "True" "False")
+
+        (if show-locals "True" "False")
+        max-frames
+        extra-lines
         (if  timer-show "True" "False")
         timer-string-formatted
         (if  timer-rounded "True" "False")))
            (result (apply orig body params args)))
       result)))
 
-(advice-add
- 'org-babel-execute:python
- :around
- #'ob-python-extras/wrap-org-babel-execute-python)
+(advice-add 'org-babel-execute:python
+            :around #'ob-python-extras/wrap-org-babel-execute-python
+            '((depth . -100)))
 
 
 ;;;; Interruption
@@ -173,7 +207,6 @@ finally:
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
-    (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
 pymockbabel_script_location = \"%s\"
@@ -181,25 +214,13 @@ import sys
 sys.path.append(pymockbabel_script_location)
 import pymockbabel
 outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\")
-try:
-    with open(exec_file, 'r') as file:
-        exec(compile(file.read(), '<org babel source block>', 'exec'))
-except:
-    import traceback
-    print(traceback.format_exc())
-finally:
-    pymockbabel.display(outputs_and_file_paths, output_types, list_writer)
-    try:
-        os.remove(exec_file)
-    except:
-        pass" exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
-           (result (apply orig body args)))
-      result)))
-
-(advice-add
- 'org-babel-execute:python
- :around
- #'ob-python-extras/wrap-org-babel-execute-python-mock-plt)
+with open(exec_file, 'r') as file:
+    exec(compile(file.read(), '<org babel source block>', 'exec'))
+pymockbabel.display(outputs_and_file_paths, output_types, list_writer)"
+                         exec-file
+                         pymockbabel-script-location
+                         (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))
+      (apply orig body args))))
 
 ;;;;;; Image Garbage collection
 
@@ -252,17 +273,8 @@ import sys
 sys.path.append(pymockbabel_script_location)
 import print_org_df
 print_org_df.enable()
-try:
-    with open(exec_file, 'r') as file:
-        exec(compile(file.read(), '<org babel source block>', 'exec'))
-except:
-    import traceback
-    print(traceback.format_exc())
-finally:
-    try:
-        os.remove(exec_file)
-    except:
-        pass" exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
+with open(exec_file, 'r') as file:
+     exec(compile(file.read(), '<org babel source block>', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
            (result (apply orig body args)))
       result)))
 
@@ -342,6 +354,7 @@ finally:
       (unless (org-view-image-full-size)
         (org-ctrl-c-ctrl-c))))
 
+;;;
 
 
 ;;; Keybindings
