@@ -172,6 +172,8 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ab" 'org-evil-block-a-block))
 #+end_src
 
+* Dependencies
+- Python packages: Rich, tabulate, matplotlib
 * Todos:
 ** TODO Inheriting lsp stuff in special mode
 ** TODO The same magic as elisp has to not need special mode
