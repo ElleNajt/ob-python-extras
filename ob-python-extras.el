@@ -205,20 +205,35 @@ finally:
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
+
+    (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
 pymockbabel_script_location = \"%s\"
+import os
 import sys
 sys.path.append(pymockbabel_script_location)
 import pymockbabel
 outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\")
 with open(exec_file, 'r') as file:
     exec(compile(file.read(), '<org babel source block>', 'exec'))
-pymockbabel.display(outputs_and_file_paths, output_types, list_writer)"
+pymockbabel.display(outputs_and_file_paths, output_types, list_writer)
+try:
+    os.remove(exec_file)
+except:
+    pass "
                          exec-file
                          pymockbabel-script-location
                          (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))
       (apply orig body args))))
+
+
+
+(advice-add 'org-babel-execute:python
+            :around #'ob-python-extras/wrap-org-babel-execute-python-mock-plt
+            '((depth . -5)))
+
+
 
 ;;;;;; Image Garbage collection
 
@@ -279,7 +294,8 @@ with open(exec_file, 'r') as file:
 (advice-add
  'org-babel-execute:python
  :around
- #'ob-python-extras/wrap-org-babel-execute-python-mock-table)
+ #'ob-python-extras/wrap-org-babel-execute-python-mock-table
+ '((depth . -10)))
 
 (defun ob-python-extras/my-align-advice-function (args)
   (let ((top-of-src-block (nth 5 args)))
