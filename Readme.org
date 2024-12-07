@@ -65,7 +65,11 @@ Cell Timer: 0:00:01
 :ID:       92ba9430-04f9-4afb-9652-6395a2f9736b
 :END:
 
-[[attachment:_20241206_183956screenshot.png]]
+#+begin_src python
+print(1/0)
+#+end_src
+
+[[attachment:_20241206_223607screenshot.png]]
 
 Additionally, with the :errors rich parameter tracebacks are displayed using rich. Requires the rich library.
 
@@ -91,11 +95,34 @@ def function(x):
 function(100)
 #+end_src
 
+
 [[attachment:_20241206_184412screenshot.png]]
 
-** Configurable alerts that tell you when long running cells finish.
+** Configurable alerts that tell you when long running cells finish. :ATTACH:
+:PROPERTIES:
+:ID:       9418b920-dc2e-4a75-956c-012e24e995b0
+:END:
 These are disabled by default, since some users might find them annoying.
-Currently these only are tested in doom emacs
+Currently these only are tested in doom emacs. This requires libnotify. This works with async by checking whether the results are not formed like a uuid, which is a hack.
+
+#+begin_src python :alert yes
+import time
+time.sleep(2)
+print("This cell will alert when done!")
+#+end_src
+
+#+RESULTS:
+:results:
+This cell will alert when done!
+:end:
+
+This opens a buffer in emacs with a link to the completed cell:
+
+[[attachment:_20241206_223810screenshot.png]]
+
+Pressing escape will close it.
+
+If you have libnotify, you will also get a libnotify notification, which is useful for when you are not in emacs.
 
 ** Gptel integrations:
 
