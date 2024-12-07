@@ -1,9 +1,13 @@
 #!/usr/bin/env sh
 #!/bin/bash
+set -euo pipefail
 
 update_goldens=false
 specific_files=()
 exit_code=0
+
+mkdir -p staging/plots/babel-formatting
+mkdir -p golden/plots/babel-formatting
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -34,6 +38,10 @@ get_emacs_args() {
 --load "../ob-python-extras.el" \
 --eval "
 (progn
+  (with-current-buffer (find-file-noselect \"$target_file\")
+         (org-babel-map-src-blocks nil
+           (org-babel-remove-result))
+         (save-buffer))
   (setq org-confirm-babel-evaluate nil)
   (setq python-shell-prompt-detect-enabled nil)
   (setq python-shell-completion-native-enable nil)
@@ -51,10 +59,10 @@ process_file() {
 
     if $update_goldens; then
         cp "$org_file" "golden/$org_file"
-        cp "shell.nix" "golden/shell.nix"
+        cp shell*.nix "golden/"
         eval "emacs --batch $(get_emacs_args "golden/$org_file")"
     else
-        cp "shell.nix" "staging/shell.nix"
+        cp shell*.nix "staging/"
         cp "$org_file" "staging/$org_file"
         eval "emacs --batch $(get_emacs_args "staging/$org_file")"
 
@@ -119,7 +127,7 @@ process_file() {
                     echo "$context"
                     new_context=0
                 fi
-                echo "$line"
+                echo "$line\n"
                 has_failure=1
             fi
         done <<< "$difference"
@@ -159,7 +167,13 @@ if $update_goldens; then
     echo "Golden files updated."
 else
     if [ $exit_code -eq 0 ]; then
-        echo "All files processed. No differences found."
+        {
+            echo "# Last Successful test: $(date)"
+            echo "## System Information"
+            echo "Emacs version: $(emacs --version | head -n1)"
+            echo "Doom version: $(doom version)"
+            echo "Nixpkgs commit: $(nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version' 2>/dev/null || echo "Nixpkgs not found")"
+        } > last_successful_test_system_info.md
     else
         echo "All files processed. Differences found in one or more files."
     fi
