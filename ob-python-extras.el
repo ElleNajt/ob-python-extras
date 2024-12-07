@@ -325,25 +325,23 @@ with open(exec_file, 'r') as file:
       (( options (nth 2 (car args)))
        ( auto-align (if (string= "no" (cdr (assq :tables-auto-align options))) nil t)))
 
-    ;; this is a terrible hack
-    ;; it happens to be that this argument is populated for the hash insert
-    ;; and not for the content insert
-    ;; I should refactor this to depend on hooks instead
-    (if (not (nth 2 args))
-        (progn
-          (if auto-align
-              (ob-python-extras/my-align-advice-function (nth 0 args))
-            ;; this is a built in that accomplishes the same task
-            ;; but it operates on the entire org file,
-            ;; which is slow
-            ;; I tried narrowing the buffer, but it didn't work
-            ;; (org-table-map-tables 'org-table-align)
-            ))
-      ())
+    (progn
+      (if auto-align
+          (ob-python-extras/my-align-advice-function (nth 0 args))
+        ;; org-table-map-tables is a built in that accomplishes the same task
+        ;; (org-table-map-tables 'org-table-align)
+        ;; but it operates on the entire org file,
+        ;; and it is slow
+        ;; I tried narrowing the buffer, but it didn't work
+        ()))
     ())
 
-
+  (if (and (fboundp 'ob-python-extras/send-block-to-gptel) ob-python-extras/auto-send-on-traceback)
+      (if (ob-python-extras/check-traceback)
+          (ob-python-extras/send-block-to-gptel) ())
+    ())
   (org-display-inline-images))
+
 
 (advice-add 'org-babel-insert-result :after #'ob-python-extras/adjust-org-babel-results)
 
@@ -407,6 +405,7 @@ with open(exec_file, 'r') as file:
         :nv "SPC o g d" 'patch-gptel-blocks
         :n "g s"  #'org-edit-special))
 
+(setq ob-python-extras/auto-send-on-traceback nil)
 
 
 (provide 'ob-python-extras)

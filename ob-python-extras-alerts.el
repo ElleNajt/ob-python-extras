@@ -115,24 +115,22 @@
         nil))))
 
 (defun ob-python-extras/alert-advice-after-org-babel-results (orig-fun params &rest args)
-  (let*
-      (( options (nth 2 (car args)))
-       ( alert-finish (if (string= "yes" (cdr (assq :alert options))) t nil)))
-    ;; this is a terrible hack
-    ;; it happens to be that this argument is populated for the hash insert
-    ;; and not for the content insert
-    ;; I should refactor this to depend on hooks instead
+  (let* ((options (nth 2 (car args)))
+         (alert-finish (if (string= "yes" (cdr (assq :alert options))) t nil))
+         (src-block (org-element-at-point))
+         (results-start (org-babel-where-is-src-block-result))
+         (results-end (ob-python-extras/org-src-block-results-end src-block)))
 
-    ;; if cell took a while always alert
-    (if (not (nth 2 args))
-        (if alert-finish
-            (ob-python-extras/my-cell-finished-alert)
-          ;; (message "alert finish!")
+    (when results-start
+      (save-excursion
+        (goto-char results-start)
+        (if (re-search-forward "^[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{12\\}$" results-end t)
+            ()
+          (progn
+            (when alert-finish
+              (ob-python-extras/my-cell-finished-alert))
+            (ob-python-extras/notify-if-took-a-while 10)))))))
 
-          ;; always alerts if the cell took a while
-          (ob-python-extras/notify-if-took-a-while 10))
-      ()
-      ()) ()))
 
 (advice-add 'org-babel-insert-result :after #'ob-python-extras/alert-advice-after-org-babel-results)
 ;; (setq debug-on-message "Code block evaluation complete\\.")

@@ -109,11 +109,20 @@ This requires gptel-default-mode to be set to org-mode to work, since it expects
 
 The conversation happens in the *CELL ERRORS* buffer.
 
-| Key         | Command              | Description          |
-|-------------+----------------------+----------------------|
+| Key         | Command               | Description                             |
+|-------------+-----------------------+-----------------------------------------|
 | ~SPC o c s~ | ~send-block-to-gptel~ | Send block to GPTel, and ask for a fix. |
-| ~SPC o c p~ | ~patch-gptel-blocks~ | Apply the fix |
-| ~SPC o c f~ | ~gptel-fix-block~    | Do the two things at once  |
+| ~SPC o c p~ | ~patch-gptel-blocks~  | Apply the fix                           |
+| ~SPC o c f~ | ~gptel-fix-block~     | Do the two things at once               |
+
+If you set:
+
+#+begin_src emacs-lisp :tangle yes
+(setq ob-python-extras/auto-send-on-traceback t)
+#+end_src
+
+Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls.
+
 
 ** Additional features:
 - shortcuts for things like cell-interruption and adding new cells.

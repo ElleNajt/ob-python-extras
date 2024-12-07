@@ -67,7 +67,7 @@
     (re-search-forward "#\\+end_src" nil t)
     (line-beginning-position)))
 
-(defun send-block-to-gptel ()
+(defun ob-python-extras/send-block-to-gptel ()
   "Send org babel block with results to new gptel buffer without affecting current buffer."
   (interactive)
   (when (org-in-src-block-p)
@@ -168,7 +168,33 @@
   "Send block to GPT and patch when response is received."
   (interactive)
   (setq gptel-fix-block-buffer (current-buffer))
-  (send-block-to-gptel))
+  (ob-python-extras/send-block-to-gptel))
+
+
+;;; Automation:
+;;;
+
+(defun ob-python-extras/check-traceback ()
+  "Check if current src block results contain a Python traceback."
+  (interactive)
+  (save-excursion
+    (let* ((src-block (org-element-at-point))
+           (results-start (org-babel-where-is-src-block-result))
+           (results-end (ob-python-extras/org-src-block-results-end src-block)))
+      (when results-start
+        (goto-char results-start)
+        (re-search-forward "Traceback (most recent call last)" results-end t)))))
+
+
+(defun ob-python-extras/test-check-traceback ()
+  "Test the traceback detection function."
+  (interactive)
+  (let ((has-traceback (ob-python-extras/check-traceback)))
+    (message "Test %s: %s"
+             (if has-traceback "PASSED" "FAILED")
+             (if has-traceback
+                 "Traceback detected"
+               "No traceback found"))))
 
 
 (provide 'ob-python-extras-gptel-integration)
