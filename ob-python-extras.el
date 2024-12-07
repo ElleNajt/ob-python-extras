@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'org)
-(require 'doom-keybinds)
 
 ;;;; Helpers
 (defun ob-python-extras/find-python-scripts-dir ()
@@ -123,7 +122,6 @@
                           100))
           (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
     (with-temp-file exec-file (insert body))
-    (message "extra lines %s" extra-lines)
     (let* ((body (format "\
 exec_file = \"%s\"
 import time
