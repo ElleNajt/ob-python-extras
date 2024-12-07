@@ -38,6 +38,8 @@ get_emacs_args() {
 --load "../ob-python-extras.el" \
 --eval "
 (progn
+
+(setq ob-python-extras/allow-png-deletion t)
   (with-current-buffer (find-file-noselect \"$target_file\")
          (org-babel-map-src-blocks nil
            (org-babel-remove-result))
@@ -68,8 +70,6 @@ process_file() {
 
         # Filter out %expect_skip lines from both files before diffing
         difference=$(diff -u <(sed '/%expect_skip/d' "golden/$org_file") <(sed '/%expect_skip/d' "staging/$org_file") | sed '/^---/d; /^+++/d')
-
-        echo $difference
 
         # Flag to track if we need to return failure
         has_failure=0

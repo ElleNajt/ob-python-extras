@@ -265,10 +265,13 @@ except:
                 (message "Deleted: %s" png-file)))))))))
 
 (defun ob-python-extras/delete-unused-pngs-in-all-org-files ()
-  "Delete unused .png files in all open org files."
+  "Delete unused .png files in all open org files if deletion is enabled."
   (interactive)
-  (dolist (buffer (buffer-list))
-    (ob-python-extras/delete-unused-pngs-in-buffer buffer)))
+  (when ob-python-extras/allow-png-deletion
+    (dolist (buffer (buffer-list))
+      (ob-python-extras/delete-unused-pngs-in-buffer buffer))))
+
+(setq ob-python-extras/allow-png-deletion nil) ; to disable deletion
 
 (run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
 
