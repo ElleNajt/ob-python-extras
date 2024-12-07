@@ -390,7 +390,6 @@ with open(exec_file, 'r') as file:
   (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
 
   (map! :map org-mode-map
-        :after org
         :n "<S-return>" #'ob-python-extras/run-cell-and-advance
         :n "SPC S" #'jupyter-org-split-src-block
         :n "SPC M" #'jupyter-org-merge-blocks
