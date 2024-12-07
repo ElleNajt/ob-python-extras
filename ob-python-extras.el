@@ -390,7 +390,6 @@ with open(exec_file, 'r') as file:
         :nv "SPC o g d" 'patch-gptel-blocks
         :n "g s"  #'org-edit-special))
 
-(ob-python-extras/map-suggested-keyindings)
 
 
 (provide 'ob-python-extras)
