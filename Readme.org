@@ -69,7 +69,10 @@ Cell Timer: 0:00:01
 print(1/0)
 #+end_src
 
-[[attachment:_20241206_223607screenshot.png]]
+
+
+
+[[file:plots/Readme/_20241206_223607screenshot.png]]
 
 Additionally, with the :errors rich parameter tracebacks are displayed using rich. Requires the rich library.
 
@@ -79,7 +82,7 @@ print(1/0)
 #+end_src
 
 
-[[attachment:_20241206_184156screenshot.png]]
+[[file:plots/Readme/_20241206_184156screenshot.png]]
 
 
 
@@ -96,7 +99,7 @@ function(100)
 #+end_src
 
 
-[[attachment:_20241206_184412screenshot.png]]
+[[file:plots/Readme/_20241206_184412screenshot.png]]
 
 ** Configurable alerts that tell you when long running cells finish. :ATTACH:
 :PROPERTIES:
@@ -118,7 +121,7 @@ This cell will alert when done!
 
 This opens a buffer in emacs with a link to the completed cell:
 
-[[attachment:_20241206_223810screenshot.png]]
+[[file:plots/Readme/_20241206_223810screenshot.png]]
 
 Pressing escape will close it.
 
@@ -181,7 +184,7 @@ If you want my keybindings, run:
 
 * Other things:
 
-In my personal config I use the following keybindings as well, based on a vendored version guilt-dolphin's org-evil with keybindings stripped, of which make it easier to manipulate source blocks:
+In my personal config I use the following keybindings as well, based on a vendored version guilt-dolphin's org-evil with keybindings stripped. These make it easier to manipulate source blocks:
 
 #+begin_src emacs-lisp :tangle yes
 
@@ -214,32 +217,3 @@ In my personal config I use the following keybindings as well, based on a vendor
 ** TODO Inheriting lsp stuff in special mode
 ** TODO The same magic as elisp has to not need special mode
 
-** TODO add more verbose errors, e.g. options ot use stuff like:
-
-import sys
-import traceback
-from pprint import pprint
-
-def verbose_excepthook(type, value, tb):
-    print("\n=== DETAILED ERROR REPORT ===")
-    print(f"Error Type: {type.__name__}")
-    print(f"Error Message: {str(value)}")
-    print("\nFull traceback:")
-
-    # Print each frame of the traceback
-    for frame in traceback.extract_tb(tb):
-        print(f"\nFile: {frame.filename}, Line {frame.lineno}")
-        print(f"Function: {frame.name}")
-        print(f"Code: {frame.line}")
-
-        # Print local variables in this frame
-        try:
-            local_vars = frame.frame_locals.items()
-            print("\nLocal variables:")
-            pprint(local_vars)
-        except:
-            pass
-
-    print("\n=== END ERROR REPORT ===")
-
-sys.excepthook = verbose_excepthook
