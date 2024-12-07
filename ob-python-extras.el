@@ -407,6 +407,38 @@ with open(exec_file, 'r') as file:
 
 (setq ob-python-extras/auto-send-on-traceback nil)
 
+;;; dir-locals in org-special
+
+;; Heavily inspired by this thread: https://github.com/joaotavora/eglot/issues/216#issuecomment-1052931508
+
+(defun advice-setq-locals-python (orig-fun &rest args)
+  "Advice to set Python-related local variables before running org-edit-src-code."
+  (let* ((info (org-babel-get-src-block-info t))
+         (headers (nth 2 info))
+         (python-cmd (alist-get :python headers))
+         (cmd-parts (split-string python-cmd))
+         (temp-file (make-temp-file "org-python-" nil ".py"))
+         (edit-buffer-name (format "*Org Src %s[ %s ]*" (buffer-name) (nth 0 info))))
+    (prog1 (apply orig-fun args)
+      (when python-cmd
+        (with-current-buffer edit-buffer-name
+          (when (eq major-mode 'python-mode)
+            (setq-local buffer-file-name temp-file)
+            (setq-local python-shell-interpreter (car cmd-parts))
+            (setq-local python-shell-interpreter-args (string-join (cdr cmd-parts) " "))
+            (setq-local eglot-server-programs
+                        (list (list (list 'python-mode)
+                                    (car cmd-parts)
+                                    "--run"
+                                    "python"
+                                    "--run"
+                                    "pyright-langserver --stdio")))
+            (eglot-ensure)
+            (message "Python settings updated with: %s" python-cmd)))))))
+
+
+(advice-add 'org-edit-special :around #'advice-setq-locals-python)
+
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
