@@ -21,6 +21,8 @@
 
 (require 'org)
 
+(require 'doom-keybinds)
+
 ;;;; Helpers
 (defun ob-python-extras/find-python-scripts-dir ()
   "Find the directory containing Python scripts for ob-python-extras."
@@ -189,14 +191,16 @@ finally:
 
 (defun ob-python-extras/interrupt-org-babel-session ()
   (interactive)
-  (let* ((current-session (ob-python-extras/org-babel-get-session))
-         (session-buffer (and current-session
-                              (concat "*" current-session "*"))))
-    (when session-buffer
-      (let ((proc (get-buffer-process (get-buffer session-buffer))))
-        (when proc
-          (interrupt-process proc)
-          (message "Interrupted session: %s" current-session))))))
+  (if (bound-and-true-p org-capture-mode)
+      (org-capture-kill)
+    (let* ((current-session (ob-python-extras/org-babel-get-session))
+           (session-buffer (and current-session
+                                (concat "*" current-session "*"))))
+      (when session-buffer
+        (let ((proc (get-buffer-process (get-buffer session-buffer))))
+          (when proc
+            (interrupt-process proc)
+            (message "Interrupted session: %s" current-session)))))))
 
 
 ;;;; Better output handling
@@ -363,13 +367,16 @@ with open(exec_file, 'r') as file:
       t)))
 
 (defun org-dispatch-C-c-C-c (arg)
-  "Helper function that wraps the usual C-c-C-c behavior in org to add image viewing as well."
+  "Helper function that wraps C-c C-c behavior.
+In org-capture-mode, finalizes capture.
+In regular org-mode, tries to view image or executes normal C-c C-c."
   (interactive "P")
-  (if (eq major-mode 'org-mode)
-      (unless (org-view-image-full-size)
-        (org-ctrl-c-ctrl-c))))
+  (if (bound-and-true-p org-capture-mode)
+      (org-capture-finalize)
+    (unless (org-view-image-full-size)
+      (org-ctrl-c-ctrl-c))))
 
-;;;
+;;
 
 
 ;;; Keybindings
@@ -391,6 +398,7 @@ with open(exec_file, 'r') as file:
 
   (map! :map org-mode-map
         :n "<S-return>" #'ob-python-extras/run-cell-and-advance
+        :n "<return>" #'org-babel-execute-src-block
         :n "SPC S" #'jupyter-org-split-src-block
         :n "SPC M" #'jupyter-org-merge-blocks
         :n "g SPC" #'org-babel-execute-buffer
@@ -402,7 +410,9 @@ with open(exec_file, 'r') as file:
         :nv "SPC o g s" 'send-block-to-gptel
         :nv "SPC o g p" 'patch-gptel-blocks
         :nv "SPC o g d" 'patch-gptel-blocks
-        :n "g s"  #'org-edit-special))
+        :n "g s"  #'org-edit-special
+        :n "C-c '"  #'org-edit-special
+        ))
 
 (setq ob-python-extras/auto-send-on-traceback nil)
 
