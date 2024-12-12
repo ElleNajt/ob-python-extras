@@ -394,21 +394,21 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
   (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
 
-  (define-key org-mode-map (kbd "<S-return>") #'ob-python-extras/run-cell-and-advance)
-  (define-key org-mode-map (kbd "<return>") #'ob-python-extras/run-cell-and-advance)
-  (define-key org-mode-map (kbd "S") #'jupyter-org-split-src-block)
-  (define-key org-mode-map (kbd "M") #'jupyter-org-merge-blocks)
-  (define-key org-mode-map (kbd "g SPC") #'org-babel-execute-buffer)
-  (define-key org-mode-map (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session)
-  (define-key org-mode-map (kbd "C-c i") #'org-toggle-inline-images)
-  (define-key org-mode-map (kbd "C-c I") #'org-display-inline-images)
-  (define-key org-mode-map (kbd "C-c C-c") #'org-dispatch-C-c-C-c)
-  (define-key org-mode-map (kbd "C-c g f") 'gptel-fix-block)
-  (define-key org-mode-map (kbd "C-c g s") 'send-block-to-gptel)
-  (define-key org-mode-map (kbd "C-c g p") 'patch-gptel-blocks)
-  (define-key org-mode-map (kbd "C-c g d") 'patch-gptel-blocks)
-  (define-key org-mode-map (kbd "g s") #'org-edit-special)
-  (define-key org-mode-map (kbd "C-c '") #'org-edit-special))
+  (evil-define-key '(normal visual) org-mode-map
+    (kbd "<S-return>") #'ob-python-extras/run-cell-and-advance
+    (kbd "SPC S") #'jupyter-org-split-src-block
+    (kbd "SPC M") #'jupyter-org-merge-blocks
+    (kbd "g SPC") #'org-babel-execute-buffer
+    (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
+    (kbd "C-c i") #'org-toggle-inline-images
+    (kbd "C-c I") #'org-display-inline-images
+    (kbd "C-c C-c") #'org-dispatch-C-c-C-c
+    (kbd "C-c g f") 'gptel-fix-block
+    (kbd "C-c g s") 'send-block-to-gptel
+    (kbd "C-c g p") 'patch-gptel-blocks
+    (kbd "C-c g d") 'patch-gptel-blocks
+    (kbd "g s") #'org-edit-special
+    (kbd "C-c '") #'org-edit-special))
 
 (setq ob-python-extras/auto-send-on-traceback nil)
 
