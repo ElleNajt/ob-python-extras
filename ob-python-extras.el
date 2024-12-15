@@ -400,15 +400,13 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC M") #'jupyter-org-merge-blocks
     (kbd "g SPC") #'org-babel-execute-buffer
     (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
-    (kbd "C-c i") #'org-toggle-inline-images
-    (kbd "C-c I") #'org-display-inline-images
+    (kbd "SPC f i") #'org-toggle-inline-images
+    (kbd "SPC f I") #'org-display-inline-images
     (kbd "C-c C-c") #'org-dispatch-C-c-C-c
-    (kbd "C-c g f") 'gptel-fix-block
-    (kbd "C-c g s") 'send-block-to-gptel
-    (kbd "C-c g p") 'patch-gptel-blocks
-    (kbd "C-c g d") 'patch-gptel-blocks
-    (kbd "g s") #'org-edit-special
-    (kbd "C-c '") #'org-edit-special))
+    (kbd "SPC g f") 'gptel-fix-block
+    (kbd "SPC g s") 'send-block-to-gptel
+    (kbd "SPC g p") 'patch-gptel-blocks
+    (kbd "g s") #'org-edit-special))
 
 (setq ob-python-extras/auto-send-on-traceback nil)
 
