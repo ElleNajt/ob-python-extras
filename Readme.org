@@ -1,23 +1,18 @@
 #+title: Readme
-
-
-
-* Overview:
-:PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
-:END:
+#+DESCRIPTION: Emacs lisp library for giving org-babel-python functionality that jupyter notebooks have.
 
 This package adds additional features to ob-python that I found lacking when trying to use it as a serious replacement for jupyter notebooks.
 
-** mix images and text in the output of cells.
-This works by mocking out matplotlib and instead saving the images and returning text that refers to the saved images. These images are garbage collected regularly.
+* Features:
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
+:END:
+** Enhanced cell output
+- Mix image and text output in the same cell, by mocking matplotlib to save images and return references.
+- Print pandas dataframes as org tables always, by overwriting the __repr__ method. Uses tabulate if available.
+- Press C-c C-c over an image for a full-size view
 
-*** Press C-c C-c over an image to open it full size in another buffer. (This dispatches to org-view-image-full-size)
-
-** pandas dataframes printed as org tables, always.
-This works by overwriting the dunder repr method.
-
-For instance, a cell like this is not possible (as far as the author is aware) with vanilla ob-python.
+  For example:
 
 #+begin_src python :results drawer :exports both
 import pandas as pd
@@ -40,124 +35,25 @@ print("...tada!")
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/Readme/plot_20241112_201256_2165943.png]]
+[[file:plots/Readme/plot_20241208_122132_1950748.png]]
 ...tada!
 :end:
 
-For best behavior, have Tabulate installed in your python environment. When Tabulate is available, this can use a pandas built into format the dataframe directly to markdown. Otherwise, it falls back on some somewhat janky code.
-
-** Cell timer
-Configurable with :timer-show block option, for instance :timer-show no.
-
-#+begin_src python :timer-show :exports both
-import time
-time.sleep(1)
-#+end_src
-
-#+RESULTS:
-:results:
-Cell Timer: 0:00:01
-:end:
-
-
-** Capturing traceback and showing that it in the results, reducing the need for navigating to the python buffer. :ATTACH:
-:PROPERTIES:
-:ID:       92ba9430-04f9-4afb-9652-6395a2f9736b
-:END:
-
-#+begin_src python
-print(1/0)
-#+end_src
-
-
-
-
-[[file:plots/Readme/_20241206_223607screenshot.png]]
-
-Additionally, with the :errors rich parameter tracebacks are displayed using rich. Requires the rich library.
-
-
-#+begin_src python :errors "rich"
-print(1/0)
-#+end_src
-
-
-[[file:plots/Readme/_20241206_184156screenshot.png]]
-
-
-
-
-Add no-locals to turn off locals, frames to control the number of frames and extras to control the number of extra lines.
-
-#+begin_src python :errors "rich no-locals frames 3 extra 5" :exports both
-def function(x):
-    while x > 0:
-        x = x-1
-        function(x)
-    print(1 / x)
-function(100)
-#+end_src
-
-
-[[file:plots/Readme/_20241206_184412screenshot.png]]
-
-** Configurable alerts that tell you when long running cells finish. :ATTACH:
-:PROPERTIES:
-:ID:       9418b920-dc2e-4a75-956c-012e24e995b0
-:END:
-These are disabled by default, since some users might find them annoying.
-Currently these only are tested in doom emacs. This requires libnotify. This works with async by checking whether the results are not formed like a uuid, which is a hack.
-
-#+begin_src python :alert yes
-import time
-time.sleep(2)
-print("This cell will alert when done!")
-#+end_src
-
-#+RESULTS:
-:results:
-This cell will alert when done!
-:end:
-
-This opens a buffer in emacs with a link to the completed cell:
-
-[[file:plots/Readme/_20241206_223810screenshot.png]]
-
-Pressing escape will close it.
-
-If you have libnotify, you will also get a libnotify notification, which is useful for when you are not in emacs.
+** Cell behavior features
+- Cell timers (configurable via :timer-show {yes/no})
+- Cell interruption with C-c C-k
+- Capturing tracebacks in the results (with the option to use rich tracebacks via :errors "rich no-locals frames 3 extra 5")
+- Alerts on long running cells, using libnotify for system alerts and pop ups inside of doom
 
 ** Gptel integrations:
-
-I added functions patch-gptel-blocks, and send-block-to-gptel to send the contents of a block and its returned valued to a gptel buffer, and get a diff patch. This is useful for fixing quick mistakes.
-
-This requires gptel-default-mode to be set to org-mode to work, since it expects an org block in the response.
-
-#+begin_src emacs-lisp :tangle yes
-(gptel-default-mode 'org-mode)
-#+end_src
-
-The conversation happens in the *CELL ERRORS* buffer.
-
-| Key         | Command               | Description                             |
-|-------------+-----------------------+-----------------------------------------|
-| ~SPC o c s~ | ~send-block-to-gptel~ | Send block to GPTel, and ask for a fix. |
-| ~SPC o c p~ | ~patch-gptel-blocks~  | Apply the fix                           |
-| ~SPC o c f~ | ~gptel-fix-block~     | Do the two things at once               |
-
-If you set:
-
-#+begin_src emacs-lisp :tangle yes
-(setq ob-python-extras/auto-send-on-traceback t)
-#+end_src
-
-Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls.
+- Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
+- Ability to trigger this automatically when a cell fails.
 
 
-** Additional features:
-- shortcuts for things like cell-interruption and adding new cells.
-
-
+* Dependencies
+- Python packages: Rich, tabulate (optional, but recommended), matplotlib
+- System: Libnotify (for alerts)
+- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts)
 * Installation
 ** With straight.el
 
@@ -182,7 +78,34 @@ If you want my keybindings, run:
 (ob-python-extras/map-suggested-keyindings)
 #+end_src
 
-* Other things:
+** Setting up gptel integrations
+This requires gptel-default-mode to be set to org-mode to work, since it expects an org block in the response.
+
+#+begin_src emacs-lisp :tangle yes
+(gptel-default-mode 'org-mode)
+#+end_src
+
+The conversation happens in the *CELL ERRORS* buffer.
+
+| Key         | Command               | Description                             |
+|-------------+-----------------------+-----------------------------------------|
+| ~SPC o c s~ | ~send-block-to-gptel~ | Send block to GPTel, and ask for a fix. |
+| ~SPC o c p~ | ~patch-gptel-blocks~  | Apply the fix                           |
+| ~SPC o c f~ | ~gptel-fix-block~     | Do the two things at once               |
+
+If you set:
+
+#+begin_src emacs-lisp :tangle yes
+(setq ob-python-extras/auto-send-on-traceback t)
+#+end_src
+
+Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls.
+
+
+* Examples:
+[[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]
+
+* Other notes:
 
 In my personal config I use the following keybindings as well, based on a vendored version guilt-dolphin's org-evil with keybindings stripped. These make it easier to manipulate source blocks:
 
@@ -211,8 +134,8 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ab" 'org-evil-block-a-block))
 #+end_src
 
-* Dependencies
-- Python packages: Rich, tabulate, matplotlib
+
+
 * Todos:
 ** TODO Inheriting lsp stuff in special mode
 ** TODO The same magic as elisp has to not need special mode
