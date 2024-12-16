@@ -1,7 +1,7 @@
 #+title: Readme
 #+DESCRIPTION: Emacs lisp library for giving org-babel-python functionality that jupyter notebooks have.
 
-This package adds additional features to ob-python that I found lacking when trying to use it as a serious replacement for jupyter notebooks.
+This package adds additional features to ob-python that I found lacking when trying to use it as a replacement for jupyter notebooks. I've been using it instead of jupyter notebooks for about a year now, slowly accumulating fixes to things that I miss from jupyter, or things that seem cool that jupyter doesn't support but emacs makes easy.
 
 * Features:
 :PROPERTIES:
@@ -54,7 +54,8 @@ print("...tada!")
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
 - System: Libnotify (for alerts)
-- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot
+- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot (for lsp integrations)
+
 * Installation
 ** With straight.el
 
@@ -134,4 +135,6 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ab" 'org-evil-block-a-block))
 #+end_src
 
-
+* Credit:
+- Aspen for teaching me a bunch about emacs and suggesting mocking out matplotlib
+- Claude for writing most of the code
