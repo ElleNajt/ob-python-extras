@@ -48,12 +48,13 @@ print("...tada!")
 ** Gptel integrations:
 - Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
 - Ability to trigger this automatically when a cell fails.
-
+** Better LSP integration
+- Special mode inherits the same python interpreter as specified for the cell, giving access to documentation and completion. (Requires eglot.)
 
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
 - System: Libnotify (for alerts)
-- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts)
+- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot
 * Installation
 ** With straight.el
 
@@ -99,8 +100,7 @@ If you set:
 (setq ob-python-extras/auto-send-on-traceback t)
 #+end_src
 
-Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls.
-
+Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls!
 
 * Examples:
 [[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]
@@ -134,9 +134,4 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ab" 'org-evil-block-a-block))
 #+end_src
 
-
-
-* Todos:
-** TODO Inheriting lsp stuff in special mode
-** TODO The same magic as elisp has to not need special mode
 
