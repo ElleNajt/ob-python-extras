@@ -396,8 +396,9 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
   (evil-define-key '(normal visual) org-mode-map
     (kbd "<S-return>") #'ob-python-extras/run-cell-and-advance
-    (kbd "SPC S") #'jupyter-org-split-src-block
-    (kbd "SPC M") #'jupyter-org-merge-blocks
+    (kbd "SPC S") #'org-babel-demarcate-block
+    (kbd "SPC M k") #'join-source-block-to-previous
+    (kbd "SPC M j") #'join-source-block-to-next
     (kbd "g SPC") #'org-babel-execute-buffer
     (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
     (kbd "SPC f i") #'org-toggle-inline-images
@@ -409,6 +410,27 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "g s") #'org-edit-special))
 
 (setq ob-python-extras/auto-send-on-traceback nil)
+
+(defun join-source-block-to-previous ()
+  (interactive)
+  (save-excursion
+    (org-babel-previous-src-block)
+    (org-babel-remove-result)
+    (forward-line 1)
+    (let ((start (progn (search-forward "#+end_src")
+                        (beginning-of-line)
+                        (point)))
+          (end (progn (search-forward "#+begin_src")
+                      (end-of-line)
+                      (forward-char)
+                      (point))))
+      (delete-region start end))))
+
+(defun join-source-block-to-next ()
+  (interactive)
+  (save-excursion
+    (org-babel-next-src-block)
+    (join-source-block-to-previous)))
 
 ;;; dir-locals in org-special
 
