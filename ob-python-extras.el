@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'org)
+(require 'evil)
 
 ;;;; Helpers
 (defun ob-python-extras/find-python-scripts-dir ()
