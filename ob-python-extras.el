@@ -392,12 +392,13 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 (defun ob-python-extras/map-suggested-keyindings ()
   "Map suggested keybindings for ob-python."
   (interactive)
+  (require 'evil)
 
   (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
 
-  (evil-define-key '(normal visual) org-mode-map
+  (evil-define-key* '(normal visual) org-mode-map
     (kbd "<S-return>") #'ob-python-extras/run-cell-and-advance
-    (kbd "SPC S") #'org-babel-demarcate-block
+    (kbd "SPC S") #'ob-python-extras/split-block
     (kbd "SPC M k") #'join-source-block-to-previous
     (kbd "SPC M j") #'join-source-block-to-next
     (kbd "g SPC") #'org-babel-execute-buffer
@@ -411,6 +412,19 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "g s") #'org-edit-special))
 
 (setq ob-python-extras/auto-send-on-traceback nil)
+
+(defun ob-python-extras/split-block ()
+  "split block -- org-babel-demarcate-block does not work"
+  (interactive)
+  (let* ((elem (org-element-at-point))
+         (lang (org-element-property :language elem))
+         (params (org-element-property :parameters elem)))
+
+    (when (eq (org-element-type elem) 'src-block)
+      (let ((beg (org-element-property :begin elem))
+            (end (org-element-property :end elem)))
+        (insert (format "#+end_src\n\n#+begin_src %s %s\n" lang (or  params "")))
+        (org-indent-region beg (point))))))
 
 (defun join-source-block-to-previous ()
   (interactive)
