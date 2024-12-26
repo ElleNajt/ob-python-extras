@@ -20,6 +20,8 @@
 ;;; Code:
 
 ;;;; Alerts
+(require 'doom-keybinds)
+
 
 (define-derived-mode cell-alerts-mode special-mode "Cell Alerts"
   "Major mode for displaying cell completion alerts.")
