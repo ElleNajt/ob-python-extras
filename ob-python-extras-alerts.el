@@ -23,7 +23,7 @@
 (require 'doom-keybinds)
 
 
-(define-derived-mode cell-alerts-mode special-mode "Cell Alerts"
+(define-derived-mode ob-python-extras/cell-alerts-mode special-mode "Cell Alerts"
   "Major mode for displaying cell completion alerts.")
 
 (defun ob-python-extras/my-cell-finished-alert ()
@@ -37,8 +37,8 @@
          (alerts-buffer-name "*Cell Completion Alerts*"))
 
     (with-current-buffer (get-buffer-create alerts-buffer-name)
-      (unless (eq major-mode 'cell-alerts-mode)
-        (cell-alerts-mode))
+      (unless (eq major-mode 'ob-python-extras/cell-alerts-mode)
+        (ob-python-extras/cell-alerts-mode))
       (let ((inhibit-read-only t))
         (goto-char (point-max))
         (let ((start (point)))
@@ -65,10 +65,10 @@
   (message "Finished cell!"))
 
 ;; Doom Emacs specific configuration
-(add-to-list 'evil-escape-excluded-major-modes 'cell-alerts-mode)
-(evil-set-initial-state 'cell-alerts-mode 'normal)
+(add-to-list 'evil-escape-excluded-major-modes 'ob-python-extras/cell-alerts-mode)
+(evil-set-initial-state 'ob-python-extras/cell-alerts-mode 'normal)
 
-(map! :map cell-alerts-mode-map
+(map! :map ob-python-extras/cell-alerts-mode-map
       :n "q" #'quit-window
       :n [escape] #'quit-window)
 
