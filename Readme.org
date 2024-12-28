@@ -63,13 +63,17 @@ print("...tada!")
 (package! ob-python-extras
   :recipe (:host github
            :repo "ElleNajt/ob-python-extras"
-           :files ("*.el" "python")))
+           :files ("ob-python-extras.el" "ob-python-extras-gptel-integration.el" "python")))
 
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(use-package! ob-python-extras)
+(after! ob-python-extras
+  (ob-python-extras/map-suggested-keyindings))
 #+end_src
+
+#+RESULTS:
+
 
 * Setup:
 ** Keybindings:
@@ -81,6 +85,12 @@ If you want my keybindings, run:
 #+end_src
 
 ** Setting up gptel integrations
+
+#+begin_src emacs-lisp :tangle yes
+(after! ob-python-extras
+(ob-python-extras-load-gptel-integration))
+#+end_src
+
 This requires gptel-default-mode to be set to org-mode to work, since it expects an org block in the response.
 
 #+begin_src emacs-lisp :tangle yes
@@ -102,6 +112,13 @@ If you set:
 #+end_src
 
 Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls!
+
+** Setting up alert integrations
+
+#+begin_src emacs-lisp :tangle yes
+(after! ob-python-extras
+  (ob-python-extras-load-alerts))
+#+end_src
 
 * Examples:
 [[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]
@@ -137,4 +154,4 @@ In my personal config I use the following keybindings as well, based on a vendor
 
 * Credit:
 - Aspen for teaching me a bunch about emacs and suggesting mocking out matplotlib
-- Claude for writing most of the code
+- Claude for writing most of the code ^^

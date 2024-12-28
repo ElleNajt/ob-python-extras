@@ -19,6 +19,8 @@
 ;;
 ;;; Code:
 
+(require 'general)
+
 (defun copy-org-babel-block-and-results ()
   "Copy the current org babel source block and its results."
   (interactive)
