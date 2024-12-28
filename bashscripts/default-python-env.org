@@ -1,0 +1,5 @@
+#+title: SESSION_NAME_PLACEHOLDER
+#+PROPERTY: header-args:python :results output drawer :python "nix-shell --run python" :async t :tangle :session python_SESSION_NAME_PLACEHOLDER
+#+PROPERTY: header-args:bash :results output :async t :tangle :session bash_SESSION_NAME_PLACEHOLDER
+
+* Original notebook

@@ -481,6 +481,32 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
   (interactive)
   (advice-add 'org-edit-special :around #'ob-python-extras/advice-setq-locals-python))
 
+;;; Pandoc conversion script
+
+(defun run-ipynb-to-org-conversion-script ()
+  (interactive)
+  (when (dired-mode-p)
+    (let ((current-dir (dired-current-directory))
+          (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
+          (script-path (concat ob-python-extras-dir "bashscripts/convertnotebooks.sh" )))
+      (compile (concat "cd " current-dir " && "script-path)))))
+
+(defun run-ipynb-to-org-conversion-script-recursively ()
+  (interactive)
+  (when (dired-mode-p)
+    (let ((current-dir (dired-current-directory))
+          (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
+          (script-path (concat ob-python-extras-dir "bashscripts/convertnotebooks.sh" )))
+      (compile (concat "cd " current-dir " && "script-path " -r")))))
+
+(defun run-org-to-ipynb-conversion-script ()
+  (interactive)
+  (when (dired-mode-p)
+    (let ((current-dir (dired-current-directory))
+          (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
+          (script-path (concat ob-python-extras-dir "bashscripts/convertnotebooks.sh" )))
+      (compile (concat "cd " current-dir " && "script-path)))))
+
 ;;; Load other packages
 
 (defun ob-python-extras-load-gptel-integration ()
