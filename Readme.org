@@ -58,6 +58,7 @@ print("...tada!")
 
 *** TODO Probably this is better:
 https://github.com/karthink/org-src-context
+** TODO Add my pandoc scripts for converting back and forth between jupyter notebooks and org files.
 
 
 * Dependencies
