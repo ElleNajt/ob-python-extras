@@ -62,10 +62,21 @@ convert_file() {
     python_header="$(cat "${default_header}" | sed "s/SESSION_NAME_PLACEHOLDER/${base_name}/")"
 
     if [[ "$(uname -s)" == "Darwin" ]]; then
-        sed -i '' -e "1i\\$python_header" -e 's/jupyter-python/python/' "$org_file"
+        sed -i '' 's/jupyter-python/python/' "$org_file"
     else
-        sed -i -e "1i$python_header" -e 's/jupyter-python/python/' "$org_file"
+        sed -i 's/jupyter-python/python/' "$org_file"
     fi
+
+    # Add the fixed text block to the top of the .org file
+    temp_file=$(mktemp)
+    mv "$org_file" "$temp_file"
+
+    # Prepend the text block to the .org file
+    echo "$python_header" >"$org_file"
+    cat "$temp_file" >>"$org_file"
+
+    # Clean up the temporary file
+    rm "$temp_file"
 }
 
 if [[ $RECURSIVE -eq 1 ]]; then
