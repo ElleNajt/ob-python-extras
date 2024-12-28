@@ -451,7 +451,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
 ;; Heavily inspired by this thread: https://github.com/joaotavora/eglot/issues/216#issuecomment-1052931508
 
-(defun advice-setq-locals-python (orig-fun &rest args)
+(defun ob-python-extras/advice-setq-locals-python (orig-fun &rest args)
   "Advice to set Python-related local variables before running org-edit-src-code."
   (let* ((info (org-babel-get-src-block-info t))
          (headers (nth 2 info))
@@ -477,8 +477,24 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
             (message "Python settings updated with: %s" python-cmd)))))))
 
 
-(advice-add 'org-edit-special :around #'advice-setq-locals-python)
+(defun ob-python-extras/add-org-edit-special-advice ()
+  (interactive)
+  (advice-add 'org-edit-special :around #'ob-python-extras/advice-setq-locals-python))
 
+;;; Load other packages
+
+(defun ob-python-extras-load-gptel-integration ()
+  "Load gptel integrations for ob-python-extras."
+  (let* ((this-file (locate-library "ob-python-extras"))
+         (this-dir (file-name-directory this-file)))
+    (load (expand-file-name "ob-python-extras-gptel-integration" this-dir))))
+
+
+(defun ob-python-extras-load-alerts ()
+  "Load alerts integrations for ob-python-extras."
+  (let* ((this-file (locate-library "ob-python-extras"))
+         (this-dir (file-name-directory this-file)))
+    (load (expand-file-name "ob-python-extras-alerts" this-dir))))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
