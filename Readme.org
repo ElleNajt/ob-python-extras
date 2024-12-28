@@ -50,6 +50,15 @@ print("...tada!")
 - Ability to trigger this automatically when a cell fails.
 ** Better LSP integration
 - Special mode inherits the same python interpreter as specified for the cell, giving access to documentation and completion. (Requires eglot.)
+  Activate with
+
+  #+begin_src emacs-lisp :tangle yes
+(ob-python-extras/add-org-edit-special-advice)
+  #+end_src
+
+*** TODO Probably this is better:
+https://github.com/karthink/org-src-context
+
 
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
