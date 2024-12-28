@@ -48,6 +48,18 @@ print("...tada!")
 ** Gptel integrations:
 - Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
 - Ability to trigger this automatically when a cell fails.
+** Pandoc scripts:
+Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.
+
+These commands are intended to be called from dired buffers.
+
+- =run-ipynb-to-org-conversion-script= :: Convert all .ipynb files in current directory to .org (removes various artifacts that pandoc creates also, cleaning can be disabled by removing the -c flag)
+- =run-ipynb-to-org-conversion-script-recursively= :: Convert all .ipynb files in current directory and subdirectories to .org
+- =run-org-to-ipynb-conversion-script= :: Convert all .org files in current directory to .ipynb
+
+
+Also includes a git precommit hook that's useful for automatically converting org to ipynb.
+
 ** Better LSP integration
 - Special mode inherits the same python interpreter as specified for the cell, giving access to documentation and completion. (Requires eglot.)
   Activate with
@@ -58,13 +70,11 @@ print("...tada!")
 
 *** TODO Probably this is better:
 https://github.com/karthink/org-src-context
-** TODO Add my pandoc scripts for converting back and forth between jupyter notebooks and org files.
-
 
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
-- System: Libnotify (for alerts)
-- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot (for lsp integrations)
+- System: Libnotify (for alerts), Pandoc (For conversions)
+- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot (for lsp integrations), Dired (For the conversion scripts)
 
 * Installation
 ** With straight.el
@@ -73,8 +83,7 @@ https://github.com/karthink/org-src-context
 (package! ob-python-extras
   :recipe (:host github
            :repo "ElleNajt/ob-python-extras"
-           :files ("ob-python-extras.el" "ob-python-extras-gptel-integration.el" "python")))
-
+           :files ("*.el" "python" "bashscripts")))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
