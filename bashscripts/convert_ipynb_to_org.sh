@@ -4,10 +4,11 @@ set -x
 set -euo pipefail
 RECURSIVE=0
 FORCE=0
-while getopts "hrf" flag; do
+CLEAN=0
+while getopts "hrfc" flag; do
     case $flag in
     h) # Handle the -h flag
-        echo "-f to force overwrite, -r to apply script recursively"
+        echo "-f to force overwrite, -r to apply script recursively, -c to clean UUIDs and property drawers"
         ;;
     r) # Handle the -r flag
         RECURSIVE=1
@@ -15,6 +16,9 @@ while getopts "hrf" flag; do
         ;;
     f) # Handle the -force overwrite flag
         FORCE=1
+        ;;
+    c) # Handle the clean flag
+        CLEAN=1
         ;;
     \?)
         echo "Invalid option."
@@ -65,6 +69,17 @@ convert_file() {
         sed -i '' 's/jupyter-python/python/' "$org_file"
     else
         sed -i 's/jupyter-python/python/' "$org_file"
+    fi
+
+    # Clean up UUIDs and property drawers if clean flag is set
+    if [[ CLEAN -eq 1 ]]; then
+        if [[ "$(uname -s)" == "Darwin" ]]; then
+            sed -i '' '/^<<.*>>$/d' "$org_file"
+            sed -i '' '/:PROPERTIES:/,/:END:/d' "$org_file"
+        else
+            sed -i '/^<<.*>>$/d' "$org_file"
+            sed -i '/:PROPERTIES:/,/:END:/d' "$org_file"
+        fi
     fi
 
     # Add the fixed text block to the top of the .org file

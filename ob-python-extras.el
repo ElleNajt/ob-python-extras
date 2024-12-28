@@ -489,7 +489,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (let* ((current-dir (dired-current-directory))
            (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
            (script-path (concat ob-python-extras-dir "bashscripts/convert_ipynb_to_org.sh" )))
-      (compile (concat "cd " current-dir " && "script-path)))))
+      (compile (concat "cd " current-dir " && "script-path " -c")))))
 
 (defun run-ipynb-to-org-conversion-script-recursively ()
   (interactive)
@@ -497,7 +497,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (let* ((current-dir (dired-current-directory))
            (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
            (script-path (concat ob-python-extras-dir "bashscripts/convert_ipynb_to_org.sh" )))
-      (compile (concat "cd " current-dir " && "script-path " -r")))))
+      (compile (concat "cd " current-dir " && "script-path " -cr")))))
 
 (defun run-org-to-ipynb-conversion-script ()
   (interactive)

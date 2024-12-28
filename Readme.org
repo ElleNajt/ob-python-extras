@@ -53,7 +53,7 @@ Configured scripts for converting org files in a directory to ipynb files, or ip
 
 These commands are intended to be called from dired buffers.
 
-- =run-ipynb-to-org-conversion-script= :: Convert all .ipynb files in current directory to .org
+- =run-ipynb-to-org-conversion-script= :: Convert all .ipynb files in current directory to .org (removes various artifacts that pandoc creates also, cleaning can be disabled by removing the -c flag)
 - =run-ipynb-to-org-conversion-script-recursively= :: Convert all .ipynb files in current directory and subdirectories to .org
 - =run-org-to-ipynb-conversion-script= :: Convert all .org files in current directory to .ipynb
 
