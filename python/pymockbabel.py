@@ -59,7 +59,7 @@ def mock_show(outputs_and_file_paths, output_types, org_babel_file_name):
         directory, f"plot_{timestamp}_{random.randint(0, 10000000)}.png"
     )
 
-    plt.savefig(file_path)
+    plt.savefig(file_path, transparent=True)
     outputs_and_file_paths.append(file_path)
     output_types.append("Image")
     plt.close()
