@@ -524,5 +524,26 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
          (this-dir (file-name-directory this-file)))
     (load (expand-file-name "ob-python-extras-alerts" this-dir))))
 
+
+;; TODO note there are also inline source code blocks?
+(defun ob-python-extras-format-ruff ()
+  (interactive)
+  (when (member 'org-src-mode local-minor-modes)
+    (let ((created-temp-file
+           (make-temp-file
+            (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
+            nil
+            nil
+            (buffer-string))))
+      (async-start-process "ruff"
+                           "ruff"
+                           (apply-partially 'ob-python-extras--format-ruff-callback created-temp-file (current-buffer))
+                           "format" created-temp-file))))
+
+(defun ob-python-extras--format-ruff-callback (temp-file-name src-edit-buffer process-obj)
+  (message "formatted code: %s" temp-file-name)
+  (with-current-buffer src-edit-buffer
+    (insert-file-contents temp-file-name nil nil nil t)))
+
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
