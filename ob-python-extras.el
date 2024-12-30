@@ -216,7 +216,7 @@ import os
 import sys
 sys.path.append(pymockbabel_script_location)
 import pymockbabel
-outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\")
+outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\"%s)
 with open(exec_file, 'r') as file:
     exec(compile(file.read(), '<org babel source block>', 'exec'))
 pymockbabel.display(outputs_and_file_paths, output_types, list_writer)
@@ -226,7 +226,8 @@ except:
     pass "
                          exec-file
                          pymockbabel-script-location
-                         (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))
+                         (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                         (concat ", transparent=" (if (and (boundp 'ob-python-extras/transparent-images) (not ob-python-extras/transparent-images)) "False" "True")))))
       (apply orig body args))))
 
 
