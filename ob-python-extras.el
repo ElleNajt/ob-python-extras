@@ -204,10 +204,12 @@ finally:
 ;;;; Better output handling
 ;;;;; mix printing images and text
 
-(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body params &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
-         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
-
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
+         (src-info (org-babel-get-src-block-info))
+         (headers (nth 2 src-info))
+         (transparent-header (assoc :transparent headers)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
@@ -227,8 +229,10 @@ except:
                          exec-file
                          pymockbabel-script-location
                          (file-name-sans-extension (file-name-nondirectory buffer-file-name))
-                         (concat ", transparent=" (if (and (boundp 'ob-python-extras/transparent-images) (not ob-python-extras/transparent-images)) "False" "True")))))
-      (apply orig body args))))
+                         (concat ", transparent="
+                                 (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
+                                   (if (and (boundp 'ob-python-extras/transparent-images) (not ob-python-extras/transparent-images)) "False" "True"))))))
+      (apply orig body params args))))
 
 
 
