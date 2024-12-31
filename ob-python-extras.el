@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'org)
-(require 'evil)
 
 ;;;; Helpers
 (defun ob-python-extras/find-python-scripts-dir ()
@@ -374,8 +373,6 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
       (org-capture-finalize)
     (unless (org-view-image-full-size)
       (org-ctrl-c-ctrl-c))))
-
-;;
 
 
 ;;; Keybindings
