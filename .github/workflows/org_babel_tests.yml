@@ -30,5 +30,6 @@ jobs:
     - name: Run Tests
       shell: bash
       run: |
-        "cd tests && ./run_expect_tests.sh"
+        cd tests
+        ./run_expect_tests.sh
 
