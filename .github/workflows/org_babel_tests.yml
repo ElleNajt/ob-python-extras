@@ -1,0 +1,33 @@
+name: Emacs org babel tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+    
+    - name: Setup Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@main
+      
+    - name: Install Emacs
+      uses: purcell/setup-emacs@master
+      with:
+        version: 29.4
+
+    - name: Run Tests
+      run: |
+        "./tests/run_expect_tests.sh"
+
