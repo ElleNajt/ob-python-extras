@@ -144,7 +144,7 @@ Then blocks will be sent automatically when a traceback is detected in the respo
 ** Matplotlib image transparency
 Matplotlib is configured to save and display transparent images by default. The
 default can be changed with ~(setq ob-python-extras/transparent-images nil)~.
-The default, in turn, can be overriden at the org-src-block level with
+The default, in turn, can be overridden at the org-src-block level with
 =:transparent nil= or =:transparent t=.
 
 * Examples:
