@@ -31,6 +31,11 @@ jobs:
       with:
         version: 29.4
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 15
+
+
     - name: Run Tests
       shell: bash
       run: |
