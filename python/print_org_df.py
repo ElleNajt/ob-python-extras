@@ -23,7 +23,7 @@ except ImportError:
     TABULATE_AVAILABLE = False
     pass
 
-def org_repr(obj : pd.DataFrame | pd.Series):
+def org_repr(obj):
     # The DF_FLAG: business is to prevent |'s from being replaced with \, which
     # we do elsewhere to prevent things accidentally being parsed as org tables.
     if TABULATE_AVAILABLE:
