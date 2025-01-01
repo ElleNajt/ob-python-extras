@@ -519,9 +519,9 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
             nil
             (buffer-string))))
       (async-start-process "ob-python-extras-format-process"
-                           "uvx"
+                           "ruff"
                            (apply-partially 'ob-python-extras-format-callback created-temp-file (current-buffer))
-                           "ruff" "format" created-temp-file))))
+                           "format" created-temp-file))))
 
 (defun ob-python-extras-format-buffer-callback (temp-file-name src-edit-buffer process-obj)
   (with-current-buffer src-edit-buffer
@@ -534,6 +534,15 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (narrow-to-region beg end)
     (insert-file-contents temp-file-name nil nil nil t))
   (message "Formatted org-src-block"))
+
+(defun ob-python-extras-format ()
+  (interactive)
+  ;; check first that the var is set
+  (if (boundp 'ob-python-extras-formatter)
+      (cond ((equal ob-python-extras-formatter "black") (ob-python-extras-format-black))
+            ((equal ob-python-extras-formatter "ruff") (ob-python-extras-format-ruff))
+            (t (message "No formatter %s found" ob-python-extras-formatter)))
+    (message "No formatter set in ob-python-extras-formatter")))
 
 ;; TODO check to make sure that it's a python source block
 (defun ob-python-extras-format-black ()
@@ -567,17 +576,36 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
                                created-temp-file))
       (message "Nothing to format"))))
 
-;; start by using (org-src--contents-area (org-element-at-point))
-;; here's the trick for replacing the contents.
-;;	 (if (version< emacs-version "27.1")
-;;	     (progn (delete-region beg end)
-;;		    (insert (with-current-buffer write-back-buf
-;;                              (buffer-string))))
-;;	   (save-restriction
-;;	     (narrow-to-region beg end)
-;;	     (org-replace-buffer-contents write-back-buf 0.1 nil)
-;;	     (goto-char (point-max))))
-;;	 (when (and expecting-bol (not (bolp))) (insert "\n")))))
+(defun ob-python-extras-format-ruff ()
+  (interactive)
+  (if (org-src-edit-buffer-p)
+      (let ((created-temp-file
+             (make-temp-file
+              (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
+              nil
+              nil
+              (buffer-string))))
+        (async-start-process "ob-python-extras-format-process"
+                             "ruff"
+                             (apply-partially 'ob-python-extras-format-buffer-callback created-temp-file (current-buffer))
+                             "format" created-temp-file))
+    ;; note that we place this in the else clause
+    ;; because org-in-src-block-p does not like running in org-src-edit-buffers
+    (if (org-in-src-block-p t)
+        (let* ((created-temp-file
+                (make-temp-file
+                 (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
+                 nil
+                 nil
+                 (org-element-property :value (org-element-at-point))))
+               (content-area (org-src--contents-area (org-element-at-point)))
+               (beg (car content-area))
+               (end (cadr content-area)))
+          (async-start-process "ob-python-extras-format-process"
+                               "ruff"
+                               (apply-partially 'ob-python-extras-format-src-block-callback created-temp-file (current-buffer) beg end)
+                               "format" created-temp-file))
+      (message "Nothing to format"))))
 
 ;;; Load other packages
 
