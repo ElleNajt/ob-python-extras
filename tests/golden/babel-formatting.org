@@ -7,15 +7,12 @@
 
 #+begin_src python
 x = 1
-
 #+end_src
 
 #+RESULTS:
 :results:
-
 Cell Timer: 0:00:00
 :end:
-
 
 #+begin_src python
 print(x)
@@ -26,8 +23,6 @@ print(x)
 1
 Cell Timer: 0:00:00
 :end:
-
-
 
 * Timer formatting
 :PROPERTIES:
@@ -69,7 +64,7 @@ print(1)
 #+RESULTS:
 :results:
 1
-%expect_skip Cell Timer: 0:00:00.000785
+%expect_skip Cell Timer: 0:00:00.000102
 :end:
 
 * Table formatting
@@ -161,6 +156,7 @@ print(long_df)
 |   8 | 8 |
 |   9 | 9 |
 :end:
+
 ** Problem -- hangs when printing large dataframes.
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting_large_dtfs :timer-show no
@@ -292,13 +288,13 @@ print(df)
 |   3 | David   |  33 | Paris         |  78.9 |
 |   4 | Eva     |  22 | Tokyo         |  90.1 |
 Space between dataframes
-| idx  |Name|Age|City|Score |
-|-----------------------------------|
-| 0|Joe|44|New York|92.5 |
-| 1|Eva|32|San Francisco|88.0 |
-| 2|Charlie|33|Boston|95.2 |
-| 3|David|33|Paris|78.9 |
-| 4|Eva|22|Tokyo|90.1 |
+| idx | Name    | Age | City          | Score |
+|-----+---------+-----+---------------+-------|
+|   0 | Joe     |  44 | New York      |  92.5 |
+|   1 | Eva     |  32 | San Francisco |  88.0 |
+|   2 | Charlie |  33 | Boston        |  95.2 |
+|   3 | David   |  33 | Paris         |  78.9 |
+|   4 | Eva     |  22 | Tokyo         |  90.1 |
 :end:
 
 In general space between dataframes requires ones below to be aligned.
@@ -329,6 +325,35 @@ Space between dataframes
 | 4|Eva|22|Tokyo|90.1 |
 :end:
 
+* Testing Tabulate
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python"  :tangle :session test_tabulate :timer-show no
+:END:
+
+If Tabulate is available we can use it directly to formate the dataframe. This is built into pandas and the safer option.
+
+#+begin_src python :results drawer
+import pandas as pd
+data = {
+'Name': ['Joe', 'Eva', 'Charlie', 'David', 'Eva'],
+'Age': [44, 32, 33,33, 22],
+'City': ['New York', 'San Francisco', 'Boston', 'Paris', 'Tokyo'],
+'Score': [92.5, 88.0, 95.2, 78.9, 90.11111]}
+df = pd.DataFrame(data)
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+|   | Name    | Age | City          |   Score |
+|---+---------+-----+---------------+---------|
+| 0 | Joe     |  44 | New York      |    92.5 |
+| 1 | Eva     |  32 | San Francisco |      88 |
+| 2 | Charlie |  33 | Boston        |    95.2 |
+| 3 | David   |  33 | Paris         |    78.9 |
+| 4 | Eva     |  22 | Tokyo         | 90.1111 |
+:end:
+
 * Images
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no
@@ -350,16 +375,16 @@ print("tada!")
 #+RESULTS:
 :results:
 look!
-| idx  |x|y |
-|-------------------|
-| 0|1|10 |
-| 1|2|11 |
-| 2|3|12 |
-| 3|4|13 |
-| 4|5|14 |
-| 5|6|15 |
-| 6|7|16 |
-[[file:plots/babel-formatting/plot_20241107_102627_8873931.png]]
+| idx | x |  y |
+|-----+---+----|
+|   0 | 1 | 10 |
+|   1 | 2 | 11 |
+|   2 | 3 | 12 |
+|   3 | 4 | 13 |
+|   4 | 5 | 14 |
+|   5 | 6 | 15 |
+|   6 | 7 | 16 |
+[[file:plots/babel-formatting/plot_20250101_112946_7965532.png]]
 tada!
 :end:
 
