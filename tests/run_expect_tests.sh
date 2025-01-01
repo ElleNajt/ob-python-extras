@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 update_goldens=false
@@ -49,7 +49,8 @@ get_emacs_args() {
   (with-current-buffer (find-file-noselect \"$target_file\")
     (message \"Executing %s...\" \"$target_file\")
     (org-babel-execute-buffer)
-    (save-buffer)))" \
+    (save-buffer))
+    (kill-emacs))" \
 "$target_file"
 EOF
 }
