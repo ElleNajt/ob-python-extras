@@ -7,15 +7,11 @@
 
 #+begin_src python
 x = 1
-
 #+end_src
-
 
 #+begin_src python
 print(x)
 #+end_src
-
-
 
 * Timer formatting
 :PROPERTIES:
