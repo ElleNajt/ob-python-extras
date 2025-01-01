@@ -153,9 +153,9 @@ finally:
     if %s:
         timerstring = \"%s\"
         if %s:
-            print(timerstring, str((org_babel_wrapper_datetime.now() - start)).split('.')[0], \"\\n\")
+            print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start)).split('.')[0]}\")
         else:
-            print(timerstring, str((org_babel_wrapper_datetime.now() - start)), \"\\n\")
+            print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start))}\")
     import os
     try:
         os.remove(exec_file)
