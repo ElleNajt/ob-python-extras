@@ -509,6 +509,76 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
            (script-path (concat ob-python-extras-dir "bashscripts/convert_org_to_ipynb.sh" )))
       (compile (concat "cd " current-dir " && "script-path)))))
 
+(defun ob-python-extras-format-ruff ()
+  (interactive)
+  (when (member 'org-src-mode local-minor-modes)
+    (let ((created-temp-file
+           (make-temp-file
+            (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
+            nil
+            nil
+            (buffer-string))))
+      (async-start-process "ob-python-extras-format-process"
+                           "uvx"
+                           (apply-partially 'ob-python-extras-format-callback created-temp-file (current-buffer))
+                           "ruff" "format" created-temp-file))))
+
+(defun ob-python-extras-format-buffer-callback (temp-file-name src-edit-buffer process-obj)
+  (with-current-buffer src-edit-buffer
+    (insert-file-contents temp-file-name nil nil nil t))
+  (message "Formatted org-src-edit-buffer"))
+
+(defun ob-python-extras-format-src-block-callback (temp-file-name src-block-buffer beg end process-obj)
+  (set-buffer src-block-buffer)
+  (save-restriction
+    (narrow-to-region beg end)
+    (insert-file-contents temp-file-name nil nil nil t))
+  (message "Formatted org-src-block"))
+
+;; TODO check to make sure that it's a python source block
+(defun ob-python-extras-format-black ()
+  (interactive)
+  (if (org-src-edit-buffer-p)
+      (let ((created-temp-file
+             (make-temp-file
+              (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-black-")
+              nil
+              nil
+              (buffer-string))))
+        (async-start-process "ob-python-extras-format-process"
+                             "black"
+                             (apply-partially 'ob-python-extras-format-buffer-callback created-temp-file (current-buffer))
+                             created-temp-file))
+    ;; note that we place this in the else clause
+    ;; because org-in-src-block-p does not like running in org-src-edit-buffers
+    (if (org-in-src-block-p t)
+        (let* ((created-temp-file
+                (make-temp-file
+                 (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-black-")
+                 nil
+                 nil
+                 (org-element-property :value (org-element-at-point))))
+               (content-area (org-src--contents-area (org-element-at-point)))
+               (beg (car content-area))
+               (end (cadr content-area)))
+          (async-start-process "ob-python-extras-format-process"
+                               "black"
+                               (apply-partially 'ob-python-extras-format-src-block-callback created-temp-file (current-buffer) beg end)
+                               created-temp-file))
+      (message "Nothing to format"))))
+
+;; start by using (org-src--contents-area (org-element-at-point))
+;; here's the trick for replacing the contents.
+;;	 (if (version< emacs-version "27.1")
+;;	     (progn (delete-region beg end)
+;;		    (insert (with-current-buffer write-back-buf
+;;                              (buffer-string))))
+;;	   (save-restriction
+;;	     (narrow-to-region beg end)
+;;	     (org-replace-buffer-contents write-back-buf 0.1 nil)
+;;	     (goto-char (point-max))))
+;;	 (when (and expecting-bol (not (bolp))) (insert "\n")))))
+
 ;;; Load other packages
 
 (defun ob-python-extras-load-gptel-integration ()
@@ -524,26 +594,6 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
          (this-dir (file-name-directory this-file)))
     (load (expand-file-name "ob-python-extras-alerts" this-dir))))
 
-
-;; TODO note there are also inline source code blocks?
-(defun ob-python-extras-format-ruff ()
-  (interactive)
-  (when (member 'org-src-mode local-minor-modes)
-    (let ((created-temp-file
-           (make-temp-file
-            (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
-            nil
-            nil
-            (buffer-string))))
-      (async-start-process "ruff"
-                           "ruff"
-                           (apply-partially 'ob-python-extras--format-ruff-callback created-temp-file (current-buffer))
-                           "format" created-temp-file))))
-
-(defun ob-python-extras--format-ruff-callback (temp-file-name src-edit-buffer process-obj)
-  (message "formatted code: %s" temp-file-name)
-  (with-current-buffer src-edit-buffer
-    (insert-file-contents temp-file-name nil nil nil t)))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
