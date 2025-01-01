@@ -8,12 +8,6 @@ exit_code=0
 mkdir -p staging/plots/babel-formatting
 mkdir -p golden/plots/babel-formatting
 
-declare -a emacs_pids
-
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-    trap 'sudo pkill -9 -f python || true; for pid in "${emacs_pids[@]}"; do sudo kill -9 $pid 2>/dev/null || true; done' EXIT
-fi
-
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -74,9 +68,7 @@ process_file() {
     else
         cp shell*.nix "staging/"
         cp "$org_file" "staging/$org_file"
-        eval "emacs --batch $(get_emacs_args "staging/$org_file")" &
-        emacs_pids+=($!)
-        wait ${emacs_pids[-1]} # Wait for the most recently launched process
+        eval "emacs --batch $(get_emacs_args "staging/$org_file")"
 
         # Filter out %expect_skip lines from both files before diffing
         difference=$(diff -u <(sed '/%expect_skip/d' "golden/$org_file") <(sed '/%expect_skip/d' "staging/$org_file") | sed '/^---/d; /^+++/d')
@@ -90,7 +82,6 @@ process_file() {
 
                 golden_png=$(echo "$difference" | grep '^-.*\.png' | grep -o 'plots/.*\.png')
                 staging_png=$(echo "$difference" | grep '^+.*\.png' | grep -o 'plots/.*\.png')
-
 
                 echo "Found difference in PNG references:"
                 echo "Golden:  $golden_png"
@@ -125,7 +116,6 @@ process_file() {
             fi
         fi
 
-
         # Now check for any other differences
         while IFS= read -r line; do
             if [[ "$line" =~ ^@@ ]]; then
@@ -140,7 +130,7 @@ process_file() {
                 echo "$line\n"
                 has_failure=1
             fi
-        done <<< "$difference"
+        done <<<"$difference"
 
         if [ $has_failure -eq 1 ]; then
             echo "Found differences in $org_file."
@@ -183,7 +173,7 @@ else
             echo "Emacs version: $(emacs --version | head -n1)"
             echo "Doom version: $(doom version)"
             echo "Nixpkgs commit: $(nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version' 2>/dev/null || echo "Nixpkgs not found")"
-        } > last_successful_test_system_info.md
+        } >last_successful_test_system_info.md
     else
         echo "All files processed. Differences found in one or more files."
     fi
