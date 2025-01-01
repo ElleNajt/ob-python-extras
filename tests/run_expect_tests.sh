@@ -8,26 +8,32 @@ exit_code=0
 mkdir -p staging/plots/babel-formatting
 mkdir -p golden/plots/babel-formatting
 
+declare -a emacs_pids
+
+trap 'pkill -f python; for pid in "${emacs_pids[@]}"; do kill $pid 2>/dev/null; done' EXIT
+
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --update-goldens) update_goldens=true ;;
-        --file)
+    --update-goldens) update_goldens=true ;;
+    --file)
+        shift
+        while [[ "$#" -gt 0 && ! "$1" =~ ^-- ]]; do
+            specific_files+=("$1")
             shift
-            while [[ "$#" -gt 0 && ! "$1" =~ ^-- ]]; do
-                specific_files+=("$1")
-                shift
-            done
-            ;;
-        *) echo "Unknown parameter: $1"; exit 1 ;;
+        done
+        ;;
+    *)
+        echo "Unknown parameter: $1"
+        exit 1
+        ;;
     esac
     shift
 done
 
-
 get_emacs_args() {
     local target_file=$1
-    cat << EOF
+    cat <<EOF
 --batch \
 --eval "(setq debug-on-error t)" \
 --eval "(defmacro map! (&rest _) nil)" \
@@ -66,7 +72,9 @@ process_file() {
     else
         cp shell*.nix "staging/"
         cp "$org_file" "staging/$org_file"
-        eval "emacs --batch $(get_emacs_args "staging/$org_file")"
+        eval "emacs --batch $(get_emacs_args "staging/$org_file")" &
+        emacs_pids+=($!)
+        wait ${emacs_pids[-1]} # Wait for the most recently launched process
 
         # Filter out %expect_skip lines from both files before diffing
         difference=$(diff -u <(sed '/%expect_skip/d' "golden/$org_file") <(sed '/%expect_skip/d' "staging/$org_file") | sed '/^---/d; /^+++/d')
