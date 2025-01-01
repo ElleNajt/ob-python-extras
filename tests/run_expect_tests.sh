@@ -10,7 +10,9 @@ mkdir -p golden/plots/babel-formatting
 
 declare -a emacs_pids
 
-trap 'pkill -f python; for pid in "${emacs_pids[@]}"; do kill $pid 2>/dev/null; done' EXIT
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    trap 'sudo pkill -9 -f python || true; for pid in "${emacs_pids[@]}"; do sudo kill -9 $pid 2>/dev/null || true; done' EXIT
+fi
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
