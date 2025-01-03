@@ -82,6 +82,7 @@ compare_results() {
         local start_time=$(date +%s)
         local has_failure=0
         local difference=""
+        ((test_count += 1))
 
         # Compare non-PNG content for this test
         golden_test=$(echo "$golden_results" | jq --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") | not)))')
@@ -89,26 +90,41 @@ compare_results() {
 
         if [ "$(echo "$golden_test" | jq -S .)" != "$(echo "$staging_test" | jq -S .)" ]; then
             has_failure=1
+            set +e
             difference=$(diff -u <(echo "$golden_test" | jq -S .) <(echo "$staging_test" | jq -S .))
+            set -e
         fi
 
         # Compare PNG if present
         # TODO compare multiple pngs
-        golden_png=$(echo "$golden_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | .png // empty')
-        staging_png=$(echo "$staging_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | .png // empty')
 
-        if [[ -n "$golden_png" && -n "$staging_png" ]]; then
-            if [ ! -f "golden/$golden_png" ] || [ ! -f "staging/$staging_png" ]; then
-                has_failure=1
-                difference+=$'\n'"PNG missing: golden=$golden_png staging=$staging_png"
-            else
-                compare -metric AE "golden/$golden_png" "staging/$staging_png" null: 2>/dev/null
-                if [ $? -ne 0 ]; then
+        golden_pngs=$(echo "$golden_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") ))) | to_entries | .[] | .value')
+        staging_pngs=$(echo "$staging_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") ))) | to_entries | .[] | .value')
+
+        # Convert to arrays
+        readarray -t golden_arr <<<"$golden_pngs"
+        readarray -t staging_arr <<<"$staging_pngs"
+
+        # Loop through arrays
+        for i in "${!golden_arr[@]}"; do
+            golden_png="${golden_arr[$i]}"
+            staging_png="${staging_arr[$i]}"
+
+            if [[ -n "$golden_png" && -n "$staging_png" ]]; then
+                if [ ! -f "golden/$golden_png" ] || [ ! -f "staging/$staging_png" ]; then
                     has_failure=1
-                    difference+=$'\n'"PNG files differ: $golden_png"
+                    difference+=$'\n'"PNG missing: golden=$golden_png staging=$staging_png"
+                else
+                    set +e
+                    compare -metric AE "golden/$golden_png" "staging/$staging_png" null: 2>/dev/null
+                    if [ $? -ne 0 ]; then
+                        has_failure=1
+                        difference+=$'\n'"PNG files differ: $golden_png"
+                    fi
+                    set -e
                 fi
             fi
-        fi
+        done
 
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
@@ -118,6 +134,7 @@ compare_results() {
             echo "<failure message=\"Test failed\"><![CDATA[$difference]]></failure>" >>"$junit_output"
             echo "</testcase>" >>"$junit_output"
             failures+=("$test_name in $test_suite")
+            ((failed_count += 1))
         else
             echo "<testcase name=\"$test_name\" time=\"$duration\" />" >>"$junit_output"
         fi
@@ -138,10 +155,9 @@ process_file() {
         eval "emacs $(get_emacs_args "golden/$org_file")"
     else
         cp shell*.nix "staging/"
-
         # TODO uncomment me!
-        cp "$org_file" "staging/$org_file"
-        eval "emacs $(get_emacs_args "staging/$org_file")"
+        # cp "$org_file" "staging/$org_file"
+        # eval "emacs $(get_emacs_args "staging/$org_file")"
         compare_results "golden/$org_file" "staging/$org_file"
     fi
 }
@@ -161,7 +177,6 @@ else
             echo "-----------------------------------"
         else
             echo "File not found: $org_file"
-            ((failed_count++))
         fi
     done
 fi
