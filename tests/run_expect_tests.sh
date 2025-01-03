@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
+set -x
 
 update_goldens=false
 specific_files=()
-exit_code=0
+failures=()
+test_count=0
+failed_count=0
 
 mkdir -p staging/plots/babel-formatting
 mkdir -p golden/plots/babel-formatting
+
+junit_output="test-results.xml"
+echo '<?xml version="1.0" encoding="UTF-8"?>' >"$junit_output"
+echo '<testsuites>' >>"$junit_output"
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -39,7 +47,6 @@ get_emacs_args() {
 --load "../ob-python-extras.el" \
 --eval "
 (progn
-
 (setq ob-python-extras/allow-png-deletion t)
   (with-current-buffer (find-file-noselect \"$target_file\")
          (org-babel-map-src-blocks nil
@@ -57,116 +64,131 @@ get_emacs_args() {
 EOF
 }
 
+compare_results() {
+    local golden_file="$1"
+    local staging_file="$2"
+    local test_suite=$(basename "$golden_file" .org)
+
+    # Get structured results
+    golden_results=$(emacs --batch -l extract-results.el "$golden_file")
+    staging_results=$(emacs --batch -l extract-results.el "$staging_file")
+
+    echo "<testsuite name=\"$test_suite\">" >>"$junit_output"
+
+    # Get list of all test names
+    test_names=$(echo "$golden_results" | jq -r 'fromjson | keys[]')
+
+    while IFS= read -r test_name; do
+        local start_time=$(date +%s)
+        local has_failure=0
+        local difference=""
+        echo "testing $test_name"
+        ((test_count += 1))
+
+        # Compare non-PNG content for this test
+        golden_test=$(echo "$golden_results" | jq --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") | not)))')
+        staging_test=$(echo "$staging_results" | jq --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") | not)))')
+
+        if [ "$(echo "$golden_test" | jq -S .)" != "$(echo "$staging_test" | jq -S .)" ]; then
+            has_failure=1
+            set +e
+            difference=$(diff -u <(echo "$golden_test" | jq -S .) <(echo "$staging_test" | jq -S .))
+            set -e
+        fi
+
+        # Compare PNG if present
+        # TODO compare multiple pngs
+
+        golden_pngs=$(echo "$golden_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") ))) | to_entries | .[] | .value')
+        staging_pngs=$(echo "$staging_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") ))) | to_entries | .[] | .value')
+
+        # Convert to arrays
+        readarray -t golden_arr <<<"$golden_pngs"
+        readarray -t staging_arr <<<"$staging_pngs"
+
+        # Loop through arrays
+        for i in "${!golden_arr[@]}"; do
+            golden_png="${golden_arr[$i]}"
+            staging_png="${staging_arr[$i]}"
+
+            if [[ -n "$golden_png" && -n "$staging_png" ]]; then
+                if [ ! -f "golden/$golden_png" ] || [ ! -f "staging/$staging_png" ]; then
+                    has_failure=1
+                    difference+=$'\n'"PNG missing: golden=$golden_png staging=$staging_png"
+                else
+                    set +e
+                    compare -metric AE "golden/$golden_png" "staging/$staging_png" null: 2>/dev/null
+                    if [ $? -ne 0 ]; then
+                        has_failure=1
+                        difference+=$'\n'"PNG files differ: $golden_png"
+                    fi
+                    set -e
+                fi
+            fi
+        done
+
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+
+        if [ $has_failure -eq 1 ]; then
+            echo "<testcase name=\"$test_name\" time=\"$duration\">" >>"$junit_output"
+            echo "<failure message=\"Test failed\"><![CDATA[$difference]]></failure>" >>"$junit_output"
+            echo "</testcase>" >>"$junit_output"
+            failures+=("$test_name in $test_suite")
+            ((failed_count += 1))
+        else
+            echo "<testcase name=\"$test_name\" time=\"$duration\" />" >>"$junit_output"
+        fi
+
+    done <<<"$test_names"
+
+    echo "</testsuite>" >>"$junit_output"
+    return 0
+}
+
 process_file() {
     local org_file="$1"
-    echo "Processing $org_file..."
+    echo "Processing file: $org_file"
 
     if $update_goldens; then
         cp "$org_file" "golden/$org_file"
         cp shell*.nix "golden/"
-        eval "emacs --batch $(get_emacs_args "golden/$org_file")"
+        eval "emacs $(get_emacs_args "golden/$org_file")"
     else
         cp shell*.nix "staging/"
+        # TODO uncomment me!
         cp "$org_file" "staging/$org_file"
-        eval "emacs --batch $(get_emacs_args "staging/$org_file")"
-
-        # Filter out %expect_skip lines from both files before diffing
-        difference=$(diff -u <(sed '/%expect_skip/d' "golden/$org_file") <(sed '/%expect_skip/d' "staging/$org_file") | sed '/^---/d; /^+++/d')
-
-        # Flag to track if we need to return failure
-        has_failure=0
-
-        # Check PNG differences
-        if [ -n "$difference" ]; then
-            if echo "$difference" | grep -q '^-.*\.png\]\]$' && echo "$difference" | grep -q '^+.*\.png\]\]$'; then
-
-                golden_png=$(echo "$difference" | grep '^-.*\.png' | grep -o 'plots/.*\.png')
-                staging_png=$(echo "$difference" | grep '^+.*\.png' | grep -o 'plots/.*\.png')
-
-                echo "Found difference in PNG references:"
-                echo "Golden:  $golden_png"
-                echo "Staging: $staging_png"
-
-                # Check if both PNG files exist
-                if [ ! -f "golden/$golden_png" ]; then
-                    echo "Error: Golden PNG file not found: golden/$golden_png"
-                    return 1
-                fi
-                if [ ! -f "staging/$staging_png" ]; then
-                    echo "Error: Staging PNG file not found: staging/$staging_png"
-                    return 1
-                fi
-
-                # Compare PNG files using ImageMagick's compare
-                # Returns 0 if images are identical, 1 if different, 2 if error occurred
-                compare -metric AE "golden/$golden_png" "staging/$staging_png" null: 2>/dev/null
-                compare_result=$?
-
-                if [ $compare_result -eq 0 ]; then
-                    echo "PNG files are identical despite different filenames."
-                elif [ $compare_result -eq 1 ]; then
-                    echo "PNG files are different:"
-                    echo "golden/$golden_png"
-                    echo "staging/$staging_png"
-                    has_failure=1
-                else
-                    echo "Error comparing PNG files"
-                    return 2
-                fi
-            fi
-        fi
-
-        # Now check for any other differences
-        while IFS= read -r line; do
-            if [[ "$line" =~ ^@@ ]]; then
-                context=$(echo "$line" | sed -E 's/^@@ .* @@ (.*)/\1/')
-                context=$line
-                new_context=1
-            elif ! [[ "$line" =~ \.png\]\]$ ]] && [[ "$line" =~ ^[+-] ]]; then
-                if [ $new_context -eq 1 ]; then
-                    echo "$context"
-                    new_context=0
-                fi
-                echo "$line\n"
-                has_failure=1
-            fi
-        done <<<"$difference"
-
-        if [ $has_failure -eq 1 ]; then
-            echo "Found differences in $org_file."
-            return 1
-        else
-            echo "No differences found in $org_file."
-            return 0
-        fi
+        eval "emacs $(get_emacs_args "staging/$org_file")"
+        compare_results "golden/$org_file" "staging/$org_file"
     fi
 }
 
 if [ ${#specific_files[@]} -eq 0 ]; then
-    # Process all *.org files if no specific files were provided
+    echo "No specific files given, processing all org files..."
     for org_file in *.org; do
         if [ -f "$org_file" ]; then
-            process_file "$org_file" || exit_code=1
+            process_file "$org_file"
             echo "-----------------------------------"
         fi
     done
 else
-    # Process only the specified files
     for org_file in "${specific_files[@]}"; do
         if [ -f "$org_file" ]; then
-            process_file "$org_file" || exit_code=1
+            process_file "$org_file"
             echo "-----------------------------------"
         else
             echo "File not found: $org_file"
-            exit_code=1
         fi
     done
 fi
 
+echo '</testsuites>' >>"$junit_output"
+
 if $update_goldens; then
     echo "Golden files updated."
 else
-    if [ $exit_code -eq 0 ]; then
+    if [ ${#failures[@]} -eq 0 ]; then
+        echo "All ${test_count} tests passed"
         {
             echo "# Last Successful test: $(date)"
             echo "## System Information"
@@ -174,9 +196,10 @@ else
             echo "Doom version: $(doom version)"
             echo "Nixpkgs commit: $(nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version' 2>/dev/null || echo "Nixpkgs not found")"
         } >last_successful_test_system_info.md
+        exit 0
     else
-        echo "All files processed. Differences found in one or more files."
+        echo "Failed tests (${failed_count}/${test_count}):"
+        printf '%s\n' "${failures[@]}"
+        exit 1
     fi
 fi
-
-exit $exit_code
