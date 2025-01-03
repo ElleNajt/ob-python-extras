@@ -48,3 +48,9 @@ jobs:
         cd tests
         ./run_expect_tests.sh
 
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: tests/test-results.xml
+        report_individual_runs: true
