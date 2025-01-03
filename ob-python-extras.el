@@ -523,31 +523,33 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
   (message "Formatted org-src-block"))
 
 (defun ob-python-extras-format ()
+  "Formats python code in an org-src-edit buffer or an org-src block.
+The formatter uses either black or ruff according to the variable
+ob-python-extras-formatter."
   (interactive)
-  ;; check first that the var is set
   (if (boundp 'ob-python-extras-formatter)
-      (cond ((equal ob-python-extras-formatter "black") (ob-python-extras-format-black))
-            ((equal ob-python-extras-formatter "ruff") (ob-python-extras-format-ruff))
-            (t (message "No formatter %s found" ob-python-extras-formatter)))
+      (if (member ob-python-extras-formatter (list "black" "ruff")) (ob-python-extras-dispatch-format)
+        (message "No formatter %s found" ob-python-extras-formatter))
     (message "No formatter set in ob-python-extras-formatter")))
 
-;; TODO check to make sure that it's a python source block
-(defun ob-python-extras-format-black ()
-  (interactive)
-  (if (org-src-edit-buffer-p)
+;; do we need to require/import something for async-start-process?
+(defun ob-python-extras-dispatch-format ()
+  (if (and (org-src-edit-buffer-p) (eq major-mode 'python-mode))
       (let ((created-temp-file
              (make-temp-file
               (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-black-")
               nil
               nil
               (buffer-string))))
-        (async-start-process "ob-python-extras-format-process"
-                             "black"
-                             (apply-partially 'ob-python-extras-format-buffer-callback created-temp-file (current-buffer))
-                             created-temp-file))
+        (apply #'async-start-process
+               "ob-python-extras-format-process"
+               ob-python-extras-formatter
+               (apply-partially 'ob-python-extras-format-buffer-callback created-temp-file (current-buffer))
+               (cond ((equal ob-python-extras-formatter "black") created-temp-file)
+                     ((equal ob-python-extras-formatter "ruff") (list "format" created-temp-file)))))
     ;; note that we place this in the else clause
     ;; because org-in-src-block-p does not like running in org-src-edit-buffers
-    (if (org-in-src-block-p t)
+    (if (and (org-in-src-block-p t) (equal (org-element-property :language (org-element-at-point)) "python"))
         (let* ((created-temp-file
                 (make-temp-file
                  (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-black-")
@@ -557,42 +559,13 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
                (content-area (org-src--contents-area (org-element-at-point)))
                (beg (car content-area))
                (end (cadr content-area)))
-          (async-start-process "ob-python-extras-format-process"
-                               "black"
-                               (apply-partially 'ob-python-extras-format-src-block-callback created-temp-file (current-buffer) beg end)
-                               created-temp-file))
-      (message "Nothing to format"))))
-
-(defun ob-python-extras-format-ruff ()
-  (interactive)
-  (if (org-src-edit-buffer-p)
-      (let ((created-temp-file
-             (make-temp-file
-              (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
-              nil
-              nil
-              (buffer-string))))
-        (async-start-process "ob-python-extras-format-process"
-                             "ruff"
-                             (apply-partially 'ob-python-extras-format-buffer-callback created-temp-file (current-buffer))
-                             "format" created-temp-file))
-    ;; note that we place this in the else clause
-    ;; because org-in-src-block-p does not like running in org-src-edit-buffers
-    (if (org-in-src-block-p t)
-        (let* ((created-temp-file
-                (make-temp-file
-                 (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
-                 nil
-                 nil
-                 (org-element-property :value (org-element-at-point))))
-               (content-area (org-src--contents-area (org-element-at-point)))
-               (beg (car content-area))
-               (end (cadr content-area)))
-          (async-start-process "ob-python-extras-format-process"
-                               "ruff"
-                               (apply-partially 'ob-python-extras-format-src-block-callback created-temp-file (current-buffer) beg end)
-                               "format" created-temp-file))
-      (message "Nothing to format"))))
+          (apply #'async-start-process
+                 "ob-python-extras-format-process"
+                 ob-python-extras-formatter
+                 (apply-partially 'ob-python-extras-format-src-block-callback created-temp-file (current-buffer) beg end)
+                 (cond ((equal ob-python-extras-formatter "black")  created-temp-file)
+                       ((equal ob-python-extras-formatter "ruff") (list "format" created-temp-file)))))
+      (message "No python code to format"))))
 
 ;;; Load other packages
 
