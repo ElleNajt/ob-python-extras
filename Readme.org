@@ -3,6 +3,8 @@
 
 This package adds additional features to ob-python that I found lacking when trying to use it as a replacement for jupyter notebooks. I've been using it instead of jupyter notebooks for about a year now, slowly accumulating fixes to things that I miss from jupyter, or things that seem cool that jupyter doesn't support but emacs makes easy.
 
+[[https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg][https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg]]
+
 * Features:
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
