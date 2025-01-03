@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+set -x
 
 update_goldens=false
 specific_files=()
@@ -92,8 +93,9 @@ compare_results() {
         fi
 
         # Compare PNG if present
-        golden_png=$(echo "$golden_results" | jq -r --arg name "$test_name" '.[$name] | with_entries(select(.value | contains(".png"))) | .[].value')
-        staging_png=$(echo "$staging_results" | jq -r --arg name "$test_name" '.[$name] | with_entries(select(.value | contains(".png"))) | .[].value')
+        # TODO compare multiple pngs
+        golden_png=$(echo "$golden_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | .png // empty')
+        staging_png=$(echo "$staging_results" | jq -r --arg name "$test_name" 'fromjson | .[$name] | .png // empty')
 
         if [[ -n "$golden_png" && -n "$staging_png" ]]; then
             if [ ! -f "golden/$golden_png" ] || [ ! -f "staging/$staging_png" ]; then
@@ -128,7 +130,7 @@ compare_results() {
 
 process_file() {
     local org_file="$1"
-    ((test_count++))
+    echo "Processing file: $org_file"
 
     if $update_goldens; then
         cp "$org_file" "golden/$org_file"
@@ -136,6 +138,8 @@ process_file() {
         eval "emacs $(get_emacs_args "golden/$org_file")"
     else
         cp shell*.nix "staging/"
+
+        # TODO uncomment me!
         cp "$org_file" "staging/$org_file"
         eval "emacs $(get_emacs_args "staging/$org_file")"
         compare_results "golden/$org_file" "staging/$org_file"
@@ -143,6 +147,7 @@ process_file() {
 }
 
 if [ ${#specific_files[@]} -eq 0 ]; then
+    echo "No specific files given, processing all org files..."
     for org_file in *.org; do
         if [ -f "$org_file" ]; then
             process_file "$org_file"
