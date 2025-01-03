@@ -24,17 +24,11 @@
 
 ;; TODO Implement expect skip lines, and skip based on property of cells
 
-(require 'org)
-(require 'json)
-(require 'ob-core)
 
 (defun normalize-result-string (result-string)
-  "Normalize result string, handling PNG file references specially."
-  (if (and result-string
-           (string-match "\\[\\[file:\\(.*\\.png\\)\\]\\]" result-string))
-      ;; For PNG results, just keep the filename part
-      (match-string 1 result-string)
-    result-string))
+  "Normalize result string, preserving all content."
+  (when result-string
+    (string-trim result-string)))
 
 (defun org-babel-get-src-block-result ()
   (interactive)
@@ -48,14 +42,26 @@
           (point)
           (org-babel-result-end)))))))
 
+(defun split-result-into-segments (result-string)
+  "Split result into list of (type . content) pairs."
+  (when result-string
+    (let ((segments nil))
+      (dolist (line (split-string result-string "\n"))
+        (if (string-match "\\[\\[file:\\(.*\\.png\\)\\]\\]" line)
+            (push (cons 'png (match-string 1 line)) segments)
+          (push (cons 'text line) segments)))
+      (nreverse segments))))
+
 (defun extract-named-results ()
-  "Extract all named results blocks as an alist of name -> result content"
+  "Extract all named results blocks as an alist of name -> segmented content"
   (let (results)
     (org-babel-map-src-blocks nil
       (let ((name (org-element-property :name (org-element-context))))
         (when name
-          (push (cons name (org-babel-get-src-block-result)) results))))
-    (prin1-to-string results)))
+          (let ((result (org-babel-get-src-block-result)))
+            (push (cons name (split-result-into-segments result))
+                  results)))))
+    (json-encode results)))
 
 (with-current-buffer (find-file-noselect (car command-line-args-left))
   (print (extract-named-results)))
