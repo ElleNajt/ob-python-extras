@@ -193,7 +193,6 @@ else
             echo "# Last Successful test: $(date)"
             echo "## System Information"
             echo "Emacs version: $(emacs --version | head -n1)"
-            echo "Doom version: $(doom version)"
             echo "Nixpkgs commit: $(nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version' 2>/dev/null || echo "Nixpkgs not found")"
         } >last_successful_test_system_info.md
         exit 0
