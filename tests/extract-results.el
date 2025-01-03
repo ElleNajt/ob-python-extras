@@ -43,13 +43,15 @@
           (org-babel-result-end)))))))
 
 (defun split-result-into-segments (result-string)
-  "Split result into list of (type . content) pairs."
+  "Split result into list of (type . content) pairs with numbered keys."
   (when result-string
-    (let ((segments nil))
+    (let ((segments nil)
+          (counter 1))
       (dolist (line (split-string result-string "\n"))
         (if (string-match "\\[\\[file:\\(.*\\.png\\)\\]\\]" line)
-            (push (cons 'png (match-string 1 line)) segments)
-          (push (cons 'text line) segments)))
+            (push (cons (format "L%d_png" counter) (match-string 1 line)) segments)
+          (push (cons (format "L%d_text" counter) line) segments))
+        (setq counter (1+ counter)))
       (nreverse segments))))
 
 (defun extract-named-results ()
