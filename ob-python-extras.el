@@ -509,19 +509,6 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
            (script-path (concat ob-python-extras-dir "bashscripts/convert_org_to_ipynb.sh" )))
       (compile (concat "cd " current-dir " && "script-path)))))
 
-(defun ob-python-extras-format-ruff ()
-  (interactive)
-  (when (member 'org-src-mode local-minor-modes)
-    (let ((created-temp-file
-           (make-temp-file
-            (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format-ruff-")
-            nil
-            nil
-            (buffer-string))))
-      (async-start-process "ob-python-extras-format-process"
-                           "ruff"
-                           (apply-partially 'ob-python-extras-format-callback created-temp-file (current-buffer))
-                           "format" created-temp-file))))
 
 (defun ob-python-extras-format-buffer-callback (temp-file-name src-edit-buffer process-obj)
   (with-current-buffer src-edit-buffer
