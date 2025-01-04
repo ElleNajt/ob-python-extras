@@ -231,7 +231,7 @@ except:
                          (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                          (concat ", transparent="
                                  (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
-                                   (if (and (boundp 'ob-python-extras/transparent-images) (not ob-python-extras/transparent-images)) "False" "True"))))))
+                                   (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False"))))))
       (apply orig body params args))))
 
 
