@@ -504,6 +504,83 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
            (script-path (concat ob-python-extras-dir "bashscripts/convert_org_to_ipynb.sh" )))
       (compile (concat "cd " current-dir " && "script-path)))))
 
+
+(defun ob-python-extras--format-buffer-callback (temp-file-name src-edit-buffer _process-obj)
+  "Callback function to replace buffer contents with formatted code.
+Reads formatted code from TEMP-FILE-NAME and replaces the contents of
+SRC-EDIT-BUFFER with it."
+  (with-current-buffer src-edit-buffer
+    (insert-file-contents temp-file-name nil nil nil t))
+  (message "Formatted org-src-edit-buffer"))
+
+(defun ob-python-extras--format-src-block-callback (temp-file-name src-block-buffer beg end _process-obj)
+  "Callback function to replace org source block contents with formatted code.
+Reads formatted code from TEMP-FILE-NAME and replaces the contents of
+an org source block located between BEG and END in SRC-BLOCK-BUFFER with it."
+  (set-buffer src-block-buffer)
+  (save-restriction
+    (narrow-to-region beg end)
+    (insert-file-contents temp-file-name nil nil nil t))
+  (message "Formatted org-src-block"))
+
+(defun ob-python-extras-format ()
+  "Asynchronously format python code in org code blocks.
+The formatter uses either black or ruff according to the variable
+ob-python-extras-formatter."
+  (interactive)
+  (if (boundp 'ob-python-extras-formatter)
+      (if (member ob-python-extras-formatter (list "black" "ruff")) (ob-python-extras--dispatch-format)
+        (message "No formatter %s found" ob-python-extras-formatter))
+    (message "No formatter set in ob-python-extras-formatter")))
+
+(defun ob-python-extras--dispatch-format ()
+  "Asynchronously format python code in org code blocks.
+If the context is an `org-src-edit-buffer' for python code (opened with, for
+example, \\[org-edit-special]), copy the buffer contents into a temporary
+file, asynchronously execute the formatter, and replace the buffer contents
+with the formatted code. If the context is an org source block, do the same,
+but using `org-element-at-point' and `org-src--contents-area' to copy and
+replace the code.
+
+The formatter uses either black or ruff according to the variable
+ob-python-extras-formatter."
+  (if (and (org-src-edit-buffer-p) (eq major-mode 'python-mode))
+      (let ((created-temp-file
+             (make-temp-file
+              (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format")
+              nil
+              nil
+              ;; the org-src-edit-buffer contents are precisely the code
+              (buffer-string))))
+        (apply #'async-start-process
+               "ob-python-extras-format-process"
+               ob-python-extras-formatter
+               (apply-partially 'ob-python-extras--format-buffer-callback created-temp-file (current-buffer))
+               ;; note that ruff takes "format" as its first argument
+               (cond ((equal ob-python-extras-formatter "black") created-temp-file)
+                     ((equal ob-python-extras-formatter "ruff") (list "format" created-temp-file)))))
+    ;; note that we place this in the else clause
+    ;; because org-in-src-block-p does not like running in org-src-edit-buffers
+    (if (and (org-in-src-block-p t) (equal (org-element-property :language (org-element-at-point)) "python"))
+        (let* ((created-temp-file
+                (make-temp-file
+                 (concat (file-name-as-directory (org-babel-temp-directory)) "ob-python-extras-format")
+                 nil
+                 nil
+                 ;; get the contents of the source block
+                 (org-element-property :value (org-element-at-point))))
+               (content-area (org-src--contents-area (org-element-at-point)))
+               (beg (car content-area))
+               (end (cadr content-area)))
+          (apply #'async-start-process
+                 "ob-python-extras-format-process"
+                 ob-python-extras-formatter
+                 (apply-partially 'ob-python-extras--format-src-block-callback created-temp-file (current-buffer) beg end)
+                 ;; note that ruff takes "format" as its first argument
+                 (cond ((equal ob-python-extras-formatter "black")  created-temp-file)
+                       ((equal ob-python-extras-formatter "ruff") (list "format" created-temp-file)))))
+      (message "No python code to format"))))
+
 ;;; Load other packages
 
 (defun ob-python-extras-load-gptel-integration ()
@@ -518,6 +595,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
   (let* ((this-file (locate-library "ob-python-extras"))
          (this-dir (file-name-directory this-file)))
     (load (expand-file-name "ob-python-extras-alerts" this-dir))))
+
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
