@@ -204,10 +204,12 @@ finally:
 ;;;; Better output handling
 ;;;;; mix printing images and text
 
-(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body params &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
-         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
-
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
+         (src-info (org-babel-get-src-block-info))
+         (headers (nth 2 src-info))
+         (transparent-header (assoc :transparent headers)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 exec_file = \"%s\"
@@ -216,7 +218,7 @@ import os
 import sys
 sys.path.append(pymockbabel_script_location)
 import pymockbabel
-outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\")
+outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\"%s)
 with open(exec_file, 'r') as file:
     exec(compile(file.read(), '<org babel source block>', 'exec'))
 pymockbabel.display(outputs_and_file_paths, output_types, list_writer)
@@ -226,8 +228,11 @@ except:
     pass "
                          exec-file
                          pymockbabel-script-location
-                         (file-name-sans-extension (file-name-nondirectory buffer-file-name)))))
-      (apply orig body args))))
+                         (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                         (concat ", transparent="
+                                 (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
+                                   (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False"))))))
+      (apply orig body params args))))
 
 
 
