@@ -1,0 +1,16 @@
+{
+  "L1_text": ":results:",
+  "L2_text": "look!",
+  "L3_text": "| idx | x |  y |",
+  "L4_text": "|-----+---+----|",
+  "L5_text": "|   0 | 0 | 10 |",
+  "L6_text": "|   1 | 2 | 11 |",
+  "L7_text": "|   2 | 3 | 12 |",
+  "L8_text": "|   3 | 4 | 13 |",
+  "L9_text": "|   4 | 5 | 14 |",
+  "L10_text": "|   5 | 6 | 15 |",
+  "L11_text": "|   6 | 7 | 16 |",
+  "L12_png": "plots/babel-formatting/plot_20250104_163503_2556179.png",
+  "L13_text": "tada!",
+  "L14_text": ":end:"
+}
