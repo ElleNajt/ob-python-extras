@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-set -x
+# set -x
 
 update_goldens=false
 specific_files=()
@@ -79,17 +79,20 @@ get_emacs_args() {
   (setq python-shell-completion-native-enable nil)
   (with-current-buffer (find-file-noselect \"$target_file\")
     (message \"Executing %s...\" \"$target_file\")
-    (if (null ${test_names_str:-nil})
-        (org-babel-execute-buffer)
-      (dolist (name ${test_names_str:-nil})
-        (org-babel-map-src-blocks nil
-          (when (equal (nth 4 (org-babel-get-src-block-info)) name)
-            (org-babel-execute-src-block)))))
+    (org-babel-execute-buffer)
     (save-buffer))
     (kill-emacs))" \
 "$target_file"
 EOF
 }
+
+# TODO figure out how to only get the named tests to revaluate
+# (if (null ${test_names_str:-nil})
+#         (org-babel-execute-buffer)
+#       (dolist (name ${test_names_str:-nil})
+#         (org-babel-map-src-blocks nil
+#           (when (equal (nth 4 (org-babel-get-src-block-info)) name)
+#             (org-babel-execute-src-block)))))
 
 compare_test() {
     local test_name="$1"
