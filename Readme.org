@@ -1,9 +1,9 @@
+[[https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg][https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg]]
 #+title: Readme
 #+DESCRIPTION: Emacs lisp library for giving org-babel-python functionality that jupyter notebooks have.
 
 This package adds additional features to ob-python that I found lacking when trying to use it as a replacement for jupyter notebooks. I've been using it instead of jupyter notebooks for about a year now, slowly accumulating fixes to things that I miss from jupyter, or things that seem cool that jupyter doesn't support but emacs makes easy.
 
-[[https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg][https://github.com/ElleNajt/ob-python-extras/actions/workflows/org_babel_tests.yml/badge.svg]]
 
 * Features:
 :PROPERTIES:
@@ -180,6 +180,17 @@ In my personal config I use the following keybindings as well, based on a vendor
                         "ab" 'org-evil-block-a-block))
 #+end_src
 
+
 * Credit:
 - Aspen for teaching me a bunch about emacs and suggesting mocking out matplotlib
 - Claude for writing most of the code ^^
+
+* Related packages:
+** Emacs jupyter
+https://github.com/emacs-jupyter/jupyter
+This package provides some overlapping functionality, and as far as I understand it does it by connecting to jupyter kernels and providing a front end in org mode for the kernel. I have not used this myself yet. It may ultimately make more sense for this project to be refactored to extend emacs-jupyter instead of ob-python, e.g. by adding the gptel integrations or other features that emacs-jupyter lacks.
+*** Scimax also uses emacs jupyter
+** ob-ipython
+** EIN
+https://github.com/millejoh/emacs-ipython-notebook
+Similar to Emacs-Jupyter. No longer maintained.
