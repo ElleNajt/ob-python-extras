@@ -142,11 +142,26 @@ Then blocks will be sent automatically when a traceback is detected in the respo
 #+end_src
 
 ** Matplotlib image transparency
+
 Matplotlib is configured to save and display images without transparency by
-default. The default can be changed with ~(setq
-ob-python-extras/transparent-images t)~. This default, in turn, can be
-overridden at the org-src-block level with =:transparent nil= or =:transparent
-t=.
+default. The default can be changed with =(setq ob-python-extras/transparent-images t)=.
+This default, in turn, can be overridden at the org-src-block level with
+=:transparent nil= or =:transparent t=.
+
+** Setting up code formatting
+
+The code formatters =ruff= and =black= are supported. Set the variable
+=ob-python-extras-formatter= to "ruff" or "black" and then execute
+=M-x ob-python-extras-format= when in a python code block (or source edit buffer).
+The formatter searches for its configuration options as usual, with the search
+path starting at the directory containing the org file. The default
+configurations can be overridden by specifying the file in the variable
+=ob-python-extras-formatter-config=.
+
+To format code automatically upon execution of source code blocks, add a hook:
+#+begin_src emacs-lisp
+(add-hook 'org-babel-after-execute-hook 'ob-python-extras-format)
+#+end_src
 
 * Examples:
 [[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]
