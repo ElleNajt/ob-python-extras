@@ -151,8 +151,8 @@ This default, in turn, can be overridden at the org-src-block level with
 ** Setting up code formatting
 
 The code formatters =ruff= and =black= are supported. Set the variable
-=ob-python-extras-formatter= to "ruff" or "black" and then execute =M-x
-ob-python-extras-format= when in a python code block (or source edit buffer).
+=ob-python-extras-formatter= to "ruff" or "black" and then execute
+=M-x ob-python-extras-format= when in a python code block (or source edit buffer).
 The formatter searches for its configuration options as usual, with the search
 path starting at the directory containing the org file. The default
 configurations can be overridden by specifying the file in the variable

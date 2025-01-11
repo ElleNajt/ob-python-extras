@@ -557,13 +557,14 @@ The formatter uses either black or ruff according to the variable
 ob-python-extras-formatter."
   (let* ((code-to-format (org-element-property :value (org-element-at-point)))
          (temp-file
-          (make-temp-file
-           (concat (file-name-directory (buffer-file-name)) ".ob-python-extras-format")
-           nil nil code-to-format))
+          (let ((inhibit-message t)
+                (message-log-max nil))
+            (make-temp-file
+             (concat (file-name-directory (buffer-file-name)) ".ob-python-extras-format")
+             nil nil code-to-format)))
          (content-area (org-src--contents-area (org-element-at-point)))
          (beg (car content-area))
          (end (cadr content-area)))
-    (message "LOG: %s" (ob-python-extras--get-formatter-args temp-file))
     (apply #'async-start-process
            "ob-python-extras-format-process"
            ob-python-extras-formatter
@@ -589,8 +590,7 @@ TEMP-FILE-NAME."
   (with-current-buffer src-edit-buffer
     (insert-file-contents temp-file-name nil nil nil t))
   (when (file-exists-p temp-file-name)
-    (delete-file temp-file-name))
-  (message "Formatted org-src-edit-buffer"))
+    (delete-file temp-file-name)))
 
 (defun ob-python-extras--format-src-block-callback (temp-file-name src-block-buffer beg end _process-obj)
   "Callback function to replace org source block contents with formatted code.
@@ -602,8 +602,7 @@ SRC-BLOCK-BUFFER with it. Finally, deletes TEMP-FILE-NAME."
     (narrow-to-region beg end)
     (insert-file-contents temp-file-name nil nil nil t))
   (when (file-exists-p temp-file-name)
-    (delete-file temp-file-name))
-  (message "Formatted org-src-block"))
+    (delete-file temp-file-name)))
 
 ;;; Load other packages
 
