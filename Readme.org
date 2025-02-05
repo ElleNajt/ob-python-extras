@@ -148,6 +148,13 @@ default. The default can be changed with ~(setq
 ob-python-extras/transparent-images t)~. This default, in turn, can be
 overridden at the org-src-block level with =:transparent nil= or =:transparent
 t=.
+** Autoformatter
+
+Auto formats source blocks using black. Configurable with
+
+#+begin_src elisp
+(setq ob-python-extras/auto-format t)
+#+end_src
 
 * Examples:
 [[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]

@@ -526,6 +526,44 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
   (let* ((this-file (locate-library "ob-python-extras"))
          (this-dir (file-name-directory this-file)))
     (load (expand-file-name "ob-python-extras-alerts" this-dir))))
+;;; Auto formatting
+
+;; TODO Get this to work in emacs batch
+;; TODO Add ruff
+
+(when (condition-case nil
+          (require 'python-black nil t)
+        (error nil))
+
+  (defvar ob-python-extras/auto-format t
+    "When non-nil, automatically format Python source blocks after execution.")
+
+  (defun ob-python-extras--format-src-block ()
+    "Format the current org babel Python source block using python-black.
+Creates a temporary buffer, sets python-mode, applies formatting, and copies back."
+    (interactive)
+
+    (when ob-python-extras/auto-format
+      (let* ((element (org-element-at-point))
+             (language (org-element-property :language element))
+             (orig-code (org-element-property :value element))
+             (point-pos (point)))
+        ;;  save excursion isn't sufficient to save the position
+        (when (string= language "python")
+          (let ((formatted-code
+                 (with-temp-buffer
+                   (insert orig-code)
+                   (python-mode)
+                   (python-black-buffer)
+                   (buffer-string))))
+            (save-excursion
+              (goto-char (org-element-property :begin element))
+              (org-babel-update-block-body formatted-code))
+            (goto-char point-pos)
+            )))))
+
+  (add-hook 'org-babel-after-execute-hook 'ob-python-extras--format-src-block))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
+
