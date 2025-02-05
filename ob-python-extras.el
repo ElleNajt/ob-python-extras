@@ -105,13 +105,13 @@
   (let* ( (exec-file (make-temp-file "execution-code"))
           (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
           (timer-string (cdr (assq :timer-string params)))
+          (show-current-time (not (member (cdr (assq :show-current-time params)) '(nil "no"))))
           (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
           (error-options (when-let ((err (cdr (assq :errors params))))
                            (split-string err " " t)))
           (use-rich (member "rich" error-options))
           (show-locals (not (member "no-locals" error-options)))
           (show-full-paths (member "full-paths" error-options))
-
           (extra-lines (or (and-let* ((extra (member "extra" error-options))
                                       (num (cadr extra)))
                              (string-to-number num))
@@ -156,6 +156,8 @@ finally:
             print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start)).split('.')[0]}\")
         else:
             print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start))}\")
+    if %s:
+        print(f\"Last run at: {org_babel_wrapper_datetime.now()}\")
     import os
     try:
         os.remove(exec_file)
@@ -168,7 +170,8 @@ finally:
         extra-lines
         (if  timer-show "True" "False")
         timer-string-formatted
-        (if  timer-rounded "True" "False")))
+        (if  timer-rounded "True" "False")
+        (if show-current-time "True" "False")))
            (result (apply orig body params args)))
       result)))
 

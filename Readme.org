@@ -43,6 +43,7 @@ print("...tada!")
 
 ** Cell behavior features
 - Cell timers (configurable via :timer-show {yes/no})
+- Last run time (configurable via :show-current-time {yes/no})
 - Cell interruption with C-c C-k
 - Capturing tracebacks in the results (with the option to use rich tracebacks via :errors "rich no-locals frames 3 extra 5")
 - Alerts on long running cells, using libnotify for system alerts and pop ups inside of doom
