@@ -411,9 +411,9 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC f i") #'org-toggle-inline-images
     (kbd "SPC f I") #'org-display-inline-images
     (kbd "C-c C-c") #'org-dispatch-C-c-C-c
-    (kbd "SPC o g f") 'gptel-fix-block
-    (kbd "SPC o g s") 'send-block-to-gptel
-    (kbd "SPC o g p") 'patch-gptel-blocks
+    (kbd "SPC o g f") 'ob-python-extras/gptel-fix-block
+    (kbd "SPC o g s") 'ob-python-extras/send-block-to-gptel
+    (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks
     (kbd "g s") #'org-edit-special))
 
 (setq ob-python-extras/auto-send-on-traceback nil)

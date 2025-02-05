@@ -108,7 +108,7 @@
       (delete-file file2)
       (buffer-string))))
 
-(defun patch-gptel-blocks ()
+(defun ob-python-extras/patch-gptel-blocks ()
   "Send block to gptel and show diff with accept option."
   (interactive)
   (message "patching!!!")
@@ -156,17 +156,17 @@
 (defvar gptel-fix-block-buffer nil
   "Buffer to patch after GPT response.")
 
-(defun gptel-fix-block-response (beg end)
+(defun ob-python-extras/gptel-fix-block-response (beg end)
   "Handle GPT response for block fixing."
   (when gptel-fix-block-buffer
     (with-current-buffer gptel-fix-block-buffer
-      (patch-gptel-blocks))
+      (ob-python-extras/patch-gptel-blocks))
     (pop-to-buffer "*GPT Block Diff*")
     (setq gptel-fix-block-buffer nil)))
 
-(add-hook 'gptel-post-response-functions #'gptel-fix-block-response)
+(add-hook 'gptel-post-response-functions #'ob-python-extras/gptel-fix-block-response)
 
-(defun gptel-fix-block ()
+(defun ob-python-extras/gptel-fix-block ()
   "Send block to GPT and patch when response is received."
   (interactive)
   (setq gptel-fix-block-buffer (current-buffer))
