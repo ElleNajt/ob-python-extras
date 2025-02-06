@@ -105,7 +105,7 @@
   (let* ( (exec-file (make-temp-file "execution-code"))
           (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
           (timer-string (cdr (assq :timer-string params)))
-          (show-current-time (not (member (cdr (assq :show-current-time params)) '(nil "no"))))
+          (last-executed (not (member (cdr (assq :last-executed params)) '(nil "no"))))
           (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
           (error-options (when-let ((err (cdr (assq :errors params))))
                            (split-string err " " t)))
@@ -171,7 +171,7 @@ finally:
         (if  timer-show "True" "False")
         timer-string-formatted
         (if  timer-rounded "True" "False")
-        (if show-current-time "True" "False")))
+        (if last-executed "True" "False")))
            (result (apply orig body params args)))
       result)))
 
