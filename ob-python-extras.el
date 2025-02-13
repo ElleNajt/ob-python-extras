@@ -315,7 +315,9 @@ with open(exec_file, 'r') as file:
     (save-excursion
       (with-current-buffer (current-buffer)
         (goto-char top-of-src-block)
-        (forward-line 1)
+        (if (re-search-forward "^#\\+end_src" nil t)
+            (forward-line 1)
+          ())
         (let ((in-table nil))
           (while (and (= (forward-line) 0)
                       (not (looking-at "^[ \t]*:END:[ \t]*$")))
