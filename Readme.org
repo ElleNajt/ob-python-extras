@@ -47,6 +47,7 @@ print("...tada!")
 - Cell interruption with C-c C-k
 - Capturing tracebacks in the results (with the option to use rich tracebacks via :errors "rich no-locals frames 3 extra 5")
 - Alerts on long running cells, using libnotify for system alerts and pop ups inside of doom
+- Open the session in another buffer (Keybindings bind it to SPC o s)
 
 ** Gptel integrations:
 - Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.

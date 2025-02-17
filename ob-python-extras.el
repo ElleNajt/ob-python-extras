@@ -204,6 +204,14 @@ finally:
             (message "Interrupted session: %s" current-session)))))))
 
 
+;;; open session buffer
+
+(defun ob-python-extras/open-session-buffer ()
+  (interactive)
+  (let ((session (ob-python-extras/org-babel-get-session)))
+    (when session
+      (pop-to-buffer (format "*%s*" session)))))
+
 ;;;; Better output handling
 ;;;;; mix printing images and text
 
@@ -413,6 +421,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC f i") #'org-toggle-inline-images
     (kbd "SPC f I") #'org-display-inline-images
     (kbd "C-c C-c") #'org-dispatch-C-c-C-c
+    (kbd "SPC o s") #'ob-python-extras/open-session-buffer
     (kbd "SPC o g f") 'ob-python-extras/gptel-fix-block
     (kbd "SPC o g s") 'ob-python-extras/send-block-to-gptel
     (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks
