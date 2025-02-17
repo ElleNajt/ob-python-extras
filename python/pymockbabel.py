@@ -1,8 +1,8 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i python3 -p python3Packages.matplotlib
 
-import os
 import gc
+import os
 import random
 import sys
 from datetime import datetime
@@ -10,11 +10,14 @@ from functools import partial
 from unittest.mock import patch
 
 MATPLOTLIB_AVAILABLE = False
+EXTRAS_DO_REPLACEMENTS = True
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     pass
+
 
 class Writer:
     def __init__(self, output_list, output_types):
@@ -77,7 +80,7 @@ def setup(org_babel_file_name, transparent):
                 outputs_and_file_paths=outputs_and_file_paths,
                 output_types=output_types,
                 org_babel_file_name=org_babel_file_name,
-                transparent=transparent
+                transparent=transparent,
             ),
         ).start()
     list_writer = start_capturing(outputs_and_file_paths, output_types)
@@ -95,7 +98,8 @@ def display(outputs_and_file_paths, output_types, list_writer):
                 # If not printing a dataframe, then replace pipes with a slash
                 # this is important for printing, e.g. the printSchema method of
                 # a spark dataframe
-                item = item.replace("|", "\\")
+                if EXTRAS_DO_REPLACEMENTS:
+                    item = item.replace("|", "\\")
             org_babel_output.append(f"{item}")
         elif item_type == "Image":
             org_babel_output.append(f"[[file:{item}]]")
