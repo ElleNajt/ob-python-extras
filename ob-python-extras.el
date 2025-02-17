@@ -427,7 +427,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks
     (kbd "g s") #'org-edit-special)
 
-  (map! :after 'org
+  (map! :after org
         :map org-mode-map
         [remap +lookup/documentation] #'ob-python-extras/python-help-clean))
 
