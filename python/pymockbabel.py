@@ -19,6 +19,11 @@ except ImportError:
     pass
 
 
+def set_do_replacements(value: bool):
+    global EXTRAS_DO_REPLACEMENTS
+    EXTRAS_DO_REPLACEMENTS = value
+
+
 class Writer:
     def __init__(self, output_list, output_types):
         self.output_list = output_list
