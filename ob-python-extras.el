@@ -693,19 +693,21 @@ except Exception as e:
                              symbol
                              symbol))
                (temp-start nil))
-          (org-babel-where-is-src-block-head)
-          (search-forward "#+end_src")
-          (forward-line)
-          (setq temp-start (point))
-          (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body))
-          (let ((output (string-trim (org-babel-execute-src-block)))
-                (location nil))
-            (unless (string-prefix-p "Traceback:" output)
-              (setq location output))
+
+          (unwind-protect
+              (progn
+                (org-babel-where-is-src-block-head)
+                (search-forward "#+end_src")
+                (forward-line)
+                (setq temp-start (point))
+                (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body)))
+            (setq output (string-trim (org-babel-execute-src-block)))
+
             (delete-region temp-start (save-excursion
                                         (forward-line 1)
-                                        (point)))
-            (when location
-              (find-file location)))))))
+                                        (point))))
+
+          (unless (string-prefix-p "Traceback:" output)
+            (find-file output))))))
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
