@@ -425,9 +425,15 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC o g f") 'ob-python-extras/gptel-fix-block
     (kbd "SPC o g s") 'ob-python-extras/send-block-to-gptel
     (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks
-    (kbd "g s") #'org-edit-special))
+    (kbd "g s") #'org-edit-special)
 
-(setq ob-python-extras/auto-send-on-traceback nil)
+  (map! :after org
+        :map org-mode-map
+        [remap +lookup/definition] #'ob-python-extras/python-goto-definition)
+
+  )
+
+(setq ob-python-extras/auto-send-on-traceback t)
 
 (defun ob-python-extras/split-block ()
   "split block -- org-babel-demarcate-block does not work"
@@ -574,6 +580,43 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
             )))))
 
   (add-hook 'org-babel-after-execute-hook 'ob-python-extras--format-src-block))
+
+
+;;; help functionality
+;; this is incredibly jank but useful for getting help at point
+
+
+(defun ob-python-extras/python-help-visual ()
+  (interactive)
+  (let* ((session (ob-python-extras/org-babel-get-session))
+         (selection (buffer-substring-no-properties (region-beginning) (region-end)))
+         (buffer-name (format "*%s*" session))
+         (process (get-buffer-process buffer-name)))
+    (when process
+      (message "Selection: %s" selection)
+      (pop-to-buffer buffer-name)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (let ((python-command (format "import pydoc; print(pydoc.render_doc(%s))\n" selection)))
+          (python-shell-send-string python-command process)
+          (goto-char (point-min)))))))
+
+(defun select-full-word-with-dots ()
+  (interactive)
+  (let ((bounds (bounds-of-thing-at-point 'word)))
+    (when bounds
+      (goto-char (car bounds))
+      (while (and (not (bobp))
+                  (looking-back "[._[:alnum:]]" 1))
+        (backward-char))
+      (when (not (looking-at "[[:alnum:]]")) (forward-char))
+      (set-mark (point))
+      (goto-char (cdr bounds)))))
+
+(defun ob-python-extras/python-goto-definition ()
+  (interactive)
+  (select-full-word-with-dots)
+  (ob-python-extras/python-help-visual))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
