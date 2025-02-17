@@ -638,35 +638,40 @@ pymockbabel.EXTRAS_DO_REPLACEMENTS = True
            (result nil)
            (temp-start nil))
       ;; Find current source block end
-      (org-babel-where-is-src-block-head)
-      (search-forward "#+end_src")
-      (forward-line)
-      (setq temp-start (point))
-      (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
-      (forward-line -1)
-      (setq result (org-babel-execute-src-block))
-      (delete-region temp-start (save-excursion
-                                  (forward-line 1)
-                                  (point)))
-      (with-current-buffer (get-buffer-create "*Python Help*")
-        (erase-buffer)
-        (insert result)
-        (goto-char (point-min))
+      (unwind-protect
+          (progn
+            (org-babel-where-is-src-block-head)
+            (search-forward "#+end_src")
+            (forward-line)
+            (setq temp-start (point))
+            (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
+            (forward-line -1)
+            (setq result (org-babel-execute-src-block)))
+        (delete-region temp-start (save-excursion
+                                    (goto-char temp-start)
+                                    (search-forward "#+end_src")
+                                    (forward-line)
+                                    (point)))
+        (with-current-buffer (get-buffer-create "*Python Help*")
+          (erase-buffer)
+          (insert result)
+          (goto-char (point-min))
 
-        (while (re-search-forward "\\(.\\)\b\\1" nil t)
-          (replace-match "\\1"))
-        (display-buffer (current-buffer))))))
+          (while (re-search-forward "\\(.\\)\b\\1" nil t)
+            (replace-match "\\1"))
+          (pop-to-buffer (current-buffer)))))))
 
 (defun ob-python-extras/python-goto-definition ()
   (interactive)
 
   (if (and (org-in-src-block-p)
            (string= "python" (org-element-property :language (org-element-at-point))))
-      (save-excursion
-        (let* ((symbol (progn
-                         (select-full-word-with-dots)
-                         (buffer-substring-no-properties (region-beginning) (region-end))))
-               (body (format "
+      (let ((orig-point (point)))
+        (save-excursion
+          (let* ((symbol (progn
+                           (select-full-word-with-dots)
+                           (buffer-substring-no-properties (region-beginning) (region-end))))
+                 (body (format "
 import sys
 sys.path.append(\"%s\")
 import inspect
@@ -681,24 +686,26 @@ try:
 except Exception as e:
     print(f'Traceback: {str(e)}')"
 
-                             (ob-python-extras/find-python-scripts-dir)
-                             symbol
-                             symbol))
-               (temp-start nil))
-          (org-babel-where-is-src-block-head)
-          (search-forward "#+end_src")
-          (forward-line)
-          (setq temp-start (point))
-          (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
-          (let ((output (string-trim (org-babel-execute-src-block)))
-                (location nil))
-            (unless (string-prefix-p "Traceback:" output)
-              (setq location output))
-            (delete-region temp-start (save-excursion
-                                        (forward-line 1)
-                                        (point)))
-            (when location
-              (find-file location)))))))
+                               (ob-python-extras/find-python-scripts-dir)
+                               symbol
+                               symbol))
+                 (temp-start nil))
+            (org-babel-where-is-src-block-head)
+            (search-forward "#+end_src")
+            (forward-line)
+            (setq temp-start (point))
+            (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
+            (let ((output (string-trim (org-babel-execute-src-block)))
+                  (location nil))
+              (unless (string-prefix-p "Traceback:" output)
+                (setq location output))
+              (delete-region temp-start (save-excursion
+                                          (goto-char temp-start)
+                                          (search-forward "#+end_src")
+                                          (forward-line)
+                                          (point)))
+              (when location
+                (find-file location))))))))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
