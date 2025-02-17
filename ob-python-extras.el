@@ -417,6 +417,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (kbd "SPC M k") #'join-source-block-to-previous
     (kbd "SPC M j") #'join-source-block-to-next
     (kbd "g SPC") #'org-babel-execute-buffer
+    (kbd "g d") #'ob-python-extras/python-goto-definition
     (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
     (kbd "SPC f i") #'org-toggle-inline-images
     (kbd "SPC f I") #'org-display-inline-images
@@ -644,7 +645,7 @@ pymockbabel.EXTRAS_DO_REPLACEMENTS = True
             (search-forward "#+end_src")
             (forward-line)
             (setq temp-start (point))
-            (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
+            (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body))
             (forward-line -1)
             (setq result (org-babel-execute-src-block)))
         (delete-region temp-start (save-excursion
@@ -696,7 +697,7 @@ except Exception as e:
           (search-forward "#+end_src")
           (forward-line)
           (setq temp-start (point))
-          (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
+          (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body))
           (let ((output (string-trim (org-babel-execute-src-block)))
                 (location nil))
             (unless (string-prefix-p "Traceback:" output)
