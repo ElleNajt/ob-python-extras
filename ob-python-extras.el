@@ -404,34 +404,6 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
       (ob-python-extras/insert-new-src-block)
     (funcall orig direction)))
 
-(defun ob-python-extras/map-suggested-keyindings ()
-  "Map suggested keybindings for ob-python."
-  (interactive)
-  (require 'evil)
-
-  (advice-add #'+org--insert-item :around #'ob-python-extras/+org-insert-item)
-
-  (evil-define-key* '(normal visual) org-mode-map
-    (kbd "<S-return>") #'ob-python-extras/run-cell-and-advance
-    (kbd "SPC S") #'ob-python-extras/split-block
-    (kbd "SPC M k") #'join-source-block-to-previous
-    (kbd "SPC M j") #'join-source-block-to-next
-    (kbd "g SPC") #'org-babel-execute-buffer
-    (kbd "g d") #'ob-python-extras/python-goto-definition
-    (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
-    (kbd "SPC f i") #'org-toggle-inline-images
-    (kbd "SPC f I") #'org-display-inline-images
-    (kbd "C-c C-c") #'org-dispatch-C-c-C-c
-    (kbd "SPC o s") #'ob-python-extras/open-session-buffer
-    (kbd "SPC o g f") 'ob-python-extras/gptel-fix-block
-    (kbd "SPC o g s") 'ob-python-extras/send-block-to-gptel
-    (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks
-    (kbd "g s") #'org-edit-special)
-
-  (map! :after org
-        :map org-mode-map
-        [remap +lookup/documentation] #'ob-python-extras/python-help-clean))
-
 (setq ob-python-extras/auto-send-on-traceback t)
 
 (defun ob-python-extras/split-block ()
