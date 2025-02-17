@@ -429,9 +429,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
   (map! :after org
         :map org-mode-map
-        [remap +lookup/definition] #'ob-python-extras/python-goto-definition)
-
-  )
+        [remap +lookup/documentation] #'ob-python-extras/python-help-clean))
 
 (setq ob-python-extras/auto-send-on-traceback t)
 
@@ -602,22 +600,70 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
           (goto-char (point-min)))))))
 
 (defun select-full-word-with-dots ()
-  (interactive)
-  (let ((bounds (bounds-of-thing-at-point 'word)))
+  "Select current word including any dots and connected words before/after it."
+  (let ((bounds (bounds-of-thing-at-point 'symbol)))
     (when bounds
+      ;; Go backward through dots
       (goto-char (car bounds))
-      (while (and (not (bobp))
-                  (looking-back "[._[:alnum:]]" 1))
-        (backward-char))
-      (when (not (looking-at "[[:alnum:]]")) (forward-char))
+      (while (and (> (point) (point-min))
+                  (save-excursion
+                    (backward-char)
+                    (looking-at "\\.")))
+        (backward-char)
+        (backward-sexp))
       (set-mark (point))
-      (goto-char (cdr bounds)))))
+      ;; Go forward through dots
+      (goto-char (cdr bounds))
+      (while (and (< (point) (point-max))
+                  (looking-at "\\."))
+        (forward-char)
+        (forward-symbol 1)))))
 
 (defun ob-python-extras/python-goto-definition ()
   (interactive)
   (select-full-word-with-dots)
   (ob-python-extras/python-help-visual))
 
+(defun ob-python-extras/python-help-clean ()
+  (interactive)
+  (message "Starting python help...")
+  (save-excursion
+    (let* ((symbol (progn
+                     (message "Getting symbol...")
+                     (save-excursion
+                       (select-full-word-with-dots)
+                       (buffer-substring-no-properties (region-beginning) (region-end)))))
+           (_ (message "Symbol is: '%s'" symbol))
+           (body (format "import pydoc; pymockbabel.set_do_replacements(False); print(pydoc.render_doc(%s)); print(\"|\"); pymockbabel.set_do_replacements(True)" symbol))
+           (_ (message "Python body: %s" body))
+           (result nil)
+           (temp-start nil))
+      ;; Find current source block end
+      (org-babel-where-is-src-block-head)
+      (search-forward "#+end_src")
+      (forward-line)
+      (setq temp-start (point))
+      (message "Inserting temp block at pos %d..." temp-start)
+      (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
+      (forward-line -1)
+      (message "Executing block at pos %d..." (point))
+      (setq result (org-babel-execute-src-block))
+      (message "Got result of length: %d" (length result))
+      (message "Cleaning up from %d to %d..." temp-start (point-max))
+      (delete-region temp-start (save-excursion
+                                  (forward-line 1)
+                                  (point)))
+      (with-current-buffer (get-buffer-create "*Python Help*")
+        (erase-buffer)
+        (insert result)
+        (goto-char (point-min))
+
+        (while (re-search-forward "\\(.\\)\b\\1" nil t)
+          (replace-match "\\1"))
+        (display-buffer (current-buffer)))
+      (message "Python help complete"))))
+
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
+
 
