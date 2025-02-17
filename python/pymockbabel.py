@@ -103,6 +103,7 @@ def display(outputs_and_file_paths, output_types, list_writer):
                 # If not printing a dataframe, then replace pipes with a slash
                 # this is important for printing, e.g. the printSchema method of
                 # a spark dataframe
+                global EXTRAS_DO_REPLACEMENTS
                 if EXTRAS_DO_REPLACEMENTS:
                     item = item.replace("|", "\\")
             org_babel_output.append(f"{item}")

@@ -584,21 +584,6 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
 ;; this is incredibly jank but useful for getting help at point
 
 
-(defun ob-python-extras/python-help-visual ()
-  (interactive)
-  (let* ((session (ob-python-extras/org-babel-get-session))
-         (selection (buffer-substring-no-properties (region-beginning) (region-end)))
-         (buffer-name (format "*%s*" session))
-         (process (get-buffer-process buffer-name)))
-    (when process
-      (message "Selection: %s" selection)
-      (pop-to-buffer buffer-name)
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (let ((python-command (format "import pydoc; print(pydoc.render_doc(%s))\n" selection)))
-          (python-shell-send-string python-command process)
-          (goto-char (point-min)))))))
-
 (defun select-full-word-with-dots ()
   "Select current word including any dots and connected words before/after it."
   (let ((bounds (bounds-of-thing-at-point 'symbol)))
@@ -619,14 +604,9 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
         (forward-char)
         (forward-symbol 1)))))
 
-(defun ob-python-extras/python-goto-definition ()
-  (interactive)
-  (select-full-word-with-dots)
-  (ob-python-extras/python-help-visual))
 
 (defun ob-python-extras/python-help-clean ()
   (interactive)
-  (message "Starting python help...")
   (save-excursion
     (let* ((symbol (progn
                      (message "Getting symbol...")
@@ -634,7 +614,26 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
                        (select-full-word-with-dots)
                        (buffer-substring-no-properties (region-beginning) (region-end)))))
            (_ (message "Symbol is: '%s'" symbol))
-           (body (format "import pydoc; pymockbabel.set_do_replacements(False); print(pydoc.render_doc(%s)); print(\"|\"); pymockbabel.set_do_replacements(True)" symbol))
+           (body
+            (format "
+import sys
+from io import StringIO
+sys.path.append(\"%s\")
+import pymockbabel
+pymockbabel.EXTRAS_DO_REPLACEMENTS = False
+
+# Capture help output
+help_output = StringIO()
+sys.stdout = help_output
+help(%s)
+# this still doesn't work ideally, it can get evaluated on the value of passed object,
+# which is a problem for pd.options.display.max_rows
+# it gets evaluated onthe int, not on the pandas option
+sys.stdout = sys.__stdout__
+print(help_output.getvalue())
+
+pymockbabel.EXTRAS_DO_REPLACEMENTS = True
+"(ob-python-extras/find-python-scripts-dir) symbol))
            (_ (message "Python body: %s" body))
            (result nil)
            (temp-start nil))
@@ -643,13 +642,9 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
       (search-forward "#+end_src")
       (forward-line)
       (setq temp-start (point))
-      (message "Inserting temp block at pos %d..." temp-start)
       (insert (format "#+begin_src python :results none\n%s\n#+end_src\n" body))
       (forward-line -1)
-      (message "Executing block at pos %d..." (point))
       (setq result (org-babel-execute-src-block))
-      (message "Got result of length: %d" (length result))
-      (message "Cleaning up from %d to %d..." temp-start (point-max))
       (delete-region temp-start (save-excursion
                                   (forward-line 1)
                                   (point)))
@@ -660,8 +655,7 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
 
         (while (re-search-forward "\\(.\\)\b\\1" nil t)
           (replace-match "\\1"))
-        (display-buffer (current-buffer)))
-      (message "Python help complete"))))
+        (display-buffer (current-buffer))))))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
