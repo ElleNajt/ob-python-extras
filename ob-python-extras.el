@@ -617,7 +617,7 @@ pymockbabel.EXTRAS_DO_REPLACEMENTS = True
             (search-forward "#+end_src")
             (forward-line)
             (setq temp-start (point))
-            (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body))
+            (insert (format "#+begin_src python :async no :results none :timer-show no\n%s\n#+end_src\n" body))
             (forward-line -1)
             (setq result (org-babel-execute-src-block)))
         (delete-region temp-start (save-excursion
@@ -672,7 +672,7 @@ except Exception as e:
                 (search-forward "#+end_src")
                 (forward-line)
                 (setq temp-start (point))
-                (insert (format "#+begin_src python :results none :timer-show no\n%s\n#+end_src\n" body)))
+                (insert (format "#+begin_src python :async no :results none :timer-show no\n%s\n#+end_src\n" body)))
             (setq output (string-trim (org-babel-execute-src-block)))
 
             (delete-region temp-start (save-excursion
