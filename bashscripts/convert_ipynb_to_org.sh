@@ -76,9 +76,11 @@ convert_file() {
         if [[ "$(uname -s)" == "Darwin" ]]; then
             sed -i '' '/^<<.*>>$/d' "$org_file"
             sed -i '' '/:PROPERTIES:/,/:END:/d' "$org_file"
+            sed -i '' 's/^%/#%' "$org_file"
         else
             sed -i '/^<<.*>>$/d' "$org_file"
             sed -i '/:PROPERTIES:/,/:END:/d' "$org_file"
+            sed -i 's/^%/#%' "$org_file"
         fi
     fi
 
