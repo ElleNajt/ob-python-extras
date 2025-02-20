@@ -681,5 +681,22 @@ except Exception as e:
 
           (unless (string-prefix-p "Traceback:" output)
             (find-file output))))))
+
+;;; renamer
+
+(defun dired-rename-python-vars ()
+  "Run rename script on marked org file using marked json file."
+  (interactive)
+  (let* ((marked-files (dired-get-marked-files))
+         (python-binary "")
+         (org-file (cl-find-if (lambda (f) (string-match "\\.org$" f)) marked-files))
+         (json-file (cl-find-if (lambda (f) (string-match "\\.json$" f)) marked-files))
+         (script-dir (ob-python-extras/find-python-scripts-dir))
+         (rename-script (expand-file-name "rename_script.py" script-dir)))
+    (when (and org-file json-file)
+      (shell-command
+       (format "nix-shell --pure -p black --run  'python %s %s %s'" rename-script org-file json-file))
+      (revert-buffer nil t))))
+
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here

@@ -77,8 +77,10 @@ These both rely on the following mechanism to execute the help and inspect funct
 
   - visually selects to the end of a (vim) word, and then selects backwards through "_" and "." . I think a better implementation of this would interace with eglot and pyright to capture the proper python thing at point, instead of this adhoc implementation.
   - puts a source block immediately below the current on in the original org file, runs it, capturing the output, and then cleans this up. Ideally it would call whatever functions execute org babel blocks under the hood.
+** Variable Renamer
+Tooling to safely rename variables in an org file across all python blocks that have valid python syntax. (python blocks with invalid syntax will be skipped.)
 
-
+To use, create a renamer.json in the same folder as your .org file, mark both, and then run ob-python-extras/dired-rename-python-vars.
 
 ** Better LSP integration
 

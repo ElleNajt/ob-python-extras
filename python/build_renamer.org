@@ -118,6 +118,8 @@ rename_blocks_in_org("./test_renamer.org", replacements)
 #+RESULTS:
 :results:
 Warning: Skipping block due to error: invalid syntax (<unknown>, line 1)
+Skipped block
+<re.Match object; span=(2042, 2695), match="#+begin_src python\nx = 1 +   # incomplete line\n>
 Cell Timer: 0:00:00
 :end:
 
