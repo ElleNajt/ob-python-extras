@@ -112,3 +112,24 @@ except Exception as old_var:  # Should handle exception binding
 #+begin_src python
 x = 1 +   # incomplete line
 def broken(x:   # incomplete function
+
+
+* partially invalid
+
+#+begin_src python
+
+
+# Invalid syntax that should be handled gracefully
+x = 1 +   # incomplete line
+def broken(x:   # incomplete type annotation
+while   # incomplete while loop
+
+# Valid but tricky cases
+x = 1; y = 2  # multiple statements on one line
+def fn(x=1, y=None, *args, **kwargs): pass  # complex parameters
+{x: x for x in range(5)}  # comprehension with same name
+from module import x as x  # import with same name
+x: 'CustomType' = 5  # type comments/annotations
+f'{x=}'  # f-string with = operator
+
+#+end_src
