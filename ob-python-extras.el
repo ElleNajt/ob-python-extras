@@ -684,18 +684,29 @@ except Exception as e:
 
 ;;; renamer
 
+(defvar alternative-python-binary nil
+  "Alternative Python binary path. If set, used instead of default Python command, which is nix-shell --pure -p balck --run 'python ...'.")
+
 (defun dired-rename-python-vars ()
   "Run rename script on marked org file using marked json file."
   (interactive)
   (let* ((marked-files (dired-get-marked-files))
-         (python-binary "")
          (org-file (cl-find-if (lambda (f) (string-match "\\.org$" f)) marked-files))
          (json-file (cl-find-if (lambda (f) (string-match "\\.json$" f)) marked-files))
          (script-dir (ob-python-extras/find-python-scripts-dir))
-         (rename-script (expand-file-name "rename_script.py" script-dir)))
+         (rename-script (expand-file-name "rename_script.py" script-dir))
+         (python-command (if alternative-python-binary
+                             (format "%s %s %s %s"
+                                     alternative-python-binary
+                                     rename-script
+                                     org-file
+                                     json-file)
+                           (format "nix-shell --pure -p black --run 'python %s %s %s'"
+                                   rename-script
+                                   org-file
+                                   json-file))))
     (when (and org-file json-file)
-      (shell-command
-       (format "nix-shell --pure -p black --run  'python %s %s %s'" rename-script org-file json-file))
+      (shell-command python-command)
       (revert-buffer nil t))))
 
 (provide 'ob-python-extras)

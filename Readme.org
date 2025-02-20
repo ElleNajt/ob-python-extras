@@ -82,6 +82,8 @@ Tooling to safely rename variables in an org file across all python blocks that 
 
 To use, create a renamer.json in the same folder as your .org file, mark both, and then run ob-python-extras/dired-rename-python-vars.
 
+By default this runs a python via "nix-shell --pure -p black --run 'python ...'" , set the variable alternative-python-binary to a different python binary if not using nix.
+
 ** Better LSP integration
 
 - Special mode inherits the same python interpreter as specified for the cell, giving access to documentation and completion. (Requires eglot.)
