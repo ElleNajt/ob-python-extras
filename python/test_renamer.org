@@ -1,0 +1,114 @@
+#+title: Test Renamer
+#+PROPERTY: header-args:python :results output drawer :python "nix-shell --run python" :async t :tangle :session python_test_renamer_orgfile
+#+PROPERTY: header-args:bash :results output :async t :tangle :session bash_test_renamer_orgfile
+
+
+#+begin_src python
+old_var = 1
+# hi
+print(old_var)
+#+end_src
+
+#+RESULTS:
+:results:
+1
+Cell Timer: 0:00:00
+:end:
+
+
+
+#+begin_src python
+import pandas as pd
+
+x = 1
+old_var = 2
+# hi
+print(old_var)
+df = pd.DataFrame([old_var])
+print(df[0])
+print(df.index)
+#+end_src
+
+#+RESULTS:
+:results:
+2
+| idx |   |
+|-----+---|
+|   0 | 2 |
+RangeIndex(start=0, stop=1, step=1)
+Cell Timer: 0:00:00
+:end:
+
+
+* Edge Cases for Python Variable Renamer
+
+** Empty code blocks
+#+begin_src python
+
+#+end_src
+
+** Comments only
+#+begin_src python
+# Just a comment
+# Another comment
+    # Indented comment
+#+end_src
+
+** Variable names within strings
+#+begin_src python
+x = "old_var"  # shouldn't change
+y = 'old_var'  # shouldn't change
+z = """
+old_var
+"""  # shouldn't change
+print(f"old_var={old_var}")  # only the variable reference should change
+#+end_src
+
+** Variable names within comments
+#+begin_src python
+# old_var should not change in comments
+x = 1  # old_var should not change here either
+#+end_src
+
+** Partial matches
+#+begin_src python
+old_var_extended = 1  # should not change
+_old_var = 2  # should not change
+old_var_ = 3  # should not change
+#+end_src
+
+** Multiple blocks with shared variables
+#+begin_src python
+x = 1
+y = x + 1
+#+end_src
+
+#+begin_src python
+# Should consistently rename x across blocks
+x = 2
+z = x * 2
+#+end_src
+
+** Special Python syntax
+#+begin_src python
+class old_var:  # Should handle class names
+    pass
+
+def old_var():  # Should handle function names
+    pass
+
+from module import old_var  # Should handle imports
+import old_var as alias  # Should handle aliases
+
+try:
+    old_var = 1
+except Exception as old_var:  # Should handle exception binding
+    pass
+
+[old_var for old_var in range(5)]  # List comprehension with same name
+#+end_src
+
+** Invalid Python syntax
+#+begin_src python
+x = 1 +   # incomplete line
+def broken(x:   # incomplete function

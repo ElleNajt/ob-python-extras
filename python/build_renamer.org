@@ -1,0 +1,133 @@
+#+title: Test Renamer
+#+PROPERTY: header-args:python :results output drawer :python "nix-shell --run python" :async t :tangle :session python_renamer
+#+PROPERTY: header-args:bash :results output :async t :tangle :session bash_renamer
+
+
+
+#+begin_src python
+import ast
+import tokenize
+from pathlib import Path
+import black
+from io import StringIO
+
+
+class NameReplacer(ast.NodeTransformer):
+    def __init__(self, replacements):
+        self.replacements = replacements
+
+    def visit_Name(self, node):
+        if node.id in self.replacements:
+            return ast.Name(id=self.replacements[node.id], ctx=node.ctx)
+        return node
+
+
+def replace_names_preserving_comments(source_file, replacements):
+    # First get the list of replacements we need to make
+    with open(source_file, "r") as f:
+        tree = ast.parse(f.read())
+
+    transformer = NameReplacer(replacements)
+    transformer.visit(tree)
+
+    # Now use tokenize to preserve formatting and comments
+    result = []
+    with open(source_file, "rb") as f:
+        tokens = list(tokenize.tokenize(f.readline))
+        for token in tokens:
+            if token.type == tokenize.NAME and token.string in replacements:
+                result.append((token.type, replacements[token.string]))
+            else:
+                result.append((token.type, token.string))
+
+    # Convert back to source
+    return tokenize.untokenize(result).decode("utf-8")
+
+
+def replace_names_inplace(source_file, replacements):
+    modified_code = replace_names_preserving_comments(source_file, replacements)
+
+    path = Path(source_file)
+
+    with open(path, "w") as f:
+        f.write(modified_code)
+
+    black.format_file_in_place(
+        Path(path),
+        fast=False,
+        mode=black.FileMode(),
+        write_back=black.WriteBack.YES,
+    )
+
+
+# Example usage
+replacements = {"old_var": "new_var", "x": "y"}
+replace_names_inplace("./input.py", replacements)
+#+end_src
+
+#+RESULTS:
+:results:
+Cell Timer: 0:00:00
+:end:
+
+
+#+begin_src python
+def rename_blocks_in_org(org_file, replacements):
+    import tempfile
+    import re
+
+    with open(org_file, "r") as f:
+        content = f.read()
+
+    # Find Python code blocks
+    code_blocks = re.finditer(
+        r"#\+begin_src python.*?\n(.*?)\n#\+end_src", content, re.DOTALL
+    )
+
+    for block in code_blocks:
+        # Write block to temp file
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as tmp:
+            tmp.write(block.group(1))
+            tmp.flush()
+
+            # Apply replacements
+            replace_names_inplace(tmp.name, replacements)
+
+            # Read modified content
+            tmp.seek(0)
+            new_code = tmp.read()
+
+            # Replace in original content
+            content = content.replace(block.group(1), new_code)
+
+    # Write back to org file
+    with open(org_file, "w") as f:
+        f.write(content)
+
+
+replacements = {"old_var": "new_var", "x": "transformed", "y": "y_new", "df": "newdf"}
+rename_blocks_in_org("./test_renamer.org", replacements)
+#+end_src
+
+#+RESULTS:
+:results:
+Cell Timer: 0:00:00
+:end:
+
+#+begin_src elisp
+(defun rename-python-vars-in-org ()
+  "Replace Python variable names in org file code blocks using the Python renamer script."
+  (interactive)
+  (let* ((replacements-str (read-string "Enter replacements as Python dict (e.g. {\"old\": \"new\"}): "))
+         (current-file (buffer-file-name))
+         (py-code (format "
+import json
+replacements = json.loads('%s')
+from rename_utils import process_org_code_blocks
+process_org_code_blocks('%s', replacements)
+" replacements-str current-file)))
+    (when (buffer-modified-p)
+      (save-buffer))
+    (python-shell-send-string py-code)
+    (revert-buffer t t)))
+#+end_src
