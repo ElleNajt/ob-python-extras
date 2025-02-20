@@ -108,17 +108,15 @@ except Exception as old_var:  # Should handle exception binding
 [old_var for old_var in range(5)]  # List comprehension with same name
 #+end_src
 
-** Invalid Python syntax
+** Invalid Python block syntax
 #+begin_src python
 x = 1 +   # incomplete line
 def broken(x:   # incomplete function
 
 
-* partially invalid
-
+** Block with invalid python syntax
+(should skip)
 #+begin_src python
-
-
 # Invalid syntax that should be handled gracefully
 x = 1 +   # incomplete line
 def broken(x:   # incomplete type annotation
@@ -131,5 +129,4 @@ def fn(x=1, y=None, *args, **kwargs): pass  # complex parameters
 from module import x as x  # import with same name
 x: 'CustomType' = 5  # type comments/annotations
 f'{x=}'  # f-string with = operator
-
 #+end_src
