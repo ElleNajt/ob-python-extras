@@ -85,20 +85,26 @@ def rename_blocks_in_org(org_file, replacements):
     )
 
     for block in code_blocks:
-        # Write block to temp file
-        with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as tmp:
-            tmp.write(block.group(1))
-            tmp.flush()
+        try:
+            # Write block to temp file
+            with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as tmp:
+                tmp.write(block.group(1))
+                tmp.flush()
 
-            # Apply replacements
-            replace_names_inplace(tmp.name, replacements)
+                # Apply replacements
+                replace_names_inplace(tmp.name, replacements)
 
-            # Read modified content
-            tmp.seek(0)
-            new_code = tmp.read()
+                # Read modified content
+                tmp.seek(0)
+                new_code = tmp.read()
 
-            # Replace in original content
-            content = content.replace(block.group(1), new_code)
+                # Replace in original content
+                content = content.replace(block.group(1), new_code)
+        except Exception as e:
+            print(f"Warning: Skipping block due to error: {str(e)}")
+            print("Skipped block")
+            print(block)
+            # Continue with next block, leaving this one unchanged
 
     # Write back to org file
     with open(org_file, "w") as f:
@@ -111,6 +117,7 @@ rename_blocks_in_org("./test_renamer.org", replacements)
 
 #+RESULTS:
 :results:
+Warning: Skipping block due to error: invalid syntax (<unknown>, line 1)
 Cell Timer: 0:00:00
 :end:
 
