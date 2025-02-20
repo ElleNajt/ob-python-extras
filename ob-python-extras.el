@@ -578,6 +578,15 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
         (forward-symbol 1)))))
 
 
+(defun ob-python-extras/help-dispatcher ()
+  "Dispatches to the python one to not overwrite workin +lookup/definition in elisp blocks."
+  (interactive)
+  (if (and (org-in-src-block-p)
+           (string= "python" (org-element-property :language (org-element-at-point))))
+      (ob-python-extras/python-help-clean)
+    ;; TODO This is pretty doom specific, I think.
+    (call-interactively #'+lookup/documentation)))
+
 (defun ob-python-extras/python-help-clean ()
   (interactive)
   (save-excursion
@@ -634,6 +643,15 @@ pymockbabel.EXTRAS_DO_REPLACEMENTS = True
             (replace-match "\\1"))
           (pop-to-buffer (current-buffer)))))))
 
+(defun ob-python-extras/goto-definition-dispatcher ()
+  "Dispatches to the python one to not overwrite workin +lookup/definition in elisp blocks."
+  (interactive)
+  (if (and (org-in-src-block-p)
+           (string= "python" (org-element-property :language (org-element-at-point))))
+      (ob-python-extras/python-goto-definition)
+
+    ;; TODO This is pretty doom specific, I think.
+    (call-interactively #'+lookup/definition)))
 
 (defun ob-python-extras/python-goto-definition ()
   (interactive)

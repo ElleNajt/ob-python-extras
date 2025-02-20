@@ -37,7 +37,7 @@
       (kbd "SPC M k") #'join-source-block-to-previous
       (kbd "SPC M j") #'join-source-block-to-next
       (kbd "g SPC") #'org-babel-execute-buffer
-      (kbd "g d") #'ob-python-extras/python-goto-definition
+      (kbd "g d") #'ob-python-extras/goto-definition-dispatcher
       (kbd "C-c C-k") #'ob-python-extras/interrupt-org-babel-session
       (kbd "SPC f i") #'org-toggle-inline-images
       (kbd "SPC f I") #'org-display-inline-images
@@ -50,7 +50,7 @@
 
     (map! 
      :map org-mode-map
-     [remap +lookup/documentation] #'ob-python-extras/python-help-clean)))
+     [remap +lookup/documentation] #'ob-python-extras/help-dispatcher   )))
 
 (provide 'ob-python-extras-alerts-keybindings)
 ;;; ob-python-extras-alerts-keybindings.el ends here
