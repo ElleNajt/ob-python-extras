@@ -737,7 +737,7 @@ except Exception as e:
          (org-file (cl-find-if (lambda (f) (string-match "\\.org$" f)) marked-files))
          (json-file (cl-find-if (lambda (f) (string-match "\\.json$" f)) marked-files))
          (script-dir (ob-python-extras/find-python-scripts-dir))
-         (rename-script (expand-file-name "rename_script.py" script-dir))
+         (rename-script (expand-file-name "renamer_utils.py" script-dir))
          (python-command (if alternative-python-binary
                              (format "%s %s %s %s"
                                      alternative-python-binary
