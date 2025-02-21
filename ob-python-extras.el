@@ -707,11 +707,17 @@ except Exception as e:
          (python-process (when session-buffer
                            (or (get-buffer-process session-buffer)
                                (get-buffer-process (format "*%s*" session-buffer)))))
-         (bounds (bounds-of-thing-at-point 'symbol))
-         (prefix (and bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
-    (when (and session-buffer python-process bounds prefix)
-      (list (car bounds)
-            (cdr bounds)
+         ;; Look backwards for the start of the expression
+         (start (save-excursion
+                  ;;  getting the right object at point
+                  ;;  may need more fiddling
+                  (skip-chars-backward "[:alnum:]_.")
+                  (point)))
+         (end (point))
+         (prefix (buffer-substring-no-properties start end)))
+    (when (and session-buffer python-process prefix)
+      (list start
+            end
             (python-shell-completion-get-completions python-process prefix)
             :exclusive 'no))))
 
