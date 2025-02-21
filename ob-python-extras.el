@@ -700,6 +700,25 @@ except Exception as e:
           (unless (string-prefix-p "Traceback:" output)
             (find-file output))))))
 
+;;;; completion at point
+
+(defun my-python-completions-capf ()
+  (let* ((session-buffer (ob-python-extras/org-babel-get-session))
+         (python-process (when session-buffer
+                           (or (get-buffer-process session-buffer)
+                               (get-buffer-process (format "*%s*" session-buffer)))))
+         (bounds (bounds-of-thing-at-point 'symbol))
+         (prefix (and bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
+    (when (and session-buffer python-process bounds prefix)
+      (list (car bounds)
+            (cdr bounds)
+            (python-shell-completion-get-completions python-process prefix)
+            :exclusive 'no))))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'completion-at-point-functions
+                      #'my-python-completions-capf nil t)))
 ;;; renamer
 
 (defvar alternative-python-binary nil
