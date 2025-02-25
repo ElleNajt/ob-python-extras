@@ -587,61 +587,38 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
     ;; TODO This is pretty doom specific, I think.
     (call-interactively #'+lookup/documentation)))
 
+
 (defun ob-python-extras/python-help-clean ()
   (interactive)
-  (save-excursion
-    (let* ((symbol (progn
-                     (message "Getting symbol...")
-                     (save-excursion
-                       (select-full-word-with-dots)
-                       (buffer-substring-no-properties (region-beginning) (region-end)))))
-           (_ (message "Symbol is: '%s'" symbol))
-           (body
-            (format "
+  (let* ((session-name (ob-python-extras/org-babel-get-session))
+         (session-buffer (get-buffer (format "*%s*" session-name)))
+         (python-process (when session-buffer
+                           (get-buffer-process session-buffer)))
+         (symbol (save-excursion
+                   (select-full-word-with-dots)
+                   (buffer-substring-no-properties (region-beginning) (region-end))))
+         (help-command (format "
 import sys
 from io import StringIO
-sys.path.append(\"%s\")
-import pymockbabel
-pymockbabel.EXTRAS_DO_REPLACEMENTS = False
-
-# Capture help output
 help_output = StringIO()
 sys.stdout = help_output
 help(%s)
-# this still doesn't work ideally, it can get evaluated on the value of passed object,
-# which is a problem for pd.options.display.max_rows
-# it gets evaluated onthe int, not on the pandas option
 sys.stdout = sys.__stdout__
 print(help_output.getvalue())
+" symbol))
+         ;;  TODO Maybe look at eldoc at point in python.el ?
+         (output (when (and session-buffer python-process symbol)
+                   (python-shell-send-string-no-output help-command python-process))))
+    
+    (when output
+      (with-current-buffer (get-buffer-create "*Python Help*")
+        (erase-buffer)
+        (insert output)
+        (goto-char (point-min))
+        (while (re-search-forward "\\(.\\)\b\\1" nil t)
+          (replace-match "\\1"))
+        (pop-to-buffer (current-buffer))))))
 
-pymockbabel.EXTRAS_DO_REPLACEMENTS = True
-"(ob-python-extras/find-python-scripts-dir) symbol))
-           (_ (message "Python body: %s" body))
-           (result nil)
-           (temp-start nil))
-      ;; Find current source block end
-      (unwind-protect
-          (progn
-            (org-babel-where-is-src-block-head)
-            (search-forward "#+end_src")
-            (forward-line)
-            (setq temp-start (point))
-            (insert (format "#+begin_src python :async no :results none :timer-show no\n%s\n#+end_src\n" body))
-            (forward-line -1)
-            (setq result (org-babel-execute-src-block)))
-        (delete-region temp-start (save-excursion
-                                    (goto-char temp-start)
-                                    (search-forward "#+end_src")
-                                    (forward-line)
-                                    (point)))
-        (with-current-buffer (get-buffer-create "*Python Help*")
-          (erase-buffer)
-          (insert result)
-          (goto-char (point-min))
-
-          (while (re-search-forward "\\(.\\)\b\\1" nil t)
-            (replace-match "\\1"))
-          (pop-to-buffer (current-buffer)))))))
 
 (defun ob-python-extras/goto-definition-dispatcher ()
   "Dispatches to the python one to not overwrite workin +lookup/definition in elisp blocks."
@@ -655,50 +632,36 @@ pymockbabel.EXTRAS_DO_REPLACEMENTS = True
 
 (defun ob-python-extras/python-goto-definition ()
   (interactive)
+  (when (and (org-in-src-block-p)
+             (string= "python" (org-element-property :language (org-element-at-point))))
+    (let* ((session-name (ob-python-extras/org-babel-get-session))
+           (session-buffer (get-buffer (format "*%s*" session-name)))
+           (python-process (when session-buffer
+                             (get-buffer-process session-buffer)))
+           (symbol (save-excursion
+                     (select-full-word-with-dots)
 
-  (if (and (org-in-src-block-p)
-           (string= "python" (org-element-property :language (org-element-at-point))))
-      (save-excursion
-        (let* ((symbol (progn
-                         (select-full-word-with-dots)
-                         (buffer-substring-no-properties (region-beginning) (region-end))))
-               (body (format "
+                     (buffer-substring-no-properties (region-beginning) (region-end))
+
+                     ))
+           (definition-command (format "
 import sys
-sys.path.append(\"%s\")
 import inspect
 
 try:
-    import inspect
-
     if inspect.ismodule(%s):
         print(%s.__file__)
     else:
         print(inspect.getsourcefile(sys.modules[%s.__module__]))
 except Exception as e:
     print(f'Traceback: {str(e)}')"
+                                       symbol symbol symbol))
+           (output (when (and session-buffer python-process symbol)
+                     (python-shell-send-string-no-output definition-command python-process))))
+      
+      (when (and output (not (string-prefix-p "Traceback:" output)))
+        (find-file (string-trim output))))))
 
-                             (ob-python-extras/find-python-scripts-dir)
-                             symbol
-
-                             symbol
-                             symbol))
-               (temp-start nil))
-
-          (unwind-protect
-              (progn
-                (org-babel-where-is-src-block-head)
-                (search-forward "#+end_src")
-                (forward-line)
-                (setq temp-start (point))
-                (insert (format "#+begin_src python :async no :results none :timer-show no\n%s\n#+end_src\n" body)))
-            (setq output (string-trim (org-babel-execute-src-block)))
-
-            (delete-region temp-start (save-excursion
-                                        (forward-line 1)
-                                        (point))))
-
-          (unless (string-prefix-p "Traceback:" output)
-            (find-file output))))))
 
 ;;;; completion at point
 
