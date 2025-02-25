@@ -123,21 +123,21 @@
           (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
-exec_file = \"%s\"
+__exec_file = \"%s\"
 import time
 # since this can cause collisions if something else in the python script gets named datetime
-from datetime import datetime as org_babel_wrapper_datetime
-start = org_babel_wrapper_datetime.now()
+from datetime import datetime as __org_babel_wrapper_datetime
+__start = __org_babel_wrapper_datetime.now()
 try:
-    with open(exec_file, 'r') as file:
+    with open(__exec_file, 'r') as file:
         exec(compile(file.read(), '<org babel source block>', 'exec'))
 except:
     if %s:
         try:
-            from rich.console import Console as Rich_Console
-            from rich.traceback import Traceback as Rich_Traceback
-            rich_console = Rich_Console()
-            rich_console.print(Rich_Traceback(
+            from rich.console import Console as __Rich_Console
+            from rich.traceback import Traceback as __Rich_Traceback
+            rich_console = __Rich_Console()
+            rich_console.print(__Rich_Traceback(
                 show_locals=%s,
                 max_frames=%d,
                 extra_lines=%d,
@@ -151,16 +151,16 @@ except:
         print(traceback.format_exc())
 finally:
     if %s:
-        timerstring = \"%s\"
+        __timer_string = \"%s\"
         if %s:
-            print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start)).split('.')[0]}\")
+            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start)).split('.')[0]}\")
         else:
-            print(f\"{timerstring} {str((org_babel_wrapper_datetime.now() - start))}\")
+            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - start))}\")
     if %s:
-        print(f\"Last run at: {org_babel_wrapper_datetime.now()}\")
+        print(f\"Last run at: {__org_babel_wrapper_datetime.now()}\")
     import os
     try:
-        os.remove(exec_file)
+        os.remove(__exec_file)
     except:
         pass" exec-file
         (if use-rich "True" "False")
@@ -220,21 +220,26 @@ finally:
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
          (src-info (org-babel-get-src-block-info))
          (headers (nth 2 src-info))
-         (transparent-header (assoc :transparent headers)))
+         (transparent-header (assoc :transparent headers))
+         (max-lines (cdr (assoc :max-lines params)))
+         (max-lines (if (and (numberp max-lines) (> max-lines 0))
+                        max-lines
+                      
+                      "None")))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
-exec_file = \"%s\"
-pymockbabel_script_location = \"%s\"
+__exec_file = \"%s\"
+__pymock_babel_script_location = \"%s\"
 import os
 import sys
-sys.path.append(pymockbabel_script_location)
-import pymockbabel
-outputs_and_file_paths, output_types, list_writer = pymockbabel.setup(\"%s\"%s)
-with open(exec_file, 'r') as file:
+sys.path.append(__pymock_babel_script_location)
+import pymockbabel as __pymockbabel 
+__outputs_and_file_paths, __output_types, __list_writer = __pymockbabel.setup(\"%s\"%s)
+with open(__exec_file, 'r') as file:
     exec(compile(file.read(), '<org babel source block>', 'exec'))
-pymockbabel.display(outputs_and_file_paths, output_types, list_writer)
+__pymockbabel.display(__outputs_and_file_paths, __output_types, __list_writer, max_lines = %s)
 try:
-    os.remove(exec_file)
+    os.remove(__exec_file)
 except:
     pass "
                          exec-file
@@ -242,7 +247,11 @@ except:
                          (file-name-sans-extension (file-name-nondirectory buffer-file-name))
                          (concat ", transparent="
                                  (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
-                                   (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False"))))))
+                                   (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False")))
+
+                         max-lines
+
+                         )))
       (apply orig body params args))))
 
 
@@ -251,6 +260,7 @@ except:
             :around #'ob-python-extras/wrap-org-babel-execute-python-mock-plt
             '((depth . -5)))
 
+;; TODO Refactor these advice so that there is a single one!
 
 
 ;;;;;; Image Garbage collection
@@ -301,14 +311,14 @@ except:
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
-exec_file = \"%s\"
-pymockbabel_script_location = \"%s\"
+__exec_file = \"%s\"
+__pymockbabel_script_location = \"%s\"
 import sys
-sys.path.append(pymockbabel_script_location)
-import print_org_df
-print_org_df.enable()
-with open(exec_file, 'r') as file:
-     exec(compile(file.read(), '<org babel source block>', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
+sys.path.append(__pymockbabel_script_location)
+import print_org_df as __print_org_df
+__print_org_df.enable()
+with open(__exec_file, 'r') as file:
+     exec(compile(file.read(), '''<%s: org babel source block> ''', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
            (result (apply orig body args)))
       result)))
 
@@ -589,6 +599,33 @@ print(help_output.getvalue())
     
     (when output
       (with-current-buffer (get-buffer-create "*Python Help*")
+        (erase-buffer)
+        (insert output)
+        (goto-char (point-min))
+        (while (re-search-forward "\\(.\\)\b\\1" nil t)
+          (replace-match "\\1"))
+        (pop-to-buffer (current-buffer))))))
+
+(defun ob-python-extras/get-variables ()
+  (interactive)
+  (let* ((session-name (ob-python-extras/org-babel-get-session))
+         (session-buffer (get-buffer (format "*%s*" session-name)))
+         (python-process (when session-buffer
+                           (get-buffer-process session-buffer)))
+         
+         (help-command "
+user_vars = {name: value for name, value in globals().items()
+            if not (name.startswith('__') or 
+                   isinstance(value, type(__builtins__)) or
+                   isinstance(value, type))}
+for name, value in user_vars.items():
+    print(f\"{name}: {value}\")
+" )
+         (output (when (and session-buffer python-process)
+                   (python-shell-send-string-no-output help-command python-process))))
+    
+    (when output
+      (with-current-buffer (get-buffer-create "*Python Variables*")
         (erase-buffer)
         (insert output)
         (goto-char (point-min))

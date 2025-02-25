@@ -92,7 +92,7 @@ def setup(org_babel_file_name, transparent):
     return outputs_and_file_paths, output_types, list_writer
 
 
-def display(outputs_and_file_paths, output_types, list_writer):
+def display(outputs_and_file_paths, output_types, list_writer, max_lines=None):
     stop_capturing(list_writer)
     org_babel_output = []
     for item, item_type in zip(outputs_and_file_paths, output_types):
@@ -110,4 +110,8 @@ def display(outputs_and_file_paths, output_types, list_writer):
         elif item_type == "Image":
             org_babel_output.append(f"[[file:{item}]]")
 
-    print("\n".join(org_babel_output))
+    if max_lines:
+        print("\n".join(org_babel_output[:max_lines]))
+
+    else:
+        print("\n".join(org_babel_output))
