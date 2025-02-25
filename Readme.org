@@ -74,7 +74,7 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
   Similarly, this uses pythons inspect to find the path for the object at point, then travels there. Default bound to gd.
 
 - Completion at point
-  Gets completion at point via the python process corresponding to a cell, and feeds them into capf. (This one isn't that janky.)
+  Gets completion at point via the python process corresponding to a cell, and feeds them into capf.
 
 ** Variable Renamer Utility
 Tooling to safely rename variables in an org file across all python blocks that have valid python syntax. (python blocks with invalid syntax will be skipped.)
