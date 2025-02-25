@@ -2,6 +2,7 @@
 #! nix-shell -i python3 -p python3Packages.matplotlib
 
 import gc
+import hashlib
 import os
 import random
 import sys
@@ -112,6 +113,16 @@ def display(outputs_and_file_paths, output_types, list_writer, max_lines=None):
 
     if max_lines:
         print("\n".join(org_babel_output[:max_lines]))
+        if len(org_babel_output) > max_lines:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            random_hash = hashlib.md5(str(random.random()).encode()).hexdigest()[:8]
+            os.makedirs("logs/org_babel_logs/", exist_ok=True)
+            log_file = (
+                f"logs/org_babel_logs/org_babel_output_{timestamp}_{random_hash}.log"
+            )
+            with open(log_file, "w") as f:
+                f.write("\n".join(org_babel_output))
+            print(f"Output Truncated, see [[file:{log_file}][Log File]]")
 
     else:
         print("\n".join(org_babel_output))
