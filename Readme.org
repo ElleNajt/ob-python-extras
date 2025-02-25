@@ -111,13 +111,6 @@ https://github.com/karthink/org-src-context
            :files ("*.el" "python" "bashscripts")))
 #+end_src
 
-#+begin_src emacs-lisp :tangle yes
-(after! ob-python-extras
-  (ob-python-extras/map-suggested-keyindings))
-#+end_src
-
-#+RESULTS:
-
 
 * Setup:
 ** Keybindings:
@@ -125,7 +118,7 @@ https://github.com/karthink/org-src-context
 If you want my keybindings, run:
 
 #+begin_src emacs-lisp :tangle yes
-(ob-python-extras/map-suggested-keyindings)
+(ob-python-extras-load-keybindings)
 #+end_src
 
 ** Setting up gptel integrations

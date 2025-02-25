@@ -524,6 +524,13 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
   (let* ((this-file (locate-library "ob-python-extras"))
          (this-dir (file-name-directory this-file)))
     (load (expand-file-name "ob-python-extras-alerts" this-dir))))
+
+(defun ob-python-extras-load-keybindings ()
+  "Load alerts integrations for ob-python-extras."
+  (let* ((this-file (locate-library "ob-python-extras"))
+         (this-dir (file-name-directory this-file)))
+    (load (expand-file-name "ob-python-extras-keybindings" this-dir))))
+
 ;;; Auto formatting
 
 ;; TODO Get this to work in emacs batch

@@ -24,6 +24,7 @@
 (require 'org)
 
 (after! (evil org)
+
   (defun ob-python-extras/map-suggested-keyindings ()
     "Map suggested keybindings for ob-python."
     (interactive)
@@ -52,5 +53,6 @@
      :map org-mode-map
      [remap +lookup/documentation] #'ob-python-extras/help-dispatcher   )))
 
+(ob-python-extras/map-suggested-keyindings)
 (provide 'ob-python-extras-alerts-keybindings)
 ;;; ob-python-extras-alerts-keybindings.el ends here
