@@ -557,27 +557,6 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
 ;; this is incredibly jank but useful for getting help at point
 
 
-(defun select-full-word-with-dots ()
-  "Select current word including any dots and connected words before/after it."
-  (let ((bounds (bounds-of-thing-at-point 'symbol)))
-    (when bounds
-      ;; Go backward through dots
-      (goto-char (car bounds))
-      (while (and (> (point) (point-min))
-                  (save-excursion
-                    (backward-char)
-                    (looking-at "\\.")))
-        (backward-char)
-        (backward-sexp))
-      (set-mark (point))
-      ;; Go forward through dots
-      (goto-char (cdr bounds))
-      (while (and (< (point) (point-max))
-                  (looking-at "\\."))
-        (forward-char)
-        (forward-symbol 1)))))
-
-
 (defun ob-python-extras/help-dispatcher ()
   "Dispatches to the python one to not overwrite workin +lookup/definition in elisp blocks."
   (interactive)
@@ -594,9 +573,7 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
          (session-buffer (get-buffer (format "*%s*" session-name)))
          (python-process (when session-buffer
                            (get-buffer-process session-buffer)))
-         (symbol (save-excursion
-                   (select-full-word-with-dots)
-                   (buffer-substring-no-properties (region-beginning) (region-end))))
+         (symbol (python-info-current-symbol))
          (help-command (format "
 import sys
 from io import StringIO
@@ -638,12 +615,7 @@ print(help_output.getvalue())
            (session-buffer (get-buffer (format "*%s*" session-name)))
            (python-process (when session-buffer
                              (get-buffer-process session-buffer)))
-           (symbol (save-excursion
-                     (select-full-word-with-dots)
-
-                     (buffer-substring-no-properties (region-beginning) (region-end))
-
-                     ))
+           (symbol (python-info-current-symbol))
            (definition-command (format "
 import sys
 import inspect
