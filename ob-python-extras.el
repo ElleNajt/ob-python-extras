@@ -155,7 +155,7 @@ finally:
         if %s:
             print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start)).split('.')[0]}\")
         else:
-            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - start))}\")
+            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start))}\")
     if %s:
         print(f\"Last run at: {__org_babel_wrapper_datetime.now()}\")
     import os
