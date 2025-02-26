@@ -79,7 +79,10 @@ get_emacs_args() {
   (setq python-shell-completion-native-enable nil)
   (with-current-buffer (find-file-noselect \"$target_file\")
     (message \"Executing %s...\" \"$target_file\")
-    (org-babel-execute-buffer)
+    (org-babel-map-src-blocks nil
+      (when-let ((name (nth 4 (org-babel-get-src-block-info))))
+        (message \"Evaluating block: %s\" name)
+        (org-babel-execute-src-block)))
     (save-buffer))
     (kill-emacs))" \
 "$target_file"
