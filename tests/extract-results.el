@@ -48,7 +48,7 @@
     (let ((segments nil)
           (counter 1))
       (dolist (line (split-string result-string "\n"))
-        (unless (string-prefix-p "%expect_skip" line)
+        (unless (string-prefix-p "expect_skip" line)
           (if (string-match "\\[\\[file:\\(.*\\.png\\)\\]\\]" line)
               (push (cons (format "L%d_png" counter) (match-string 1 line)) segments)
             (push (cons (format "L%d_text" counter) line) segments))
