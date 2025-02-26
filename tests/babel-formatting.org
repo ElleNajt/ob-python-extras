@@ -41,7 +41,7 @@ Set :timer-rounded to no to get the full timer.
 (Also modifying the timer string here so that my expect tests will skip it.)
 
 #+name: not_rounded_timer
-#+begin_src python :timer-rounded no :timer-string %expect_skip Cell Timer:
+#+begin_src python :timer-rounded no :timer-string expect_skip Cell Timer:
 print(1)
 #+end_src
 
