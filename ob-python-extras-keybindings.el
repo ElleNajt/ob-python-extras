@@ -44,6 +44,7 @@
       (kbd "SPC f I") #'org-display-inline-images
       (kbd "C-c C-c") #'org-dispatch-C-c-C-c
       (kbd "SPC o s") #'ob-python-extras/open-session-buffer
+      (kbd "SPC o v") #'ob-python-extras/get-variables 
       (kbd "SPC o g f") 'ob-python-extras/gptel-fix-block
       (kbd "SPC o g s") 'ob-python-extras/send-block-to-gptel
       (kbd "SPC o g p") 'ob-python-extras/patch-gptel-blocks

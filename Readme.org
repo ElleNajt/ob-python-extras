@@ -86,6 +86,7 @@ print("...tada!")
 - Capturing tracebacks in the results (with the option to use rich tracebacks via :errors "rich no-locals frames 3 extra 5")
 - Alerts on long running cells, using libnotify for system alerts and pop ups inside of doom
 - Open the session in another buffer (Keybindings bind it to SPC o s)
+- Variable inspector (Keybindings bind it to SPC o v)
 - Limit output with :max-lines (POSITIVE-INTEGER) -- useful because very long output can crash org babel, so it's useful to set this to :max-lines 1000 or similar and just inspect the shell (easily accessible with SPC o s).
 
 ** Bare bones LSP features :ATTACH:
@@ -157,6 +158,8 @@ If you want my keybindings, run:
 #+begin_src emacs-lisp :tangle yes
 (ob-python-extras-load-keybindings)
 #+end_src
+
+No keybindings are set otherwise, to prevent conflicts with users configs.
 
 ** Setting up gptel integrations
 
