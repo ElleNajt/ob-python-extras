@@ -600,6 +600,8 @@ help(%s)
 sys.stdout = sys.__stdout__
 print(__help_output.getvalue())
 " symbol))
+         ;; it would be better if I could get the *path* to the documentation
+         ;; and open in a buffer with less
          ;;  TODO Maybe look at eldoc at point in python.el ?
          (output (when (and session-buffer python-process symbol)
                    (python-shell-send-string-no-output help-command python-process))))
@@ -736,55 +738,55 @@ except Exception as e:
 
 (defun my/wrap-python-html-capture (orig body &rest args)
   (let ((wrapped-body (format "
-import sys
 import re
+import subprocess
 from IPython.display import HTML
-_original_stdout = sys.stdout
 
-def is_likely_html(text):
+def __is_likely_html(text):
     patterns = [
         r'<table.*?</table>',
         r'<div.*?</div>',
         r'<p>.*?</p>',
         r'<h[1-3]>.*?</h[1-3]>',
-        r'<img\s+[^>]+>'  # img is self-closing
+        r'<img\s+[^>]+>'
     ]
     return any(re.search(pattern, text, re.DOTALL | re.IGNORECASE) for pattern in patterns)
 
-class HTMLCapture:
-    def write(self, text):
-        try:
-            if is_likely_html(text):
-                import subprocess
-                proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org', 
-                                      '--extract-media=plots/html_outputs'],
-                                     stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE)
-                org_output, _ = proc.communicate(text.encode())
-                org_text = org_output.decode()
-                
-                # Clean up the output
-                cleaned_lines = []
-                for line in org_text.splitlines():
-                    if not any(x in line for x in [':PROPERTIES:', ':CUSTOM_ID:', ':END:']):
-                        if line.startswith('*'):
-                            stars_count = len(line) - len(line.lstrip('*'))
-                            # Only transform if it's actually a header
-                            if line[stars_count] == ' ':
-                                line = ('-' * stars_count) + line[stars_count:]
-                        cleaned_lines.append(line)
-                
-                _original_stdout.write('\\n'.join(cleaned_lines))
-            else:
-                _original_stdout.write(text)
-        except:
-            _original_stdout.write(text)
+__original_print = print
 
-sys.stdout = HTMLCapture()
+def __smart_print(*args, **kwargs):
+    text = ' '.join(str(arg) for arg in args)
+    try:
+        if __is_likely_html(text):
+            proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org',
+                                  '--extract-media=plots/html_outputs'],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE)
+            org_output, _ = proc.communicate(text.encode())
+            org_text = org_output.decode()
+            
+            # Clean up the output
+            cleaned_lines = []
+            for line in org_text.splitlines():
+                if not any(x in line for x in [':PROPERTIES:', ':CUSTOM_ID:', ':END:']):
+                    if line.startswith('*'):
+                        stars_count = len(line) - len(line.lstrip('*'))
+                        if line[stars_count] == ' ':
+                            line = ('-' * stars_count) + line[stars_count:]
+                    cleaned_lines.append(\"DF_FLAG:\" + line)
+                    # TODO find a better solution than this flag
+            
+            __original_print('\\n'.join(cleaned_lines), **kwargs)
+        else:
+            __original_print(*args, **kwargs)
+    except:
+        __original_print(*args, **kwargs)
+
+print = __smart_print
 
 %s
 
-sys.stdout = _original_stdout" body)))
+print = __original_print" body)))
     (apply orig wrapped-body args)))
 
 (advice-add 'org-babel-execute:python :around #'my/wrap-python-html-capture)
