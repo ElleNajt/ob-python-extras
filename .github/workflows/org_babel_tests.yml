@@ -43,9 +43,9 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
 
-
     - name: Run Tests
       shell: bash
+      timeout-minutes: 10
       run: |
         cd tests
         ./run_expect_tests.sh
