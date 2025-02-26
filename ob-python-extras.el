@@ -767,8 +767,11 @@ class HTMLCapture:
                 cleaned_lines = []
                 for line in org_text.splitlines():
                     if not any(x in line for x in [':PROPERTIES:', ':CUSTOM_ID:', ':END:']):
-                        if line.startswith('* '):
-                            line = '- ' + line[2:]
+                        if line.startswith('*'):
+                            stars_count = len(line) - len(line.lstrip('*'))
+                            # Only transform if it's actually a header
+                            if line[stars_count] == ' ':
+                                line = ('-' * stars_count) + line[stars_count:]
                         cleaned_lines.append(line)
                 
                 _original_stdout.write('\\n'.join(cleaned_lines))
