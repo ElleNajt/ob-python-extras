@@ -129,8 +129,8 @@ import time
 from datetime import datetime as __org_babel_wrapper_datetime
 __start = __org_babel_wrapper_datetime.now()
 try:
-    with open(__exec_file, 'r') as file:
-        exec(compile(file.read(), '<org babel source block>', 'exec'))
+    with open(__exec_file, 'r') as __file:
+        exec(compile(__file.read(), '<org babel source block>', 'exec'))
 except:
     if %s:
         try:
@@ -235,8 +235,8 @@ import sys
 sys.path.append(__pymock_babel_script_location)
 import pymockbabel as __pymockbabel 
 __outputs_and_file_paths, __output_types, __list_writer = __pymockbabel.setup(\"%s\"%s)
-with open(__exec_file, 'r') as file:
-    exec(compile(file.read(), '<org babel source block>', 'exec'))
+with open(__exec_file, 'r') as __file:
+    exec(compile(__file.read(), '<org babel source block>', 'exec'))
 __pymockbabel.display(__outputs_and_file_paths, __output_types, __list_writer, max_lines = %s)
 try:
     os.remove(__exec_file)
@@ -317,8 +317,8 @@ import sys
 sys.path.append(__pymockbabel_script_location)
 import print_org_df as __print_org_df
 __print_org_df.enable()
-with open(__exec_file, 'r') as file:
-     exec(compile(file.read(), '''<%s: org babel source block> ''', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
+with open(__exec_file, 'r') as __file:
+     exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
            (result (apply orig body args)))
       result)))
 
@@ -594,11 +594,11 @@ Creates a temporary buffer, sets python-mode, applies formatting, and copies bac
          (help-command (format "
 import sys
 from io import StringIO
-help_output = StringIO()
-sys.stdout = help_output
+__help_output = StringIO()
+sys.stdout = __help_output
 help(%s)
 sys.stdout = sys.__stdout__
-print(help_output.getvalue())
+print(__help_output.getvalue())
 " symbol))
          ;;  TODO Maybe look at eldoc at point in python.el ?
          (output (when (and session-buffer python-process symbol)
@@ -621,12 +621,12 @@ print(help_output.getvalue())
                            (get-buffer-process session-buffer)))
          
          (help-command "
-user_vars = {name: value for name, value in globals().items()
+__user_vars = {name: value for name, value in globals().items()
             if not (name.startswith('__') or 
                    isinstance(value, type(__builtins__)) or
                    isinstance(value, type))}
-for name, value in user_vars.items():
-    print(f\"{name}: {value}\")
+for __name, __value in __user_vars.items():
+    print(f\"{__name}: {__value}\")
 " )
          (output (when (and session-buffer python-process)
                    (python-shell-send-string-no-output help-command python-process))))
