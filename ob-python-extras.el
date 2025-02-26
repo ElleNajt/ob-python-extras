@@ -737,17 +737,24 @@ except Exception as e:
 (defun my/wrap-python-html-capture (orig body &rest args)
   (let ((wrapped-body (format "
 import sys
-from bs4 import BeautifulSoup
+import re
 from IPython.display import HTML
 _original_stdout = sys.stdout
+
+def is_likely_html(text):
+    patterns = [
+        r'<table.*?</table>',
+        r'<div.*?</div>',
+        r'<p>.*?</p>',
+        r'<h[1-3]>.*?</h[1-3]>',
+        r'<img\s+[^>]+>'  # img is self-closing
+    ]
+    return any(re.search(pattern, text, re.DOTALL | re.IGNORECASE) for pattern in patterns)
 
 class HTMLCapture:
     def write(self, text):
         try:
-            # Try to parse as HTML
-            soup = BeautifulSoup(text, 'html.parser')
-            if soup.find(['table', 'div', 'p', 'h1', 'h2', 'h3', 'img']):
-                # It's likely HTML, process with pandoc
+            if is_likely_html(text):
                 import subprocess
                 proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org', 
                                       '--extract-media=./plots/html_outputs'],
