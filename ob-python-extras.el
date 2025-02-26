@@ -757,7 +757,7 @@ class HTMLCapture:
             if is_likely_html(text):
                 import subprocess
                 proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org', 
-                                      '--extract-media=./plots/html_outputs'],
+                                      '--extract-media=plots/html_outputs'],
                                      stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
                 org_output, _ = proc.communicate(text.encode())

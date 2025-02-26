@@ -1,0 +1,20 @@
+{
+  "L1_text": ":results:",
+  "L2_text": "- Data Analysis Results",
+  "L3_text": "Here's a sample of our trigonometric functions:",
+  "L4_text": "",
+  "L5_text": "|   |       x |      sin |      cos |",
+  "L6_text": "|---+---------+----------+----------|",
+  "L7_text": "| 0 | 0.00000 | 0.000000 | 1.000000 |",
+  "L8_text": "| 1 | 0.10101 | 0.100838 | 0.994903 |",
+  "L9_text": "| 2 | 0.20202 | 0.200649 | 0.979663 |",
+  "L10_text": "| 3 | 0.30303 | 0.298414 | 0.954437 |",
+  "L11_text": "| 4 | 0.40404 | 0.393137 | 0.919480 |",
+  "L12_text": "",
+  "L13_text": "*Visualization:*",
+  "L14_text": "",
+  "L15_png": "plots/html_outputs/0ad12f4435751e2babc79ffce8a9f268a845ccad.png",
+  "L16_text": "",
+  "L17_text": "/Figure 1: First few periods of sine and cosine waves/",
+  "L18_text": ":end:"
+}

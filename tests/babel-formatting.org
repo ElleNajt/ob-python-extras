@@ -202,3 +202,72 @@ I also have it configured to send an alert for any cell that takes more than 10 
 
 This parses the cell timer, so requires it to be enabled for that part to be on to work.
 ** TODO Change the cell timer display to leave it up for the parsing and delete the timer afterwards.
+* HTML formatting
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session HTML_formatting :timer-show no
+:END:
+
+
+#+name: converting_html_with_images_and_table
+#+begin_src python :results output
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
+
+# Create sample data
+df = pd.DataFrame(
+    {
+        "x": np.linspace(0, 10, 100),
+        "sin": np.sin(np.linspace(0, 10, 100)),
+        "cos": np.cos(np.linspace(0, 10, 100)),
+    }
+)
+
+# Create matplotlib plot
+plt.figure(figsize=(8, 4))
+plt.plot(df["x"][:20], df["sin"][:20], label="sin")
+plt.plot(df["x"][:20], df["cos"][:20], label="cos")
+plt.legend()
+plt.title("Sine and Cosine Waves")
+
+# Convert plot to base64
+buf = BytesIO()
+plt.savefig(buf, format="png")
+plt.close()
+img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+# Create HTML with table and image
+html = f"""
+<h1>Data Analysis Results</h1>
+<p>Here's a sample of our trigonometric functions:</p>
+{df.head().to_html(classes='dataframe')}
+<p><b>Visualization:</b></p>
+<img src="data:image/png;base64,{img_base64}"/>
+<p><i>Figure 1: First few periods of sine and cosine waves</i></p>
+"""
+
+print(html)
+#+end_src
+
+#+RESULTS: converting_html_with_images_and_table
+:results:
+/home/elle/code/ob-python-extras/tests/plots/html_outputs
+- Data Analysis Results
+Here's a sample of our trigonometric functions:
+
+|   |       x |      sin |      cos |
+|---+---------+----------+----------|
+| 0 | 0.00000 | 0.000000 | 1.000000 |
+| 1 | 0.10101 | 0.100838 | 0.994903 |
+| 2 | 0.20202 | 0.200649 | 0.979663 |
+| 3 | 0.30303 | 0.298414 | 0.954437 |
+| 4 | 0.40404 | 0.393137 | 0.919480 |
+
+*Visualization:*
+
+[[/home/elle/code/ob-python-extras/tests/plots/html_outputs/0ad12f4435751e2babc79ffce8a9f268a845ccad.png]]
+
+/Figure 1: First few periods of sine and cosine waves/
+:end:
