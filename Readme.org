@@ -38,6 +38,44 @@ print("...tada!")
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
 [[file:plots/Readme/plot_20241208_122132_1950748.png]]
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 ...tada!
 :end:
 
@@ -50,18 +88,26 @@ print("...tada!")
 - Open the session in another buffer (Keybindings bind it to SPC o s)
 - Limit output with :max-lines (POSITIVE-INTEGER) -- useful because very long output can crash org babel, so it's useful to set this to :max-lines 1000 or similar and just inspect the shell (easily accessible with SPC o s).
 
-** Bare bones LSP features
+** Bare bones LSP features :ATTACH:
+:PROPERTIES:
+:ID:       43ad407a-3046-4fe7-8b0a-ce2b9113cb9e
+:END:
 
 - ob-python-extras/python-help-clean
 
 This calls the python REPL's help on the current symbol (obtained from (python-info-current-symbol)). The defaults bind it to K (lookup/documentation)
 
+
+[[file:images/org-download/Overview:/_20250225_190929screenshot.png]]
 - ob-python-extras/goto-definition
 
   Similarly, this uses pythons inspect to find the path for the object at point, then travels there. Default bound to gd.
 
 - Completion at point
+
   Gets completion at point via the python process corresponding to a cell, and feeds them into capf.
+  
+  [[file:images/org-download/Overview:/_20250225_190659screenshot.png]]
 
 ** Gptel integrations:
 - Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
@@ -203,6 +249,9 @@ In my personal config I use the following keybindings as well, based on a vendor
 ** Emacs jupyter
 https://github.com/emacs-jupyter/jupyter
 This package provides some overlapping functionality, and as far as I understand it does it by connecting to jupyter kernels and providing a front end in org mode for the kernel. I have not used this myself yet. It may ultimately make more sense for this project to be refactored to extend emacs-jupyter instead of ob-python, e.g. by adding the gptel integrations or other features that emacs-jupyter lacks.
+
+On the other hand, getting emacs-jupyter set up seems difficult to many people, including me, so having a simpler package that makes python babel cells more powerful is also useful.
+
 *** Scimax also uses emacs jupyter
 ** ob-ipython
 ** EIN
