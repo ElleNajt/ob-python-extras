@@ -731,5 +731,30 @@ except Exception as e:
       (shell-command python-command)
       (revert-buffer nil t))))
 
+;;; html conversion
+;; support for automatically converting html output via pandoc
+
+(defun my/html-to-org (html-string)
+  (with-temp-buffer
+    (insert html-string)
+    (shell-command-on-region (point-min) (point-max)
+                             "pandoc -f html -t org --extract-media=./plots/html_outputs"
+                             nil t)
+    ;; Clean up the output
+    ;; Otherwise interferes with output drawers and org formatting
+    (goto-char (point-min))
+    (delete-matching-lines ":PROPERTIES:\\|:CUSTOM_ID:\\|:END:")
+    (while (re-search-forward "^\\* " nil t)
+      (replace-match "- "))
+    (buffer-string)))
+
+(advice-add 'org-babel-execute:python :filter-return
+            (lambda (result)
+              (if (and (stringp result)
+                       (string-match-p "<[^>]+>" result))
+                  (my/html-to-org result)
+                result)))
+
+
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here

@@ -113,6 +113,8 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
 ** Gptel integrations:
 - Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
 - Ability to trigger this automatically when a cell fails.
+** HTML Output conversion
+Uses pandoc to convert HTML output into org, with some clean up to prevent it from breaking output drawer results block formatting.
 
 ** Variable Renamer Utility
 Tooling to safely rename variables in an org file across all python blocks that have valid python syntax. (python blocks with invalid syntax will be skipped.)
