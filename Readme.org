@@ -50,20 +50,6 @@ print("...tada!")
 - Open the session in another buffer (Keybindings bind it to SPC o s)
 - Limit output with :max-lines (POSITIVE-INTEGER) -- useful because very long output can crash org babel, so it's useful to set this to :max-lines 1000 or similar and just inspect the shell (easily accessible with SPC o s).
 
-** Gptel integrations:
-- Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
-- Ability to trigger this automatically when a cell fails.
-** Pandoc scripts:
-Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.
-
-These commands are intended to be called from dired buffers.
-
-- =run-ipynb-to-org-conversion-script= :: Convert all .ipynb files in current directory to .org (removes various artifacts that pandoc creates also, cleaning can be disabled by removing the -c flag)
-- =run-ipynb-to-org-conversion-script-recursively= :: Convert all .ipynb files in current directory and subdirectories to .org
-- =run-org-to-ipynb-conversion-script= :: Convert all .org files in current directory to .ipynb
-
-
-Also includes a git precommit hook that's useful for automatically converting org to ipynb.
 ** Bare bones LSP features
 
 - ob-python-extras/python-help-clean
@@ -77,6 +63,10 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
 - Completion at point
   Gets completion at point via the python process corresponding to a cell, and feeds them into capf.
 
+** Gptel integrations:
+- Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
+- Ability to trigger this automatically when a cell fails.
+
 ** Variable Renamer Utility
 Tooling to safely rename variables in an org file across all python blocks that have valid python syntax. (python blocks with invalid syntax will be skipped.)
 
@@ -84,17 +74,18 @@ To use, create a renamer.json in the same folder as your .org file, mark both wi
 
 By default this runs a python via "nix-shell --pure -p black --run 'python ...'" , set the variable alternative-python-binary to a different python binary if not using nix.
 
-** Eglot integration in org edit special
 
-- Special mode inherits the same python interpreter as specified for the cell, giving access to documentation and completion. (Requires eglot.)
-  Activate with
+** Pandoc scripts:
+Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.
 
-  #+begin_src emacs-lisp :tangle yes
-(ob-python-extras/add-org-edit-special-advice)
-  #+end_src
+These commands are intended to be called from dired buffers.
 
-*** TODO Probably this is better:
-https://github.com/karthink/org-src-context
+- =run-ipynb-to-org-conversion-script= :: Convert all .ipynb files in current directory to .org (removes various artifacts that pandoc creates also, cleaning can be disabled by removing the -c flag)
+- =run-ipynb-to-org-conversion-script-recursively= :: Convert all .ipynb files in current directory and subdirectories to .org
+- =run-org-to-ipynb-conversion-script= :: Convert all .org files in current directory to .ipynb
+
+
+Also includes a git precommit hook that's useful for automatically converting org to ipynb.
 
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
