@@ -5,7 +5,6 @@ let
     with ps; [
       pandas
       numpy
-      jupyter-lab
       scikit-learn
       ipdb
       matplotlib
