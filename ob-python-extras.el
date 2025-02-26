@@ -734,26 +734,50 @@ except Exception as e:
 ;;; html conversion
 ;; support for automatically converting html output via pandoc
 
-(defun my/html-to-org (html-string)
-  (with-temp-buffer
-    (insert html-string)
-    (shell-command-on-region (point-min) (point-max)
-                             "pandoc -f html -t org --extract-media=./plots/html_outputs"
-                             nil t)
-    ;; Clean up the output
-    ;; Otherwise interferes with output drawers and org formatting
-    (goto-char (point-min))
-    (delete-matching-lines ":PROPERTIES:\\|:CUSTOM_ID:\\|:END:")
-    (while (re-search-forward "^\\* " nil t)
-      (replace-match "- "))
-    (buffer-string)))
+(defun my/wrap-python-html-capture (orig body &rest args)
+  (let ((wrapped-body (format "
+import sys
+from bs4 import BeautifulSoup
+from IPython.display import HTML
+_original_stdout = sys.stdout
 
-(advice-add 'org-babel-execute:python :filter-return
-            (lambda (result)
-              (if (and (stringp result)
-                       (string-match-p "<[^>]+>" result))
-                  (my/html-to-org result)
-                result)))
+class HTMLCapture:
+    def write(self, text):
+        try:
+            # Try to parse as HTML
+            soup = BeautifulSoup(text, 'html.parser')
+            if soup.find(['table', 'div', 'p', 'h1', 'h2', 'h3', 'img']):
+                # It's likely HTML, process with pandoc
+                import subprocess
+                proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org', 
+                                      '--extract-media=./plots/html_outputs'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+                org_output, _ = proc.communicate(text.encode())
+                org_text = org_output.decode()
+                
+                # Clean up the output
+                cleaned_lines = []
+                for line in org_text.splitlines():
+                    if not any(x in line for x in [':PROPERTIES:', ':CUSTOM_ID:', ':END:']):
+                        if line.startswith('* '):
+                            line = '- ' + line[2:]
+                        cleaned_lines.append(line)
+                
+                _original_stdout.write('\\n'.join(cleaned_lines))
+            else:
+                _original_stdout.write(text)
+        except:
+            _original_stdout.write(text)
+
+sys.stdout = HTMLCapture()
+
+%s
+
+sys.stdout = _original_stdout" body)))
+    (apply orig wrapped-body args)))
+
+(advice-add 'org-babel-execute:python :around #'my/wrap-python-html-capture)
 
 
 (provide 'ob-python-extras)
