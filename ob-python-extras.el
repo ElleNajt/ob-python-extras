@@ -791,6 +791,65 @@ print = __original_print" body)))
 
 (advice-add 'org-babel-execute:python :around #'my/wrap-python-html-capture)
 
+;;; Run org notebook in new emacs process
+
+
+;; This handles async blocks by counting each time the results are updated
+;; So 2 updates for each async block, and 1 for each sync block in the org file.
+(defun ob-python-extras--count-org-blocks ()
+  (interactive)
+  "Count sync and async babel blocks in current buffer."
+  (let ((block-count 0)
+        (async-count 0))
+    (org-babel-map-src-blocks nil 
+      (let ((async (cdr (assq :async (nth 2 (org-babel-get-src-block-info))))))
+        (if (string= async "yes")
+            (progn 
+              (setq async-count (1+ async-count))
+              (message "Found async block - total async: %d" async-count))
+          (progn
+            (setq block-count (1+ block-count))
+            (message "Found sync block - total sync: %d" block-count)))))
+    (message "Found %d sync blocks and %d async blocks" block-count async-count)
+    (cons block-count async-count)))
+
+
+(defun ob-python-extras--run-org-file-externally ()
+  "Run marked org file in separate Emacs process with full config and notify when done."
+  (interactive)
+  (let ((files (dired-get-marked-files t current-prefix-arg)))
+    (revert-buffer)
+    (dolist (file files)
+      (when (string-match "\\.org$" file)
+        (let ((process-name (format "org-export-%s" (file-name-base file))))
+          (message "Starting export of %s..." file)
+          (start-process
+           process-name "*org-export*"
+           "emacs" "--eval" 
+           (format "(progn 
+                     (find-file \"%s\")
+                     (let* ((counts (ob-python-extras--count-org-blocks))
+                            (block-count (car counts))
+                            (async-count (cdr counts))
+                            (expected-completions (+ block-count (* 2 async-count)))
+                            (blocks-completed 0))
+                       (message \"Expecting %%d completions (%%d sync + %%d async x2)\" 
+                               expected-completions block-count async-count)
+                       (advice-add 'org-babel-insert-result :after
+                                (lambda (&rest args) 
+                                  (setq blocks-completed (1+ blocks-completed))
+                                  (message \"Block completed %%d/%%d (args: %%S)\" 
+                                          blocks-completed expected-completions args)
+                                  (when (= blocks-completed expected-completions)
+                                    (save-buffer)
+                                    (message \"Export complete\")
+                                    (kill-emacs 0))))
+                       (org-babel-execute-buffer)))" file))
+          (set-process-sentinel
+           (get-process process-name)
+           (lambda (process event)
+             (when (string= event "finished\n")
+               (alert (format "Finished processing %s" file))))))))))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
