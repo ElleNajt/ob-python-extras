@@ -99,7 +99,6 @@ print("...tada!")
 
 This calls the python REPL's help on the current symbol (obtained from (python-info-current-symbol)). The defaults bind it to K (lookup/documentation)
 
-
 [[file:images/org-download/Overview:/_20250225_190929screenshot.png]]
 - ob-python-extras/goto-definition
 
@@ -112,8 +111,8 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
   [[file:images/org-download/Overview:/_20250225_190659screenshot.png]]
 
 ** Gptel integrations:
-- Functions to send a block and the results (e.g. the traceback) to a gptel buffer, get a patch, view the diff, and optionally apply it.
-- Ability to trigger this automatically when a cell fails.
+This was moved into ElleNajt/gpt-babel to handle more soruce blocks than just python.
+
 ** HTML Output conversion
 Uses pandoc to convert HTML output into org, with some clean up to prevent it from breaking output drawer results block formatting.
 
@@ -123,7 +122,6 @@ Tooling to safely rename variables in an org file across all python blocks that 
 To use, create a renamer.json in the same folder as your .org file, mark both with dired, and then run ob-python-extras/dired-rename-python-vars.
 
 By default this runs a python via "nix-shell --pure -p black --run 'python ...'" , set the variable alternative-python-binary to a different python binary if not using nix.
-
 
 ** Pandoc scripts:
 Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.
@@ -140,7 +138,7 @@ Also includes a git precommit hook that's useful for automatically converting or
 * Dependencies
 - Python packages: Rich, tabulate (optional, but recommended), matplotlib
 - System: Libnotify (for alerts), Pandoc (For conversions)
-- Emacs: Gptel (For the gptel extensions), Doom (for now required for alerts), Eglot (for lsp integrations), Dired (For the conversion scripts)
+- Emacs: Doom (for now required for alerts), Eglot (for lsp integrations), Dired (For the conversion scripts)
 
 * Installation
 ** With straight.el
@@ -163,35 +161,6 @@ If you want my keybindings, run:
 #+end_src
 
 No keybindings are set otherwise, to prevent conflicts with users configs.
-
-** Setting up gptel integrations
-
-#+begin_src emacs-lisp :tangle yes
-(after! ob-python-extras
-(ob-python-extras-load-gptel-integration))
-#+end_src
-
-This requires gptel-default-mode to be set to org-mode to work, since it expects an org block in the response.
-
-#+begin_src emacs-lisp :tangle yes
-(gptel-default-mode 'org-mode)
-#+end_src
-
-The conversation happens in the *CELL ERRORS* buffer.
-
-| Key         | Command               | Description                             |
-|-------------+-----------------------+-----------------------------------------|
-| ~SPC o c s~ | ~send-block-to-gptel~ | Send block to GPTel, and ask for a fix. |
-| ~SPC o c p~ | ~patch-gptel-blocks~  | Apply the fix                           |
-| ~SPC o c f~ | ~gptel-fix-block~     | Do the two things at once               |
-
-If you set:
-
-#+begin_src emacs-lisp :tangle yes
-(setq ob-python-extras/auto-send-on-traceback t)
-#+end_src
-
-Then blocks will be sent automatically when a traceback is detected in the response. This can rack up a bill with API calls!
 
 ** Setting up alert integrations
 
@@ -254,7 +223,7 @@ In my personal config I use the following keybindings as well, based on a vendor
 * Related packages:
 ** Emacs jupyter
 https://github.com/emacs-jupyter/jupyter
-This package provides some overlapping functionality, and as far as I understand it does it by connecting to jupyter kernels and providing a front end in org mode for the kernel. I have not used this myself yet. It may ultimately make more sense for this project to be refactored to extend emacs-jupyter instead of ob-python, e.g. by adding the gptel integrations or other features that emacs-jupyter lacks.
+This package provides some overlapping functionality, and as far as I understand it does it by connecting to jupyter kernels and providing a front end in org mode for the kernel. I have not used this myself yet.
 
 On the other hand, getting emacs-jupyter set up seems difficult to many people, including me, so having a simpler package that makes python babel cells more powerful is also useful.
 

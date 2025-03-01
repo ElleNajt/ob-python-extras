@@ -373,10 +373,7 @@ with open(__exec_file, 'r') as __file:
         ()))
     ())
 
-  (if (and (fboundp 'ob-python-extras/send-block-to-gptel) ob-python-extras/auto-send-on-traceback)
-      (if (ob-python-extras/check-traceback)
-          (ob-python-extras/send-block-to-gptel) ())
-    ())
+  
   (org-display-inline-images))
 
 
@@ -421,7 +418,6 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
       (ob-python-extras/insert-new-src-block)
     (funcall orig direction)))
 
-(setq ob-python-extras/auto-send-on-traceback t)
 
 (defun ob-python-extras/split-block ()
   "split block -- org-babel-demarcate-block does not work"
@@ -521,9 +517,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
 (defun ob-python-extras-load-gptel-integration ()
   "Load gptel integrations for ob-python-extras."
-  (let* ((this-file (locate-library "ob-python-extras"))
-         (this-dir (file-name-directory this-file)))
-    (load (expand-file-name "ob-python-extras-gptel-integration" this-dir))))
+  (message "Deprecated! Use ElleNajt/gptel-babel now."))
 
 
 (defun ob-python-extras-load-alerts ()
