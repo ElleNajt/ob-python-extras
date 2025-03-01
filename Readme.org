@@ -83,11 +83,12 @@ print("...tada!")
 - Cell timers (configurable via :timer-show {yes/no})
 - Last run time (configurable via :last-executed {yes/no})
 - Cell interruption with C-c C-k
-- Capturing tracebacks in the results (with the option to use rich tracebacks via :errors "rich no-locals frames 3 extra 5")
+- Capturing tracebacks in the results (with the option to use rich tracebacks via header-args like :errors "rich no-locals frames 3 extra 5")
 - Alerts on long running cells, using libnotify for system alerts and pop ups inside of doom
 - Open the session in another buffer (Keybindings bind it to SPC o s)
 - Variable inspector (Keybindings bind it to SPC o v)
 - Limit output with :max-lines (POSITIVE-INTEGER) -- useful because very long output can crash org babel, so it's useful to set this to :max-lines 1000 or similar and just inspect the shell (easily accessible with SPC o s).
+- Print the last expressions result
 
 ** Bare bones LSP features :ATTACH:
 :PROPERTIES:

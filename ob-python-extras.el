@@ -130,7 +130,14 @@ from datetime import datetime as __org_babel_wrapper_datetime
 __start = __org_babel_wrapper_datetime.now()
 try:
     with open(__exec_file, 'r') as __file:
-        exec(compile(__file.read(), '<org babel source block>', 'exec'))
+        __lines = __file.readlines()
+        # split up evaluation so we can capture the output of the last line and print it
+        if len(__lines) > 1:
+            exec(compile(''.join(__lines[:-1]), '<org babel source block>', 'exec'))
+        if __lines:
+            __last_result = eval(compile(__lines[-1], '<org babel source block>', 'single'))
+            if __last_result is not None and (hasattr(__last_result, '__str__') or hasattr(__last_result, '__repr__')):
+                print(__last_result)
 except:
     if %s:
         try:
