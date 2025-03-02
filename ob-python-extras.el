@@ -129,22 +129,31 @@ import ast
 # since this can cause collisions if something else in the python script gets named datetime
 from datetime import datetime as __org_babel_wrapper_datetime
 __start = __org_babel_wrapper_datetime.now()
+with open(__exec_file, 'r') as __file:
+    __lines = __file.readlines()
+
+
+__all_but_last = ''.join(__lines[:-1])
 try:
-    with open(__exec_file, 'r') as __file:
-        __lines = __file.readlines()
-        # split up evaluation so we can capture the output of the last line and print it
-        __all_but_last = ''.join(__lines[:-1])
-        try:
-            __ = ast.parse(__all_but_last)
-            # if parsing fails, exec the entire thing
-            if len(__lines) > 1:
-                exec(compile(__all_but_last, '<org babel source block>', 'exec'))
-            if __lines:
-                __last_result = eval(compile(__lines[-1], '<org babel source block>', 'single'))
-                if __last_result is not None and (hasattr(__last_result, '__str__') or hasattr(__last_result, '__repr__')):
-                    print(__last_result)
-        except:
-            exec(compile(''.join(__lines), '<org babel source block>', 'exec'))
+    __ = ast.parse(__all_but_last)
+    __ = ast.parse(__lines[-1])
+    __split_valid = True
+except:
+    __split_valid = False
+
+
+try:
+    if __split_valid:
+    # split up evaluation so we can capture the output of the last line and print it
+        # if parsing fails, exec the entire thing
+        if len(__lines) > 1:
+            exec(compile(__all_but_last, '<org babel source block>', 'exec'))
+        if __lines:
+            __last_result = eval(compile(__lines[-1], '<org babel source block>', 'single'))
+            if __last_result is not None and (hasattr(__last_result, '__str__') or hasattr(__last_result, '__repr__')):
+                print(__last_result)
+    else:
+        exec(compile(''.join(__lines), '<org babel source block>', 'exec'))
 except:
     if %s:
         try:
