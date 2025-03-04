@@ -180,7 +180,7 @@ finally:
         else:
             print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start))}\")
     if %s:
-        print(f\"Last run at: {__org_babel_wrapper_datetime.now()}\")
+        print(f\"Last run at: {__org_babel_wrapper_datetime.now().strftime('%%Y-%%m-%%d %%H:%%M:%%S')}\")
     import os
     try:
         os.remove(__exec_file)
@@ -322,7 +322,8 @@ except:
     (dolist (buffer (buffer-list))
       (ob-python-extras/delete-unused-pngs-in-buffer buffer))))
 
-(setq ob-python-extras/allow-png-deletion nil) ; to disable deletion
+(defvar ob-python-extras/allow-png-deletion nil
+  "If non-nil, allow deletion of PNG files after inline image creation.")
 
 (run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
 

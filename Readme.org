@@ -152,6 +152,15 @@ Also includes a git precommit hook that's useful for automatically converting or
 
 
 * Setup:
+** Garbage collection
+By default garbage collection is disabled. To turn it on, set:
+#+begin_src emacs-lisp :tangle yes
+(setq ob-python-extras/allow-png-deletion t)
+#+end_src
+
+Then, every 5 minutes, a script will run that collects all the open org files, and checks the folders in /plots/{buffer_name} where the images are stored, and deletes those that are not referenced.
+*** TODO Modify the html conversion stuff to go in the same folder
+
 ** Keybindings:
 
 If you want my keybindings, run:
