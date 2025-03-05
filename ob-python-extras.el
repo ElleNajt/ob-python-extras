@@ -777,7 +777,7 @@ def __smart_print(*args, **kwargs):
     try:
         if __is_likely_html(text):
             proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'org',
-                                  '--extract-media=plots/html_outputs'],
+                                  '--extract-media=plots/%s'],
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE)
             org_output, _ = proc.communicate(text.encode())
@@ -804,8 +804,12 @@ print = __smart_print
 
 %s
 
-print = __original_print" body)))
+print = __original_print"
+                              (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                              body)))
     (apply orig wrapped-body args)))
+
+
 
 (advice-add 'org-babel-execute:python :around #'my/wrap-python-html-capture)
 
