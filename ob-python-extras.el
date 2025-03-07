@@ -136,7 +136,8 @@ with open(__exec_file, 'r') as __file:
 __all_but_last = ''.join(__lines[:-1])
 try:
     __ = ast.parse(__all_but_last)
-    __ = ast.parse(__lines[-1])
+    # specifically need to make sure printing the last line results in valid python, to avoid e.g. print( # acomment ) 
+    __ = ast.parse(f\"print({__lines[-1]})\")
     __split_valid = True
 except:
     __split_valid = False
