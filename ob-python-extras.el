@@ -326,7 +326,19 @@ except:
 (defvar ob-python-extras/allow-png-deletion nil
   "If non-nil, allow deletion of PNG files after inline image creation.")
 
-(run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
+(defun ob-python-extras/remove-unused-pngs-on-save ()
+  (when (eq major-mode 'org-mode)
+    (ob-python-extras/delete-unused-pngs-in-all-org-files)))
+
+;; decided to replace this with save and quit hooks instead -- I think it's
+;; dangerous to run it every 5 minutes, because there's a chance it kills a file
+;; while yanking an dmoving, or while putting images in org from the shell.
+;; those cases could also be handled by searching the killring or the ipython
+;; buffer for file:... but I haven't done that
+
+;; (run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
+(add-hook 'after-save-hook #'ob-python-extras/remove-unused-pngs-on-save)
+(add-hook 'kill-emacs-hook #'ob-python-extras/delete-unused-pngs-in-all-org-files)
 
 ;;;;; Pandas dataframe printing
 
