@@ -186,11 +186,20 @@ overridden at the org-src-block level with =:transparent nil= or =:transparent
 t=.
 ** Autoformatter
 
-Auto formats source blocks using black. Configurable with
+Auto formats source blocks using black and isort. Can be turned on and off with:
 
 #+begin_src elisp
 (setq ob-python-extras/auto-format t)
 #+end_src
+
+This requires isort to be available on your path, and to configure python-black.
+
+#+begin_src emacs-lisp :tangle yes
+(package! python-black)
+(use-package! python-black
+  :after python)
+#+end_src
+
 
 * Examples:
 [[file:tests/babel-formatting.org][See this org file for examples of the different functionality and configurations.]]

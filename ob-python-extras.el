@@ -578,36 +578,49 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 ;; TODO Get this to work in emacs batch
 ;; TODO Add ruff
 
+(defvar ob-python-extras/auto-format t
+  "When non-nil, automatically format Python source blocks after execution.")
+
 (when (condition-case nil
-          (require 'python-black nil t)
+          (and 
+           (executable-find "isort")
+           (require 'python-black nil t))
         (error nil))
 
-  (defvar ob-python-extras/auto-format t
-    "When non-nil, automatically format Python source blocks after execution.")
 
   (defun ob-python-extras--format-src-block ()
-    "Format the current org babel Python source block using python-black.
-Creates a temporary buffer, sets python-mode, applies formatting, and copies back."
+    "Format the current org babel Python source block using python-black and isort.
+Applies black in buffer, then uses temp file for isort."
     (interactive)
-
+    
     (when ob-python-extras/auto-format
       (let* ((element (org-element-at-point))
              (language (org-element-property :language element))
              (orig-code (org-element-property :value element))
              (point-pos (point)))
-        ;;  save excursion isn't sufficient to save the position
+        
         (when (string= language "python")
-          (let ((formatted-code
+          (let ((temp-file (make-temp-file "ob-python-extras-format-" nil ".py"))
+                (black-formatted
                  (with-temp-buffer
                    (insert orig-code)
                    (python-mode)
                    (python-black-buffer)
                    (buffer-string))))
-            (save-excursion
-              (goto-char (org-element-property :begin element))
-              (org-babel-update-block-body formatted-code))
-            (goto-char point-pos)
-            )))))
+            (unwind-protect
+                (progn
+                  (with-temp-file temp-file
+                    (insert black-formatted))
+                  (call-process "isort" nil nil nil temp-file)
+                  (let ((final-code
+                         (with-temp-buffer
+                           (insert-file-contents temp-file)
+                           (buffer-string))))
+                    (save-excursion
+                      (goto-char (org-element-property :begin element))
+                      (org-babel-update-block-body final-code))
+                    (goto-char point-pos)))
+              (delete-file temp-file)))))))
 
   (add-hook 'org-babel-after-execute-hook 'ob-python-extras--format-src-block))
 
