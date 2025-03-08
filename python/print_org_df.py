@@ -7,6 +7,23 @@ PANDAS_AVAILABLE = False
 _original_repr = {}
 _original_str = {}
 
+POLARS_AVAILABLE = False
+try:
+    import polars as pl
+
+    POLARS_AVAILABLE = True
+
+    def custom_repr(self: pl.DataFrame) -> str:
+        shape = str(self.shape)
+        return shape + "\n" + self.to_pandas().__repr__()
+
+    pl.DataFrame.__repr__ = custom_repr
+
+except ImportError:
+    POLARS_AVAILABLE = False
+    pass
+
+
 try:
     import pandas as pd
     pd.options.display.max_rows = 20
