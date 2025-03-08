@@ -299,20 +299,31 @@ except:
           (push file-name file-references))))
     file-references))
 
+(defun ob-python-extras/find-org-file-references-in-string (str)
+  "Find all file names referenced within [[]] in STR and return them as a list."
+  (let ((file-references nil)
+        (start 0))
+    (while (string-match "\\[\\[file:\\([^]]+\\)\\]\\]" str start)
+      (push (match-string 1 str) file-references)
+      (setq start (match-end 0)))
+    file-references))
+
 (defun ob-python-extras/delete-unused-pngs-in-buffer (buffer)
-  "Delete .png files in the /plots/ directory that are not referenced in the org file corresponding to BUFFER."
+  "Delete .png files in the /plots/ directory that are not referenced in the org file corresponding to BUFFER, and that are not in the killring."
   (with-current-buffer buffer
     (when (and (eq major-mode 'org-mode) (buffer-file-name))
       (let* ((org-file (buffer-file-name))
              (org-file-name (file-name-sans-extension (file-name-nondirectory org-file)))
              (plots-dir (concat (file-name-directory org-file) "plots/" org-file-name))
              (referenced-files (ob-python-extras/find-org-file-references))
+             (killring-references (mapcan #'ob-python-extras/find-org-file-references-in-string kill-ring))
              (png-files (when (and (file-directory-p plots-dir) (file-exists-p plots-dir))
                           (directory-files plots-dir t "\\.png$"))))
         (when png-files
           (dolist (png-file png-files)
             (let ((relative-png-file (file-relative-name png-file (file-name-directory org-file))))
-              (unless (member relative-png-file referenced-files)
+              (unless (or (member relative-png-file referenced-files)
+                          (member relative-png-file killring-references))
                 (delete-file png-file)
                 (message "Deleted: %s" png-file)))))))))
 
