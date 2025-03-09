@@ -354,9 +354,18 @@ except:
 ;;;;; Pandas dataframe printing
 
 
-(defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body &rest args)
+(defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body params &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
-         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir)))
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
+         (buffer-filename (file-name-sans-extension (file-name-nondirectory buffer-file-name)))
+         (dataframe_image_header (cdr (assq :dataframe_image params)))
+         (_  (message "%s" dataframe_image_header))
+         (repr-type (if dataframe_image_header 
+                        "image" 
+                      "org_table"))
+         (_ (message "type: %s" repr-type))
+
+         )
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 __exec_file = \"%s\"
@@ -364,11 +373,17 @@ __pymockbabel_script_location = \"%s\"
 import sys
 sys.path.append(__pymockbabel_script_location)
 import print_org_df as __print_org_df
-__print_org_df.enable()
+__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\")
 with open(__exec_file, 'r') as __file:
-     exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " exec-file pymockbabel-script-location (file-name-sans-extension (file-name-nondirectory buffer-file-name))))
-           (result (apply orig body args)))
+     exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " 
+                         exec-file 
+                         pymockbabel-script-location
+                         repr-type
+                         buffer-filename
+                         buffer-filename))
+           (result (apply orig body params args)))
       result)))
+
 
 (advice-add
  'org-babel-execute:python
@@ -876,7 +891,8 @@ print = __original_print"
 (defun ob-python-extras--run-org-file-externally ()
   "Run marked org file in separate Emacs process with full config and notify when done."
   (interactive)
-  (let ((files (dired-get-marked-files t current-prefix-arg)))
+  (let ((files (dired-get-marked-files t current-prefix-arg))
+        (init-file (or user-init-file "~/.emacs.d/init.el")))
     (revert-buffer)
     (dolist (file files)
       (when (string-match "\\.org$" file)

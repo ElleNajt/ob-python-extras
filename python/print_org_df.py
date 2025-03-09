@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 import io
+import os
+import random
+from datetime import datetime
+from functools import partial
 
 PANDAS_AVAILABLE = False
 _original_repr = {}
@@ -39,7 +43,29 @@ try:
 
 except ImportError:
     TABULATE_AVAILABLE = False
-    pass
+
+try:
+    import dataframe_image as dfi
+
+    DATAFRAME_IMAGE_AVAILABLE = True
+except ImportError:
+    DATAFRAME_IMAGE_AVAILABLE = False
+
+
+def image_repr(self, org_babel_filename, dpi=400):
+    if not DATAFRAME_IMAGE_AVAILABLE:
+        raise ImportError("Must have dataframe_image installed.")
+
+    directory = os.path.join("plots", org_babel_filename)
+    os.makedirs(directory, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = os.path.join(
+        directory, f"df_plot_{timestamp}_{random.randint(0, 10000000)}.png"
+    )
+
+    dfi.export(self, file_path, table_conversion="chrome", dpi=dpi)
+    return f"[[file:{file_path}]]"
 
 
 def org_repr(obj):
@@ -88,21 +114,39 @@ def org_repr(obj):
     )
 
 
-def enable():
-    global PANDAS_AVAILABLE
-    if not PANDAS_AVAILABLE:
-        print(
-            "Pandas is not available in this environment. Org-mode representation cannot be enabled."
-        )
-        return
+def enable(repr_type, org_babel_filename=None, dpi=400):
+    if repr_type == "org_table":
+        global PANDAS_AVAILABLE
+        if not PANDAS_AVAILABLE:
+            print(
+                "Pandas is not available in this environment. Org-mode representation cannot be enabled."
+            )
+            return
 
-    for obj in [pd.DataFrame, pd.Series]:
-        if obj not in _original_repr:
-            _original_repr[obj] = obj.__repr__
-            _original_str[obj] = obj.__str__
+        for obj in [pd.DataFrame, pd.Series]:
+            if obj not in _original_repr:
+                _original_repr[obj] = obj.__repr__
+                _original_str[obj] = obj.__str__
 
-        obj.__str__ = org_repr
-        obj.__repr__ = org_repr
+            obj.__str__ = org_repr
+            obj.__repr__ = org_repr
+
+    if repr_type == "image":
+        for obj in [pd.DataFrame, pd.Series, pd.io.formats.style.Styler]:
+            if obj not in _original_repr:
+                _original_repr[obj] = obj.__repr__
+                _original_str[obj] = obj.__str__
+
+            obj.__str__ = (
+                lambda self, org_babel_filename=org_babel_filename, dpi=dpi: image_repr(
+                    self, org_babel_filename, dpi
+                )
+            )
+            obj.__repr__ = (
+                lambda self, org_babel_filename=org_babel_filename, dpi=dpi: image_repr(
+                    self, org_babel_filename, dpi
+                )
+            )
 
 
 def disable():
@@ -137,7 +181,7 @@ if __name__ == "__main__":
     }
     df = pd.DataFrame(data)
     df.index.name = "ID"
-    enable()
+    enable(repr_type="org_table")
 
     print(df)
     print(df.Name)
@@ -149,3 +193,11 @@ if __name__ == "__main__":
 
     # disable()
     # print(df)
+
+    print("testing image")
+
+    enable(repr_type="image", org_babel_filename="test")
+
+    df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+    styled_df = df.style.background_gradient()
+    print(styled_df)
