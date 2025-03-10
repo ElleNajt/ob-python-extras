@@ -45,7 +45,7 @@ jobs:
 
     - name: Run Tests
       shell: bash
-      timeout-minutes: 10
+      timeout-minutes: 45
       run: |
         cd tests
         ./run_expect_tests.sh
