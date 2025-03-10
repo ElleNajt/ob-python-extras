@@ -359,13 +359,12 @@ except:
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
          (buffer-filename (file-name-sans-extension (file-name-nondirectory buffer-file-name)))
          (dataframe_image_header (cdr (assq :dataframe_image params)))
+         (dpi_header (cdr (assq :dpi params)))
          (_  (message "%s" dataframe_image_header))
          (repr-type (if dataframe_image_header 
                         "image" 
                       "org_table"))
-         (_ (message "type: %s" repr-type))
-
-         )
+         (dpi (if dpi_header dpi_header 200)))
     (with-temp-file exec-file (insert body))
     (let* ((body (format "\
 __exec_file = \"%s\"
@@ -373,13 +372,14 @@ __pymockbabel_script_location = \"%s\"
 import sys
 sys.path.append(__pymockbabel_script_location)
 import print_org_df as __print_org_df
-__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\")
+__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\", dpi = %s)
 with open(__exec_file, 'r') as __file:
      exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " 
                          exec-file 
                          pymockbabel-script-location
                          repr-type
                          buffer-filename
+                         dpi
                          buffer-filename))
            (result (apply orig body params args)))
       result)))
