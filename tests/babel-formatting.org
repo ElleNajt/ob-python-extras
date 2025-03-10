@@ -50,7 +50,8 @@ print(1)
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting :timer-show no
 :END:
 
-Dataframes are printed as org tables
+** As org tables
+By default dataframes are printed as org tables
 
 #+name: print_table
 #+begin_src python :results drawer
@@ -64,18 +65,19 @@ df = pd.DataFrame(data)
 print(df)
 #+end_src
 
-
-
-To not print the index as idx, set something else as to be the index.
-
-#+name: change_table_index
-#+begin_src python
-print(df.set_index("Name"))
-#+end_src
-
+#+RESULTS: print_table
+:results:
+| idx | Name    | Age | City          |    Score |
+|-----+---------+-----+---------------+----------|
+|   0 | Joe     |  44 | New York      |     92.5 |
+|   1 | Eva     |  32 | San Francisco |     88.0 |
+|   2 | Charlie |  33 | Boston        |     95.2 |
+|   3 | David   |  33 | Paris         |     78.9 |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+:end:
 
 This respects various pandas options:
-*** Float formatting
+**** Float formatting
 
 
 #+name: format_table_floats
@@ -84,7 +86,7 @@ pd.options.display.float_format = '{:.1f}'.format
 print(df.set_index("Name"))
 #+end_src
 
-*** Max rows
+**** Max rows
 
 #+name: limit_table_max_rows
 #+begin_src python
@@ -93,7 +95,7 @@ long_df = pd.DataFrame({'A': range(200)})
 print(long_df)
 #+end_src
 
-** Problem -- hangs when printing large dataframes.
+*** Problem -- hangs when printing large dataframes.
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting_large_dtfs :timer-show no
 :END:
@@ -116,7 +118,7 @@ long_df = pd.DataFrame({'A': range(200)})
 print(long_df)
 #+end_src
 
-** Printing multiple dataframes:
+*** Printing multiple dataframes:
 
 #+name: printing_multiple_dataframes
 #+begin_src python
@@ -136,6 +138,96 @@ print("Space between dataframes")
 print(df)
 #+end_src
 
+*** Bug -- tables that contain | are buggy.
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python"  :tangle :session test_bug :timer-show no
+:END:
+
+
+Need a way to handle |'s in the string names
+
+
+#+begin_src python
+import pandas as pd
+
+
+df = pd.DataFrame({"names": ["John \vert", "Mary", "Bob  Rob", "Alice John", "Tom"]})
+print(df)
+#+end_src
+
+#+RESULTS:
+:results:
+|   | names |
+|---+-------|
+| 0 | John  |
+ert            \
+| 1 | Mary       |
+| 2 | Bob  Rob   |
+| 3 | Alice John |
+| 4 | Tom        |
+:end:
+
+One work around is to call to_markdown directly, as ob-python-extras converts | that are not in dataframes into \ to prevent org from incorrectly recognizing text as tables.
+
+#+begin_src python
+import pandas as pd
+
+df = pd.DataFrame({"names": ["John", "Mary", "Bob|Rob", "Alice|John", "Tom"]})
+print(df.to_markdown())
+#+end_src
+
+#+RESULTS:
+:results:
+\    \ names      \
+\---:\:-----------\
+\  0 \ John       \
+\  1 \ Mary       \
+\  2 \ Bob\Rob    \
+\  3 \ Alice\John \
+\  4 \ Tom        \
+:end:
+
+** Displaying styled dataframes as pngs
+
+Dataframes can also be displayed as styled dataframes. This is nice for exporting documents with pretty tables.
+
+#+name: styled_dataframes
+#+begin_src python :dataframe_image yes :async t :dpi 200
+styled_df = df.style.background_gradient()
+print(styled_df)
+#+end_src
+
+#+RESULTS: styled_dataframes
+:results:
+[[file:plots/babel-formatting/df_plot_20250309_233812_9163414.png]]
+:end:
+
+
+** Polars
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session polars :show-timer no
+:END:
+
+Polars dataframes are always printed as an org table as well.
+
+#+name: polars
+#+begin_src python
+import polars as pl
+
+df = pl.DataFrame({"x": [1, 1, 3], "y": [2, 3, 1]})
+df
+#+end_src
+
+#+RESULTS: polars
+:results:
+(3, 2)
+| idx | x | y |
+|-----+---+---|
+|   0 | 1 | 2 |
+|   1 | 1 | 3 |
+|   2 | 3 | 1 |
+Cell Timer: 0:00:00
+:end:
 
 * Testing Tabulate
 :PROPERTIES:
@@ -155,7 +247,6 @@ data = {
 df = pd.DataFrame(data)
 print(df)
 #+end_src
-
 * Images
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no
@@ -165,17 +256,22 @@ mocks out python plotting to allow plots to be interspersed with printing, and a
 
 #+name: table_with_plot_and_text
 #+begin_src python :results drawer
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+
 print("look!")
-df = pd.DataFrame({"x": [0, 2, 3, 4, 5,6,7,], "y": [10, 11, 12, 13, 14,15,16]})
+df = pd.DataFrame(
+    {
+        "x": [0, 2, 3, 4, 5, 6, 7],
+        "y": [10, 11, 12, 13, 14, 15, 16],
+    }
+)
 print(df)
 df.plot(x="x", y="y", kind="line")
 plt.show()
 print("tada!")
 #+end_src
 
-* DONE Make : Alerts on finishing
 * Alerts on finishing
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session alerts_on_finish :timer-show no
@@ -200,8 +296,6 @@ print("finished")
 
 I also have it configured to send an alert for any cell that takes more than 10 seconds.
 
-This parses the cell timer, so requires it to be enabled for that part to be on to work.
-** TODO Change the cell timer display to leave it up for the parsing and delete the timer afterwards.
 * HTML formatting
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session HTML_formatting :timer-show no
@@ -210,11 +304,12 @@ This parses the cell timer, so requires it to be enabled for that part to be on 
 
 #+name: converting_html_with_images_and_table
 #+begin_src python :results output
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # Create sample data
 df = pd.DataFrame(
@@ -253,7 +348,6 @@ print(html)
 
 #+RESULTS: converting_html_with_images_and_table
 :results:
-/home/elle/code/ob-python-extras/tests/plots/html_outputs
 - Data Analysis Results
 Here's a sample of our trigonometric functions:
 
@@ -267,7 +361,131 @@ Here's a sample of our trigonometric functions:
 
 *Visualization:*
 
-[[/home/elle/code/ob-python-extras/tests/plots/html_outputs/0ad12f4435751e2babc79ffce8a9f268a845ccad.png]]
+[[file:plots/babel-formatting/78541c71669b81b9d48fdedd590bdea71af4f366.png]]
 
 /Figure 1: First few periods of sine and cosine waves/
 :end:
+** TODO Also use dataframe_image to get styled dataframes from the html output as pngs.
+SCHEDULED: <2025-03-09 Sun>
+* Error handling
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session errors :timer-show no
+:END:
+
+
+#+begin_src python :errors "rich"
+print(1 / 0)
+#+end_src
+
+#+RESULTS:
+:results:
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ in <module>:28                                                               │
+│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
+│ │          ast = <module 'ast' from                                        │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │            f = <_io.TextIOWrapper name='/tmp/babel-pnB2aZ/python-G3FRkP' │ │
+│ │                mode='r' encoding='UTF-8'>                                │ │
+│ │           os = <module 'os' (frozen)>                                    │ │
+│ │           re = <module 're' from                                         │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │     readline = <module 'readline' from                                   │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │ rich_console = <console width=80 None>                                   │ │
+│ │   subprocess = <module 'subprocess' from                                 │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │          sys = <module 'sys' (built-in)>                                 │ │
+│ │         time = <module 'time' (built-in)>                                │ │
+│ │          tty = <module 'tty' from                                        │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ ╰──────────────────────────────────────────────────────────────────────────╯ │
+│ in <module>:1                                                                │
+│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
+│ │          ast = <module 'ast' from                                        │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │            f = <_io.TextIOWrapper name='/tmp/babel-pnB2aZ/python-G3FRkP' │ │
+│ │                mode='r' encoding='UTF-8'>                                │ │
+│ │           os = <module 'os' (frozen)>                                    │ │
+│ │           re = <module 're' from                                         │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │     readline = <module 'readline' from                                   │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │ rich_console = <console width=80 None>                                   │ │
+│ │   subprocess = <module 'subprocess' from                                 │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │          sys = <module 'sys' (built-in)>                                 │ │
+│ │         time = <module 'time' (built-in)>                                │ │
+│ │          tty = <module 'tty' from                                        │ │
+│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ ╰──────────────────────────────────────────────────────────────────────────╯ │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ZeroDivisionError: division by zero
+:end:
+
+#+begin_src python :errors "rich no-locals"
+x = 0
+print(1 / 0)
+#+end_src
+
+#+RESULTS:
+:results:
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ in <module>:28                                                               │
+│ in <module>:1                                                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ZeroDivisionError: division by zero
+:end:
+
+** TODO Get more detailed errors
+
+* Last line print
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python" :session last_line_print :timer-show no :tangle yes
+:END:
+
+#+name testing_last_line_print
+#+begin_src python
+x = 1
+print(x)
+1000 * 2 + x
+#+end_src
+
+#+RESULTS:
+:results:
+1
+2001
+:end:
+
+** Edge case handling
+Last line might not be an expression. Ideally this would get the last expression, but I'm settling for just not crashing.
+
+(Achieved by checking if the code without the last line is valid python before execing it first; otherwise exec's the whole block. I don't like relying on _.)
+#+name testing_last_line_print_not_full_expr
+#+begin_src python
+(
+    1,
+    2,
+    3,
+    4,
+    1,
+)
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Need to make sure that we handle comments on the last line
+-- in general, print(last_line) is checked to be valid python syntax.
+
+#+name last_line_a_comment
+#+begin_src python
+print(1)
+# a comment
+#+end_src
+
+#+RESULTS:
+:results:
+1
+:end:
+

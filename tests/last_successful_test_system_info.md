@@ -1,4 +1,4 @@
-# Last Successful test: Tue Feb 25 09:41:10 PM EST 2025
+# Last Successful test: Sun Mar  9 11:03:31 PM EDT 2025
 ## System Information
-Emacs version: GNU Emacs 29.4
-Nixpkgs commit: "24.05.3523.a633d89c6dc9"
+Emacs version: GNU Emacs 30.1
+Nixpkgs commit: "25.05pre-git"
