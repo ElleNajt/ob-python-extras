@@ -2,9 +2,9 @@ name: Emacs org babel tests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "Development" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "Development" ]
 
 permissions:
   contents: read
