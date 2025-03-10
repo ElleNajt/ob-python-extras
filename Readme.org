@@ -11,7 +11,8 @@ This package adds additional features to ob-python that I found lacking when try
 :END:
 ** Enhanced cell output
 - Mix image and text output in the same cell, by mocking matplotlib to save images and return references.
-- Print pandas dataframes as org tables always, by overwriting the __repr__ method. Uses tabulate if available.
+- Print pandas [[file:tests/babel-formatting.org::*Displaying styled dataframes as pngs][dataframes as org tables by default]], by overwriting the __repr__ method. Uses tabulate if available.
+- Displayed styled dataframes as embedded pngs, using dataframe_image.
 - Press C-c C-c over an image for a full-size view
 
   For example:
@@ -37,47 +38,22 @@ print("...tada!")
 |   4 | 5 | 14 |
 |   5 | 6 | 15 |
 |   6 | 7 | 16 |
-[[file:plots/Readme/plot_20241208_122132_1950748.png]]
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+[[file:plots/Readme/plot_20250309_231625_844246.png]]
 ...tada!
 :end:
+
+#+begin_src python :dpi 200 :dataframe_image yes :results drawer :exports both
+print("that same dataframe as a styled dataframe")
+styled_df = df.head(3).style.background_gradient()
+print(styled_df)
+#+end_src
+
+#+RESULTS:
+:results:
+that same dataframe as a styled dataframe
+[[file:plots/Readme/df_plot_20250310_001026_1904424.png]]
+:end:
+
 
 ** Cell behavior features
 - Cell timers (configurable via :timer-show {yes/no})
@@ -89,13 +65,14 @@ print("...tada!")
 - Variable inspector (Keybindings bind it to SPC o v)
 - Limit output with :max-lines (POSITIVE-INTEGER) -- useful because very long output can crash org babel, so it's useful to set this to :max-lines 1000 or similar and just inspect the shell (easily accessible with SPC o s).
 - Print the last expressions result
+- Image inspector: Enlarge images with C-c C-c when over an image, quit with q.
 
 ** Bare bones LSP features :ATTACH:
 :PROPERTIES:
 :ID:       43ad407a-3046-4fe7-8b0a-ce2b9113cb9e
 :END:
 
-- ob-python-extras/python-help-clean
+- ob-python-extras/python-help
 
 This calls the python REPL's help on the current symbol (obtained from (python-info-current-symbol)). The defaults bind it to K (lookup/documentation)
 
@@ -107,7 +84,7 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
 - Completion at point
 
   Gets completion at point via the python process corresponding to a cell, and feeds them into capf.
-  
+
   [[file:images/org-download/Overview:/_20250225_190659screenshot.png]]
 
 ** Gptel integrations:
@@ -158,8 +135,7 @@ By default garbage collection is disabled. To turn it on, set:
 (setq ob-python-extras/allow-png-deletion t)
 #+end_src
 
-Then, every 5 minutes, a script will run that collects all the open org files, and checks the folders in /plots/{buffer_name} where the images are stored, and deletes those that are not referenced.
-*** TODO Modify the html conversion stuff to go in the same folder
+ Whenever an org file is saved, or emacs is closed, a script will run that collects all the open org files, and checks the folders in /plots/{buffer_name} where the images are stored, and deletes those that are not referenced.
 
 ** Keybindings:
 
