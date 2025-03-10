@@ -198,7 +198,7 @@ process_file() {
     echo "Processing file: $org_file"
 
     # Always run the tests in staging
-    cp shell*.nix "staging/"
+    cp *.nix "staging/"
     cp "$org_file" "staging/$org_file"
     eval "emacs $(get_emacs_args "staging/$org_file")"
 
