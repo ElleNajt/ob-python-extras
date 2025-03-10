@@ -6,8 +6,9 @@
       python3 = prev.python3.override {
         packageOverrides = pfinal: pprev: {
           dataframe_image = final.python3Packages.callPackage
-            /home/elle/code/nixpkgs/pkgs/development/python-modules/dataframe_image/default.nix
-            { };
+            /home/elle/code/nixpkgs/pkgs/development/python-modules/dataframe_image/default.nix {
+              doCheck = false;
+            };
         };
       };
     }

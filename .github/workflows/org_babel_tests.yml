@@ -43,12 +43,17 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
 
+    - name: Test nix shells
+      shell: bash
+      timeout-minutes: 10
+      working-directory: tests
+      run: ./test_nix_shells.sh
+
     - name: Run Tests
       shell: bash
-      timeout-minutes: 45
-      run: |
-        cd tests
-        ./run_expect_tests.sh
+      timeout-minutes: 10
+      working-directory: tests
+      run: ./run_expect_tests.sh
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
