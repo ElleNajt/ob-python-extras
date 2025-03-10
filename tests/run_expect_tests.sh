@@ -82,6 +82,9 @@ get_emacs_args() {
     (org-babel-map-src-blocks nil
       (when-let ((name (nth 4 (org-babel-get-src-block-info))))
         (message \"Evaluating block: %s\" name)
+        (message \"Block %s starting at %s\" 
+                 name 
+                 (format-time-string \"%Y-%m-%d %H:%M:%S\"))
         (org-babel-execute-src-block)))
     (save-buffer))
     (kill-emacs))" \
