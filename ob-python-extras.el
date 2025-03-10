@@ -641,20 +641,18 @@ Applies black in buffer, then uses temp file for isort."
 
 
 ;;; help functionality
-;; this is incredibly jank but useful for getting help at point
-
 
 (defun ob-python-extras/help-dispatcher ()
   "Dispatches to the python one to not overwrite workin +lookup/definition in elisp blocks."
   (interactive)
   (if (and (org-in-src-block-p)
            (string= "python" (org-element-property :language (org-element-at-point))))
-      (ob-python-extras/python-help-clean)
+      (ob-python-extras/python-help)
     ;; TODO This is pretty doom specific, I think.
     (call-interactively #'+lookup/documentation)))
 
 
-(defun ob-python-extras/python-help-clean ()
+(defun ob-python-extras/python-help ()
   (interactive)
   (let* ((session-name (ob-python-extras/org-babel-get-session))
          (session-buffer (get-buffer (format "*%s*" session-name)))
