@@ -348,7 +348,16 @@ except:
 ;; buffer for file:... but I haven't done that
 
 ;; (run-at-time 300 300 'ob-python-extras/delete-unused-pngs-in-all-org-files)
-(add-hook 'after-save-hook #'ob-python-extras/remove-unused-pngs-on-save)
+
+;; this is actually *worse* if you have auto save:
+;; (add-hook 'after-save-hook #'ob-python-extras/remove-unused-pngs-on-save)
+
+;; ultimately the problem is that a long running cell can generate pngs, and
+;; they can get deleted before put anywhere 
+
+;; so for now, only deleting on closing emacs, and also modifying the githook to
+;; only commit referenced files, instead of deleting overzealously
+
 (add-hook 'kill-emacs-hook #'ob-python-extras/delete-unused-pngs-in-all-org-files)
 
 ;;;;; Pandas dataframe printing
