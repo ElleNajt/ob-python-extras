@@ -191,7 +191,8 @@ print(df.to_markdown())
 
 Dataframes can also be displayed as styled dataframes. This is nice for exporting documents with pretty tables.
 
-#+name: styled_dataframes
+Removing because I haven't been able to get it to work in CI.
+--- #+name: styled_dataframes
 #+begin_src python :dataframe_image yes :async t :dpi 200
 styled_df = df.style.background_gradient()
 print(styled_df)
