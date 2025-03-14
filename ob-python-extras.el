@@ -244,6 +244,15 @@ finally:
       (pop-to-buffer (format "*%s*" session)))))
 
 ;;;; Better output handling
+
+(defun ob-python-extras/get-base-file-name ()
+  (if buffer-file-name
+      (file-name-sans-extension 
+       (file-name-nondirectory buffer-file-name))
+    (when (boundp 'gpt-babel-home-file)
+      gpt-babel-home-file)))
+
+
 ;;;;; mix printing images and text
 
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body params &rest args)
@@ -252,6 +261,7 @@ finally:
          (src-info (org-babel-get-src-block-info))
          (headers (nth 2 src-info))
          (transparent-header (assoc :transparent headers))
+         (file-base-name (ob-python-extras/get-base-file-name))
          (max-lines (cdr (assoc :max-lines params)))
          (max-lines (if (and (numberp max-lines) (> max-lines 0))
                         max-lines
@@ -275,7 +285,8 @@ except:
     pass "
                          exec-file
                          pymockbabel-script-location
-                         (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+                         file-base-name
+                         
                          (concat ", transparent="
                                  (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
                                    (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False")))
@@ -373,10 +384,9 @@ except:
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body params &rest args)
   (let* ((exec-file (make-temp-file "execution-code"))
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
-         (buffer-filename (file-name-sans-extension (file-name-nondirectory buffer-file-name)))
+         (buffer-filename (ob-python-extras/get-base-file-name))
          (dataframe_image_header (cdr (assq :dataframe_image params)))
          (dpi_header (cdr (assq :dpi params)))
-         (_  (message "%s" dataframe_image_header))
          (repr-type (if dataframe_image_header 
                         "image" 
                       "org_table"))
@@ -871,7 +881,8 @@ print = __smart_print
 %s
 
 print = __original_print"
-                              (file-name-sans-extension (file-name-nondirectory buffer-file-name))
+
+                              (ob-python-extras/get-base-file-name)
                               body)))
     (apply orig wrapped-body args)))
 
@@ -942,3 +953,4 @@ print = __original_print"
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
+
