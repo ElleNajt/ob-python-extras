@@ -133,19 +133,25 @@ with open(__exec_file, 'r') as __file:
     __lines = __file.readlines()
 
 
-__all_but_last = ''.join(__lines[:-1])
+# __all_but_last = ''.join([line.rstrip('\\\\n') + '\\\\n' for line in __lines[:-1]])
 try:
+    # print('parsing all but')
     __ = ast.parse(__all_but_last)
     # specifically need to make sure printing the last line results in valid python, to avoid e.g. print( # acomment ) 
+
+    # print('parsing last')
+    # print(f\"print({__lines[-1]})\")
     __ = ast.parse(f\"print({__lines[-1]})\")
     __split_valid = True
 except:
     __split_valid = False
 
-
+# for now this is broken, i think this is the wrong way to do this 
+__split_valid = False
 try:
     if __split_valid:
-    # split up evaluation so we can capture the output of the last line and print it
+        print(__all_but_last)
+        # split up evaluation so we can capture the output of the last line and print it
         # if parsing fails, exec the entire thing
         if len(__lines) > 1:
             exec(compile(__all_but_last, '<org babel source block>', 'exec'))
@@ -197,6 +203,7 @@ finally:
         (if  timer-rounded "True" "False")
         (if last-executed "True" "False")))
            (result (apply orig body params args)))
+      ;; (message "%s" body)
       result)))
 
 (advice-add 'org-babel-execute:python
