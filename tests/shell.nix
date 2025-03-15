@@ -1,15 +1,15 @@
 { pkgs ? import <nixpkgs> {
 
-  overlays = [
-    (final: prev: {
-      python3 = prev.python3.override {
-        packageOverrides = pfinal: pprev: {
-          dataframe_image =
-            final.python3Packages.callPackage ./dataframe_image_default.nix { };
-        };
-      };
-    })
-  ];
+  # overlays = [
+  #   (final: prev: {
+  #     python3 = prev.python3.override {
+  #       packageOverrides = pfinal: pprev: {
+  #         dataframe_image =
+  #           final.python3Packages.callPackage ./dataframe_image_default.nix { };
+  #       };
+  #     };
+  #   })
+  # ];
 
 } }:
 
@@ -26,7 +26,7 @@ let
       rich
       pyarrow
       pyspark
-      dataframe_image
+      # dataframe_image
       # jinja2
       plotly
       # python3Packages.better-exceptions # or better-exceptions
