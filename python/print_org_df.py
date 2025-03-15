@@ -16,11 +16,13 @@ try:
 
     POLARS_AVAILABLE = True
 
-    def custom_repr(self: pl.DataFrame) -> str:
+    def custom_polars_repr(self: pl.DataFrame) -> str:
         shape = str(self.shape)
         return shape + "\n" + self.to_pandas().__repr__()
 
-    pl.DataFrame.__repr__ = custom_repr
+    pl.DataFrame.__repr__ = custom_polars_repr
+    pl.DataFrame.__str__ = custom_polars_repr
+
 
 except ImportError:
     POLARS_AVAILABLE = False
