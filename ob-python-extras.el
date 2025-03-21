@@ -239,9 +239,11 @@ finally:
 
 (defun ob-python-extras/open-session-buffer ()
   (interactive)
-  (let ((session (ob-python-extras/org-babel-get-session)))
+  (let* ((info (org-babel-get-src-block-info))
+         (lang (car info))
+         (session (ob-python-extras/org-babel-get-session)))
     (when session
-      (pop-to-buffer (format "*%s*" session)))))
+      (pop-to-buffer (format (if (string= lang "python") "*%s*" "%s") session)))))
 
 ;;;; Better output handling
 
