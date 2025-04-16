@@ -1,15 +1,5 @@
-{
-  stdenv,
-  pkgs,
-  lib,
-  buildPythonPackage,
-  fetchFromGitHub,
-  python3Packages,
-  texlive,
-  chromium,
-  pandoc,
-  playwright-driver,
-}:
+{ stdenv, pkgs, lib, buildPythonPackage, fetchFromGitHub, python3Packages
+, texlive, chromium, pandoc, playwright-driver, }:
 
 let
   version = "0.2.7";
@@ -39,10 +29,7 @@ let
     # selenium
   ];
 
-  testDeps = with python3Packages; [
-    pytestCheckHook
-    pytest-asyncio
-  ];
+  testDeps = with python3Packages; [ pytestCheckHook pytest-asyncio ];
 
   systemDeps = [
     texlive.combined.scheme-small
@@ -53,8 +40,7 @@ let
     # pkgs.geckodriver
   ];
 
-in
-python3Packages.buildPythonPackage rec {
+in python3Packages.buildPythonPackage rec {
   pname = "dataframe_image";
   inherit version;
   format = "pyproject";
@@ -69,7 +55,8 @@ python3Packages.buildPythonPackage rec {
   nativeBuildInputs = testDeps ++ systemDeps;
   buildInputs = with python3Packages; [ setuptools ];
   propagatedBuildInputs = pythonDeps ++ systemDeps;
-  nativeCheckInputs = testDeps ++ systemDeps ++ (with python3Packages; [ pytestCheckHook ]);
+  nativeCheckInputs = testDeps ++ systemDeps
+    ++ (with python3Packages; [ pytestCheckHook ]);
 
   pythonImportsCheck = [ "dataframe_image" ];
   doCheck = true;
@@ -79,16 +66,21 @@ python3Packages.buildPythonPackage rec {
     export JUPYTER_PLATFORM_DIRS=1
     export MPLCONFIGDIR=$TMPDIR/matplotlib
     export PLAYWRIGHT_BROWSERS_PATH=${playwright-driver.browsers}
+    # export PLAYWRIGHT_LAUNCH_OPTIONS="--no-sandbox"
     # export PATH="${pkgs.geckodriver}/bin:$PATH"
   '';
 
   makeWrapperArgs = [
     "--set PLAYWRIGHT_BROWSERS_PATH ${playwright-driver.browsers}"
+    # "--set PLAYWRIGHT_LAUNCH_OPTIONS '--no-sandbox'"
     # "--prefix PATH : ${pkgs.geckodriver}/bin"
   ];
 
   pytestFlagsArray = [
-    "-k 'not selenium and not test_latex[playwright]'"
+    # SKip because of github CI
+    "-x"
+
+    # "-k 'not selenium and not test_latex[playwright] and not test_huge_df[playwright-300]'"
     # The selenium tests are failing as firefox drivers cannot be found.
     # test_latex[playwright] is timing out.
     #
@@ -116,7 +108,8 @@ python3Packages.buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    description = "Embed pandas DataFrames as images in pdf and markdown files when converting from Jupyter Notebooks";
+    description =
+      "Embed pandas DataFrames as images in pdf and markdown files when converting from Jupyter Notebooks";
     homepage = "https://github.com/dexplo/dataframe_image";
     license = licenses.mit;
     maintainers = with maintainers; [ lnajt ];

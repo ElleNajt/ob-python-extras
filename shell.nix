@@ -32,6 +32,7 @@ let
       rich
       pyarrow
       pyspark
+      # reladiff
       dataframe_image
       # jinja2
       plotly
