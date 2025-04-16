@@ -88,7 +88,7 @@ This calls the python REPL's help on the current symbol (obtained from (python-i
   [[file:images/org-download/Overview:/_20250225_190659screenshot.png]]
 
 ** Gptel integrations:
-This was moved into ElleNajt/gpt-babel to handle more soruce blocks than just python.
+This was moved into ElleNajt/gpt-babel to handle more source blocks than just python. This allows one to send cells and output into a conversations with an LLM that carries the same sessions, provides tools to make it easy to patch LLM corrections back onto original cells.
 
 ** HTML Output conversion
 Uses pandoc to convert HTML output into org, with some clean up to prevent it from breaking output drawer results block formatting.
