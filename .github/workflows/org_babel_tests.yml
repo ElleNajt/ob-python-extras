@@ -47,11 +47,15 @@ jobs:
       shell: bash
       timeout-minutes: 10
       working-directory: tests
+      env:
+        NO_SANDBOX: "True"
       run: ./test_nix_shells.sh
 
     - name: Run Tests
       shell: bash
       timeout-minutes: 10
+      env:
+        NO_SANDBOX: "True"
       working-directory: tests
       run: ./run_expect_tests.sh
 
