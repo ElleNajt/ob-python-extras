@@ -66,7 +66,13 @@ def image_repr(self, org_babel_filename, dpi=400):
         directory, f"df_plot_{timestamp}_{random.randint(0, 10000000)}.png"
     )
 
-    dfi.export(self, file_path, table_conversion="chrome", dpi=dpi)
+    dfi.export(
+        # dfi.export doesn't handle series
+        self if self.type == pd.DataFrame else pd.DataFrame(self),
+        file_path,
+        table_conversion="chrome",
+        dpi=dpi,
+    )
     return f"[[file:{file_path}]]"
 
 
