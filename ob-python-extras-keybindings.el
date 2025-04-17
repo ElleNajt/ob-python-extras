@@ -1,4 +1,4 @@
-;;; ob-python-extras-alerts-keybindings.el -*- lexical-binding: t; -*-
+;;; ob-python-extras-keybindings.el -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2025 
 ;;
@@ -52,5 +52,5 @@
      [remap +lookup/documentation] #'ob-python-extras/help-dispatcher   )))
 
 (ob-python-extras/map-suggested-keyindings)
-(provide 'ob-python-extras-alerts-keybindings)
+(provide 'ob-python-extras-keybindings)
 ;;; ob-python-extras-alerts-keybindings.el ends here
