@@ -273,30 +273,6 @@ plt.show()
 print("tada!")
 #+end_src
 
-* Alerts on finishing
-:PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session alerts_on_finish :timer-show no
-:END:
-
-When this finishes, it alerts you in an emacs minibuffer, with a link back.
-You also get a system alert. (This requires libnotify to be installed.)
-
-#+begin_src python :alert yes
-import time
-print("waiting")
-time.sleep(1)
-print("finished")
-#+end_src
-
-#+begin_src python
-import time
-print("waiting")
-time.sleep(1)
-print("finished")
-#+end_src
-
-I also have it configured to send an alert for any cell that takes more than 10 seconds.
-
 * HTML formatting
 :PROPERTIES:
 :header-args: :results output drawer :python "nix-shell --run python"  :tangle :session HTML_formatting :timer-show no
