@@ -244,8 +244,10 @@ finally:
          (session (ob-python-extras/org-babel-get-session)))
     (when session
       (let ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session)))
-        (with-minibuffer-selected-window
-          (switch-to-buffer buffer-name))))))
+        (display-buffer buffer-name
+                        '((display-buffer-in-side-window)
+                          (side . bottom)
+                          (window-height . 0.3)))))))
 
 ;;;; Better output handling
 
