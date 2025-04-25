@@ -243,11 +243,23 @@ finally:
          (lang (car info))
          (session (ob-python-extras/org-babel-get-session)))
     (when session
-      (let ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session)))
-        (display-buffer buffer-name
-                        '((display-buffer-in-side-window)
-                          (side . bottom)
-                          (window-height . 0.3)))))))
+      (let* ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session))
+             (window (display-buffer buffer-name
+                                    '((display-buffer-in-side-window)
+                                      (side . bottom)
+                                      (window-height . 0.3)))))
+        ;; Add a local binding for ESC to close this window
+        (with-current-buffer buffer-name
+          (let ((old-map (current-local-map))
+                (new-map (make-sparse-keymap)))
+            (if old-map
+                (set-keymap-parent new-map old-map)
+              (set-keymap-parent new-map (current-global-map)))
+            (define-key new-map (kbd "<escape>") 
+              (lambda () 
+                (interactive)
+                (quit-window)))
+            (use-local-map new-map)))))))
 
 ;;;; Better output handling
 
