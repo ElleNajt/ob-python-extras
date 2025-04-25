@@ -245,21 +245,11 @@ finally:
     (when session
       (let* ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session))
              (window (display-buffer buffer-name
-                                    '((display-buffer-in-side-window)
-                                      (side . bottom)
-                                      (window-height . 0.3)))))
-        ;; Add a local binding for ESC to close this window
-        (with-current-buffer buffer-name
-          (let ((old-map (current-local-map))
-                (new-map (make-sparse-keymap)))
-            (if old-map
-                (set-keymap-parent new-map old-map)
-              (set-keymap-parent new-map (current-global-map)))
-            (define-key new-map (kbd "<escape>") 
-              (lambda () 
-                (interactive)
-                (quit-window)))
-            (use-local-map new-map)))))))
+                                     '((display-buffer-in-side-window)
+                                       (side . bottom)
+                                       (window-height . 0.3)))))
+        ;; Select the window
+        (select-window window)))))
 
 ;;;; Better output handling
 
