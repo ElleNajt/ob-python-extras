@@ -243,7 +243,9 @@ finally:
          (lang (car info))
          (session (ob-python-extras/org-babel-get-session)))
     (when session
-      (pop-to-buffer (format (if (string= lang "python") "*%s*" "%s") session)))))
+      (let ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session)))
+        (with-minibuffer-selected-window
+          (switch-to-buffer buffer-name))))))
 
 ;;;; Better output handling
 
