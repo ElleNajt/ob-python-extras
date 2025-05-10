@@ -28,6 +28,27 @@ except ImportError:
     POLARS_AVAILABLE = False
     pass
 
+PYSPARK_AVAILABLE = False
+try:
+    from pyspark.sql import DataFrame as SparkDataFrame
+
+    PYSPARK_AVAILABLE = True
+
+    def custom_spark_show(self, n=20):
+        self.limit(n).toPandas().print()
+
+    _original_spark_show = SparkDataFrame.show
+
+    def enable_spark():
+        if PYSPARK_AVAILABLE:
+            SparkDataFrame.show = custom_spark_show
+
+    def disable_spark():
+        if PYSPARK_AVAILABLE:
+            SparkDataFrame.show = _original_spark_show
+
+except ImportError:
+    pass
 
 try:
     import pandas as pd
@@ -114,7 +135,7 @@ def org_repr(obj):
         hline = f"DF_FLAG:|{'-' * (header_width - 2)}|"
         table.insert(1, hline)
 
-    # TODO Add the head and tail printing like jupyter does
+    # TODO[UXWdAurs7o] Add the head and tail printing like jupyter does
 
     OFFSET_DUE_TO_HEADER_AND_HLINE = 2
     return "\n".join(

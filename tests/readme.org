@@ -1,0 +1,52 @@
+#+title: Test suite readme
+
+
+* Running tests
+
+# Run all tests
+#+begin_src bash
+./run_expect_test.sh
+#+end_src
+
+# Run tests for specific test names only
+#+begin_src bash
+./run_expect_tests.sh --file test1.org --test test_name1 test_name2
+#+end_src
+
+
+* Updating goldens
+
+# Update all goldens
+
+#+begin_src bash
+./run_expect_test.sh --update-goldens
+#+end_src
+
+
+# Update all goldens in specific files
+#+begin_src bash
+./run_expect_tests.sh --update-goldens --file babel-formatting.org
+#+end_src
+
+
+# Update specific tests in specific files
+#+begin_src bash
+./run_expect_tests.sh --update-goldens --file babel-formatting.org --test timer
+#+end_src
+
+#+RESULTS:
+: Processing file: babel-formatting.org
+
+
+#+begin_src bash
+./run_expect_tests.sh --update-goldens --file babel-formatting.org --test testing_sessions_set_variable
+#+end_src
+
+
+* Creating new tests for a new module
+
+- Either create a new file, or add use babel-formatting.org.
+
+- Make a new header for the module
+
+- Add a source block about the test
