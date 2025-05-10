@@ -31,9 +31,10 @@ let
       ipdb
       rich
       pyarrow
+      distutils
       pyspark
       # reladiff
-      dataframe_image
+      # dataframe_image
       # jinja2
       plotly
       # python3Packages.better-exceptions # or better-exceptions

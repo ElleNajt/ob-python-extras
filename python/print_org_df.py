@@ -5,6 +5,7 @@ import os
 import random
 from datetime import datetime
 from functools import partial
+from typing import Any, Dict, Optional, Union  # for type hints
 
 PANDAS_AVAILABLE = False
 _original_repr = {}
@@ -37,7 +38,14 @@ try:
     def custom_spark_show(
         self, n: int = 20, truncate: Union[bool, int] = True, vertical: bool = False
     ) -> None:
-        print(org_repr(self.limit(n).toPandas()))
+        pandas_df = self.limit(n).toPandas()
+        total_rows = self.count()
+
+        table = org_repr(pandas_df)
+        if n < total_rows:
+            table += f"\nonly showing top {n} rows"
+
+        print(table)
 
     _original_spark_show = SparkDataFrame.show
 
@@ -162,6 +170,9 @@ def enable(repr_type, org_babel_filename=None, dpi=400):
             obj.__str__ = org_repr
             obj.__repr__ = org_repr
 
+        if PYSPARK_AVAILABLE:
+            SparkDataFrame.show = custom_spark_show
+
     if repr_type == "image":
         for obj in [pd.DataFrame, pd.Series, pd.io.formats.style.Styler]:
             if obj not in _original_repr:
@@ -227,8 +238,19 @@ if __name__ == "__main__":
 
     print("testing image")
 
-    enable(repr_type="image", org_babel_filename="test")
+    # enable(repr_type="image", org_babel_filename="test")
 
-    df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-    styled_df = df.style.background_gradient()
-    print(styled_df)
+    # df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+    # styled_df = df.style.background_gradient()
+    # print(styled_df)
+
+    from pyspark.sql import SparkSession
+
+    spark = SparkSession.builder.getOrCreate()
+    data = [("Alice", 25), ("Bob", 30), ("Charlie", 35)]
+    spark_df = spark.createDataFrame(data, ["name", "age"])
+
+    print("Testing Spark show():")
+    spark_df.show()
+    spark_df.show(2)
+    spark_df.show(1, truncate=False)
