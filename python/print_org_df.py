@@ -34,8 +34,10 @@ try:
 
     PYSPARK_AVAILABLE = True
 
-    def custom_spark_show(self, n=20):
-        self.limit(n).toPandas().print()
+    def custom_spark_show(
+        self, n: int = 20, truncate: Union[bool, int] = True, vertical: bool = False
+    ) -> None:
+        print(org_repr(self.limit(n).toPandas()))
 
     _original_spark_show = SparkDataFrame.show
 
