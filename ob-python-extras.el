@@ -779,23 +779,26 @@ except Exception as e:
 ;;;; completion at point
 
 (defun my-python-completions-capf ()
-  (let* ((session-buffer (ob-python-extras/org-babel-get-session))
-         (python-process (when session-buffer
-                           (or (get-buffer-process session-buffer)
-                               (get-buffer-process (format "*%s*" session-buffer)))))
-         ;; Look backwards for the start of the expression
-         (start (save-excursion
-                  ;;  getting the right object at point
-                  ;;  may need more fiddling
-                  (skip-chars-backward "[:alnum:]_.")
-                  (point)))
-         (end (point))
-         (prefix (buffer-substring-no-properties start end)))
-    (when (and session-buffer python-process prefix)
-      (list start
-            end
-            (python-shell-completion-get-completions python-process prefix)
-            :exclusive 'no))))
+  (when (and (derived-mode-p 'org-mode)
+             (org-in-src-block-p)
+             (string= (org-element-property :language (org-element-at-point)) "python"))
+    (let* ((session-buffer (ob-python-extras/org-babel-get-session))
+           (python-process (when session-buffer
+                             (or (get-buffer-process session-buffer)
+                                 (get-buffer-process (format "*%s*" session-buffer)))))
+           ;; Look backwards for the start of the expression
+           (start (save-excursion
+                    ;;  getting the right object at point
+                    ;;  may need more fiddling
+                    (skip-chars-backward "[:alnum:]_.")
+                    (point)))
+           (end (point))
+           (prefix (buffer-substring-no-properties start end)))
+      (when (and session-buffer python-process prefix)
+        (list start
+              end
+              (python-shell-completion-get-completions python-process prefix)
+              :exclusive 'no)))))
 
 (add-hook 'org-mode-hook
           (lambda ()
