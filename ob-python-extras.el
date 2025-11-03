@@ -29,7 +29,8 @@
    (bound-and-true-p ob-python-extras-python-path)
 
    ;; Check straight.el installation
-   (when (bound-and-true-p straight-base-dir)
+   (when (and (bound-and-true-p straight-base-dir)
+              (bound-and-true-p straight-build-dir))
      (let ((straight-python-dir
             (expand-file-name (concat straight-build-dir "/ob-python-extras/python")
                               straight-base-dir)))
