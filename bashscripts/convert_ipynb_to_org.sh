@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 #
 set -x
 set -euo pipefail
@@ -49,7 +49,7 @@ else
     exit 1
 fi
 
-setopt extendedglob
+shopt -s globstar nullglob
 
 convert_file() {
     local ipynb_file="$1"
@@ -58,8 +58,8 @@ convert_file() {
     local org_file="${file_directory}/${base_name}.org"
 
     # Convert .ipynb to .org using pandoc
-    if [[ FORCE -eq 1 ]] || ! [ -f "$org_file" ]; then
-        pandoc "$notebook" -o "$org_file"
+    if [[ $FORCE -eq 1 ]] || ! [ -f "$org_file" ]; then
+        pandoc "$ipynb_file" -o "$org_file"
     else
         echo "Error: The file $org_file already exists. Delete it first."
     fi
@@ -72,7 +72,7 @@ convert_file() {
     fi
 
     # Clean up UUIDs and property drawers if clean flag is set
-    if [[ CLEAN -eq 1 ]]; then
+    if [[ $CLEAN -eq 1 ]]; then
         if [[ "$(uname -s)" == "Darwin" ]]; then
             sed -i '' '/^<<.*>>$/d' "$org_file"
             sed -i '' '/:PROPERTIES:/,/:END:/d' "$org_file"
