@@ -101,17 +101,19 @@
   "Execute current source block and advance to next Python block."
   (interactive)
   (org-babel-execute-src-block)
-  (let ((start-pos (point)))
-    (catch 'found-python
-      (while (condition-case nil
-                 (progn (org-babel-next-src-block) t)
-               (error nil))
+  (let ((start-pos (point))
+        (found nil))
+    (save-excursion
+      (while (and (not found)
+                  (condition-case nil
+                      (progn (org-babel-next-src-block) t)
+                    (error nil)))
         (let* ((info (org-babel-get-src-block-info))
                (lang (car info)))
-          (when (string= lang "python")
-            (throw 'found-python t))))
-      ;; If no python block found, stay at last position or return to start
-      (goto-char start-pos))))
+          (when (and lang (string= lang "python"))
+            (setq found (point))))))
+    (when found
+      (goto-char found))))
 
 ;;;; Cell timing and error handling
 
