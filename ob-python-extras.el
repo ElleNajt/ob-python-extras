@@ -97,7 +97,21 @@
       (insert "\n#+end_src\n")
       (goto-char contents))))
 
-(defun ob-python-extras/run-cell-and-advance () (interactive) (org-babel-execute-src-block) (org-babel-next-src-block) )
+(defun ob-python-extras/run-cell-and-advance ()
+  "Execute current source block and advance to next Python block."
+  (interactive)
+  (org-babel-execute-src-block)
+  (let ((start-pos (point)))
+    (catch 'found-python
+      (while (condition-case nil
+                 (progn (org-babel-next-src-block) t)
+               (error nil))
+        (let* ((info (org-babel-get-src-block-info))
+               (lang (car info)))
+          (when (string= lang "python")
+            (throw 'found-python t))))
+      ;; If no python block found, stay at last position or return to start
+      (goto-char start-pos))))
 
 ;;;; Cell timing and error handling
 
