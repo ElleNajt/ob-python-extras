@@ -97,6 +97,7 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
+
 RICH_AVAILABLE = False
 try:
     from rich.console import Console
@@ -109,26 +110,33 @@ except ImportError:
     RICH_AVAILABLE = False
 
 
+def _rich_repr_helper(obj, original_repr):
+    """Helper to create rich repr for any object."""
+    if not RICH_AVAILABLE:
+        return original_repr(obj)
+
+    from io import StringIO
+
+    from rich.console import Console
+    from rich.pretty import Pretty
+
+    output = StringIO()
+    console = Console(file=output, force_terminal=False, width=120)
+    console.print(Pretty(obj, indent_guides=True))
+    return output.getvalue()
+
+
 def tensor_repr(self):
     """Simple rich repr for PyTorch tensors."""
     if not RICH_AVAILABLE:
         return _torch_original_repr(self)
-    
-    from io import StringIO
-    from rich.console import Console
-    from rich.pretty import Pretty
-    
+
     # Temporarily restore original repr to avoid recursion
     torch.Tensor.__repr__ = _torch_original_repr
     try:
-        # Create a console that outputs to string without ANSI codes
-        output = StringIO()
-        console = Console(file=output, force_terminal=False, width=120)
-        console.print(Pretty(self, indent_guides=True))
-        result = output.getvalue()
+        result = _rich_repr_helper(self, _torch_original_repr)
     finally:
         torch.Tensor.__repr__ = tensor_repr
-    
     return result
 
 
@@ -291,7 +299,7 @@ def enable(repr_type, org_babel_filename=None, dpi=400):
 
         if PYSPARK_AVAILABLE:
             SparkDataFrame.show = custom_spark_show
-    
+
     # Enable tensor pretty printing
     if TORCH_AVAILABLE and RICH_AVAILABLE:
         torch.Tensor.__repr__ = tensor_repr

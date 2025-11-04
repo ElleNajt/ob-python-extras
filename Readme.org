@@ -13,6 +13,7 @@ This package adds additional features to ob-python that I found lacking when try
 - Mix image and text output in the same cell, by mocking matplotlib to save images and return references.
 - Print pandas [[file:tests/babel-formatting.org::*Displaying styled dataframes as pngs][dataframes as org tables by default]], by overwriting the __repr__ method. Uses tabulate if available.
 - Displayed styled dataframes as embedded pngs, using dataframe_image.
+- Pretty print PyTorch tensors using rich library with syntax highlighting and indentation guides
 - Press C-c C-c over an image for a full-size view
 
   For example:
