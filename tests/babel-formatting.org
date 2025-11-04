@@ -466,3 +466,23 @@ print(1)
 1
 :end:
 
+
+* Torch
+:PROPERTIES:
+:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session torch :timer-show no
+:END:
+
+
+  #+begin_src python
+import torch
+x = torch.randn(3, 3)
+print(x)
+  #+end_src
+
+  #+RESULTS:
+  :results:
+  tensor([[-1.0608,  0.0756,  0.4520],
+  │   │   [-0.4603, -0.6774, -0.1871],
+  │   │   [-0.6745,  0.0472, -0.8954]])
+  :end:
+

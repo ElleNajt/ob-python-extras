@@ -19,6 +19,7 @@ let
       pandas
       numpy
       scikit-learn
+      torch
       matplotlib
       seaborn
       polars

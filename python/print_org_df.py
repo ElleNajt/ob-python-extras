@@ -84,6 +84,125 @@ try:
 except ImportError:
     DATAFRAME_IMAGE_AVAILABLE = False
 
+TORCH_AVAILABLE = False
+_torch_original_str = None
+_torch_original_repr = None
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+    # Save original methods immediately at import time to avoid recursion
+    _torch_original_str = torch.Tensor.__str__
+    _torch_original_repr = torch.Tensor.__repr__
+except ImportError:
+    TORCH_AVAILABLE = False
+
+RICH_AVAILABLE = False
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
+
+def tensor_repr(self):
+    """Simple rich repr for PyTorch tensors."""
+    if not RICH_AVAILABLE:
+        return _torch_original_repr(self)
+    
+    from io import StringIO
+    from rich.console import Console
+    from rich.pretty import Pretty
+    
+    # Temporarily restore original repr to avoid recursion
+    torch.Tensor.__repr__ = _torch_original_repr
+    try:
+        # Create a console that outputs to string without ANSI codes
+        output = StringIO()
+        console = Console(file=output, force_terminal=False, width=120)
+        console.print(Pretty(self, indent_guides=True))
+        result = output.getvalue()
+    finally:
+        torch.Tensor.__repr__ = tensor_repr
+    
+    return result
+
+
+def rich_tensor_repr(tensor):
+    """Format PyTorch tensor with rich library for better readability."""
+    if not RICH_AVAILABLE:
+        # Fallback to default repr if rich not available
+        if _torch_original_repr is not None:
+            return _torch_original_repr(tensor)
+        return object.__repr__(tensor)
+
+    console = Console(width=120, force_terminal=False, force_jupyter=False)
+
+    # Use the original string func saved at module load time to avoid recursion
+    original_str_func = (
+        _torch_original_str if _torch_original_str is not None else object.__str__
+    )
+
+    # Capture output to string
+    with console.capture() as capture:
+        # Create info table
+        info_table = Table(show_header=False, box=None, padding=(0, 1))
+        info_table.add_column("Property", style="cyan")
+        info_table.add_column("Value", style="yellow")
+
+        # Basic info
+        info_table.add_row("Shape", str(tuple(tensor.shape)))
+        info_table.add_row("Dtype", str(tensor.dtype))
+        info_table.add_row("Device", str(tensor.device))
+
+        # Gradient info
+        if tensor.requires_grad:
+            info_table.add_row("Requires Grad", "True")
+            if tensor.grad_fn is not None:
+                info_table.add_row("Grad Fn", str(tensor.grad_fn))
+
+        # Statistics for numeric tensors
+        if tensor.numel() > 0 and tensor.dtype in [
+            torch.float32,
+            torch.float64,
+            torch.float16,
+            torch.bfloat16,
+        ]:
+            try:
+                info_table.add_row("Min", f"{tensor.min().item():.4f}")
+                info_table.add_row("Max", f"{tensor.max().item():.4f}")
+                info_table.add_row("Mean", f"{tensor.mean().item():.4f}")
+                info_table.add_row("Std", f"{tensor.std().item():.4f}")
+            except Exception:
+                # Skip stats if they fail (NaNs, inf, empty tensors, etc.)
+                # Better to show tensor without stats than crash the repr
+                pass
+
+        console.print(info_table)
+
+        # Show tensor values (truncated if large)
+        console.print("\n[bold]Values:[/bold]")
+
+        # Use torch's ORIGINAL repr for the values, but limit size
+        if tensor.numel() <= 1000:
+            console.print(original_str_func(tensor))
+        else:
+            # For large tensors, show a sample
+            console.print(f"[dim](showing slice of {tensor.numel()} elements)[/dim]")
+            if tensor.ndim == 1:
+                console.print(original_str_func(tensor[:10]))
+            elif tensor.ndim == 2:
+                console.print(original_str_func(tensor[:5, :5]))
+            else:
+                # For higher dims, show first slice
+                console.print(original_str_func(tensor[0]))
+
+    return capture.get()
+
 
 def image_repr(self, org_babel_filename, dpi=400):
     if not DATAFRAME_IMAGE_AVAILABLE:
@@ -172,6 +291,11 @@ def enable(repr_type, org_babel_filename=None, dpi=400):
 
         if PYSPARK_AVAILABLE:
             SparkDataFrame.show = custom_spark_show
+    
+    # Enable tensor pretty printing
+    if TORCH_AVAILABLE and RICH_AVAILABLE:
+        torch.Tensor.__repr__ = tensor_repr
+        torch.Tensor.__str__ = tensor_repr
 
     if repr_type == "image":
         for obj in [pd.DataFrame, pd.Series, pd.io.formats.style.Styler]:
@@ -201,6 +325,11 @@ def disable():
         if obj in _original_repr:
             obj.__repr__ = _original_repr[obj]
             obj.__str__ = _original_str[obj]
+
+    # Restore original tensor repr
+    if TORCH_AVAILABLE and _torch_original_repr is not None:
+        torch.Tensor.__repr__ = _torch_original_repr
+        torch.Tensor.__str__ = _torch_original_str
 
 
 def is_enabled():
