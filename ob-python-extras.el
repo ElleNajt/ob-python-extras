@@ -102,18 +102,34 @@
   (interactive)
   (org-babel-execute-src-block)
   (let ((start-pos (point))
-        (found nil))
+        (found nil)
+        (iterations 0))
     (save-excursion
       (while (and (not found)
-                  (condition-case nil
-                      (progn (org-babel-next-src-block) t)
-                    (error nil)))
-        (let* ((info (org-babel-get-src-block-info))
+                  (< iterations 10)  ; Safety limit
+                  (condition-case err
+                      (progn 
+                        (org-babel-next-src-block) 
+                        
+                        t)
+                    (error 
+                     
+                     nil)))
+        (setq iterations (1+ iterations))
+        (let* ((element (org-element-at-point))
+               (element-type (org-element-type element))
+               (info (org-babel-get-src-block-info))
                (lang (car info)))
+          
           (when (and lang (string= lang "python"))
+            
             (setq found (point))))))
+    
     (when found
-      (goto-char found))))
+      
+      (goto-char found))
+    (unless found
+      )))
 
 ;;;; Cell timing and error handling
 
@@ -327,7 +343,7 @@ except:
             :around #'ob-python-extras/wrap-org-babel-execute-python-mock-plt
             '((depth . -5)))
 
-;; TODO Refactor these advice so that there is a single one!
+;; TODO[CepTwbh6GU] Refactor these advice so that there is a single one!
 
 
 ;;;;;; Image Garbage collection
@@ -634,8 +650,8 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
 ;;; Auto formatting
 
-;; TODO Get this to work in emacs batch
-;; TODO Add ruff
+;; TODO[QdYCTfqIxS] Get this to work in emacs batch
+;; TODO[HlJlq2Q5Rb] Add ruff
 
 (defvar ob-python-extras/auto-format t
   "When non-nil, automatically format Python source blocks after execution.")
@@ -692,7 +708,7 @@ Applies black in buffer, then uses temp file for isort."
   (if (and (org-in-src-block-p)
            (string= "python" (org-element-property :language (org-element-at-point))))
       (ob-python-extras/python-help)
-    ;; TODO This is pretty doom specific, I think.
+    ;; TODO[CN6QJEyYIJ] This is pretty doom specific, I think.
     (call-interactively #'+lookup/documentation)))
 
 
@@ -714,7 +730,7 @@ print(__help_output.getvalue())
 " symbol))
          ;; it would be better if I could get the *path* to the documentation
          ;; and open in a buffer with less
-         ;;  TODO Maybe look at eldoc at point in python.el ?
+         ;;  TODO[Hq1PyRoIwW] Maybe look at eldoc at point in python.el ?
          (output (when (and session-buffer python-process symbol)
                    (python-shell-send-string-no-output help-command python-process))))
     
@@ -762,7 +778,7 @@ for __name, __value in __user_vars.items():
            (string= "python" (org-element-property :language (org-element-at-point))))
       (ob-python-extras/python-goto-definition)
 
-    ;; TODO This is pretty doom specific, I think.
+    ;; TODO[JfUsvOaUkB] This is pretty doom specific, I think.
     (call-interactively #'+lookup/definition)))
 
 (defun ob-python-extras/python-goto-definition ()
@@ -796,26 +812,58 @@ except Exception as e:
 ;;;; completion at point
 
 (defun my-python-completions-capf ()
+  "Provide Python completions in org-mode source blocks using the session REPL."
   (when (and (derived-mode-p 'org-mode)
              (org-in-src-block-p)
              (string= (org-element-property :language (org-element-at-point)) "python"))
-    (let* ((session-buffer (ob-python-extras/org-babel-get-session))
-           (python-process (when session-buffer
-                             (or (get-buffer-process session-buffer)
-                                 (get-buffer-process (format "*%s*" session-buffer)))))
+    (let* ((session-name (ob-python-extras/org-babel-get-session))
+           (session-buffer (when session-name
+                             (format "*%s*" session-name)))
+           (python-process (when (and session-buffer (get-buffer session-buffer))
+                             (get-buffer-process session-buffer)))
            ;; Look backwards for the start of the expression
            (start (save-excursion
-                    ;;  getting the right object at point
-                    ;;  may need more fiddling
                     (skip-chars-backward "[:alnum:]_.")
                     (point)))
            (end (point))
            (prefix (buffer-substring-no-properties start end)))
-      (when (and session-buffer python-process prefix)
-        (list start
-              end
-              (python-shell-completion-get-completions python-process prefix)
-              :exclusive 'no)))))
+      (when (and python-process prefix (not (string-empty-p prefix)))
+        (condition-case err
+            (let* ((completions (ob-python-extras--get-completions python-process prefix)))
+              (when completions
+                (list start end completions :exclusive 'no)))
+          (error nil))))))
+
+(defun ob-python-extras--get-completions (process prefix)
+  "Get completions for PREFIX from Python PROCESS, handling prompt output correctly."
+  (let* ((escaped-prefix (replace-regexp-in-string "'" "\\\\'" prefix))
+         (completion-code
+          (format "
+import json
+import rlcompleter
+completer = rlcompleter.Completer(globals())
+completions = []
+i = 0
+while True:
+    completion = completer.complete('%s', i)
+    if completion is None:
+        break
+    completions.append(completion)
+    i += 1
+print('__COMPLETIONS_START__')
+print(json.dumps(completions))
+print('__COMPLETIONS_END__')
+" escaped-prefix))
+         (output (python-shell-send-string-no-output completion-code process)))
+    (when output
+      ;; Extract JSON between markers
+      (let ((cleaned-output
+             (when (string-match "__COMPLETIONS_START__\n\\(\\[.*?\\]\\)\n__COMPLETIONS_END__" output)
+               (match-string 1 output))))
+        (when cleaned-output
+          (condition-case err
+              (json-parse-string cleaned-output :array-type 'list)
+            (error nil)))))))
 
 (add-hook 'org-mode-hook
           (lambda ()
