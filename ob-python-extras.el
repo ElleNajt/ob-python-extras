@@ -276,7 +276,10 @@ finally:
          (lang (car info))
          (session (ob-python-extras/org-babel-get-session)))
     (when session
-      (let* ((buffer-name (format (if (string= lang "python") "*%s*" "%s") session))
+      (let* ((buffer-name (cond
+                           ((string= lang "tidal") "*tidal*")
+                           ((string= lang "python") (format "*%s*" session))
+                           (t session)))
              (window (display-buffer buffer-name
                                      '((display-buffer-in-side-window)
                                        (side . bottom)
