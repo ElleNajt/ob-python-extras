@@ -986,10 +986,11 @@ print = __original_print"
 
 
 (defun ob-python-extras--run-org-file-externally ()
-  "Run marked org file in separate Emacs process with full config and notify when done."
+  "Run marked org file in separate Emacs process with ob-python-extras loaded."
   (interactive)
-  (let ((files (dired-get-marked-files t current-prefix-arg))
-        (init-file (or user-init-file "~/.emacs.d/init.el")))
+  (let* ((files (dired-get-marked-files t current-prefix-arg))
+         (ob-python-extras-lib (locate-library "ob-python-extras"))
+         (python-scripts-dir (ob-python-extras/find-python-scripts-dir)))
     (revert-buffer)
     (dolist (file files)
       (when (string-match "\\.org$" file)
@@ -997,8 +998,13 @@ print = __original_print"
           (message "Starting export of %s..." file)
           (start-process
            process-name "*org-export*"
-           "emacs" "--eval" 
-           (format "(progn 
+           "emacs"
+           "--eval" (format "(setq ob-python-extras-python-path \"%s\")" python-scripts-dir)
+           "-l" ob-python-extras-lib
+           "--eval" 
+           (format "(progn
+                     (require 'ob-python)
+                     (setq org-confirm-babel-evaluate nil)
                      (find-file \"%s\")
                      (let* ((counts (ob-python-extras--count-org-blocks))
                             (block-count (car counts))
