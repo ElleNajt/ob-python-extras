@@ -7,7 +7,7 @@ This package adds additional features to ob-python that I found lacking when try
 
 * Features:
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python" :async t :tangle :session project :timer-show no :exports both
+:header-args: :results output drawer :async t :tangle :session project :timer-show no :exports both
 :END:
 ** Enhanced cell output
 - Mix image and text output in the same cell, by mocking matplotlib to save images and return references.
@@ -98,7 +98,7 @@ Tooling to safely rename variables in an org file across all python blocks that 
 
 To use, create a renamer.json in the same folder as your .org file, mark both with dired, and then run ob-python-extras/dired-rename-python-vars.
 
-By default this runs a python via "nix-shell --pure -p black --run 'python ...'" , set the variable alternative-python-binary to a different python binary if not using nix.
+By default this runs python via nix-shell. Set the variable `alternative-python-binary` to use a different python binary (e.g., from uv or system python).
 
 ** Pandoc scripts:
 Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.

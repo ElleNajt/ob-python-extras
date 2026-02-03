@@ -1,8 +1,9 @@
 #+title: Tests
+#+PROPERTY: header-args:python :results output drawer :python "../.venv/bin/python3" :tangle yes
 
 * Testing sessions:
 :PROPERTIES:
-:header-args: :results output drawer :tangle :session timer_formatting_tests
+:header-args: :results output drawer :session timer_formatting_tests
 :END:
 
 #+name: testing_sessions_set_variable
@@ -10,15 +11,26 @@
 x = 1
 #+end_src
 
+#+RESULTS: testing_sessions_set_variable
+:results:
+Cell Timer: 0:00:00
+:end:
+
 #+name: testing_sessions_print
 #+begin_src python
 print(x*2)
 #+end_src
 
+#+RESULTS: testing_sessions_print
+:results:
+2
+Cell Timer: 0:00:00
+:end:
+
 
 * Timer formatting
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session timer_formatting_tests
+:header-args: :results output drawer :tangle :session timer_formatting_tests
 :END:
 
 Rounds by default, and shows by default:
@@ -30,12 +42,23 @@ import time
 time.sleep(3)
 #+end_src
 
+#+RESULTS: timer
+:results:
+1
+Cell Timer: 0:00:03
+:end:
+
 Turn off timer-show to hide it
 
 #+name: turn_off_timer
 #+begin_src python :timer-show no
 print(1)
 #+end_src
+
+#+RESULTS: turn_off_timer
+:results:
+1
+:end:
 
 Set :timer-rounded to no to get the full timer.
 (Also modifying the timer string here so that my expect tests will skip it.)
@@ -45,9 +68,15 @@ Set :timer-rounded to no to get the full timer.
 print(1)
 #+end_src
 
+#+RESULTS: not_rounded_timer
+:results:
+1
+expect_skip Cell Timer: 0:00:00.000227
+:end:
+
 * Table formatting
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting :timer-show no
+:header-args: :results output drawer :tangle :session table_formatting :timer-show no
 :END:
 
 ** As org tables
@@ -67,13 +96,13 @@ print(df)
 
 #+RESULTS: print_table
 :results:
-| idx | Name    | Age | City          |    Score |
-|-----+---------+-----+---------------+----------|
-|   0 | Joe     |  44 | New York      |     92.5 |
-|   1 | Eva     |  32 | San Francisco |     88.0 |
-|   2 | Charlie |  33 | Boston        |     95.2 |
-|   3 | David   |  33 | Paris         |     78.9 |
-|   4 | Eva     |  22 | Tokyo         | 90.11111 |
+| idx | Name    | Age | City          |    Score |  |
+|-----+---------+-----+---------------+----------+----|
+|   0 | Joe     |  44 | New York      |     92.5 |  |
+|   1 | Eva     |  32 | San Francisco |     88.0 |  |
+|   2 | Charlie |  33 | Boston        |     95.2 |  |
+|   3 | David   |  33 | Paris         |     78.9 |  |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |    |
 :end:
 
 This respects various pandas options:
@@ -86,6 +115,17 @@ pd.options.display.float_format = '{:.1f}'.format
 print(df.set_index("Name"))
 #+end_src
 
+#+RESULTS: format_table_floats
+:results:
+| Name    | Age | City          | Score |  |
+|---------+-----+---------------+-------+----|
+| Joe     |  44 | New York      |  92.5 |  |
+| Eva     |  32 | San Francisco |  88.0 |  |
+| Charlie |  33 | Boston        |  95.2 |  |
+| David   |  33 | Paris         |  78.9 |  |
+| Eva     |  22 | Tokyo         |  90.1 |    |
+:end:
+
 **** Max rows
 
 #+name: limit_table_max_rows
@@ -95,9 +135,25 @@ long_df = pd.DataFrame({'A': range(200)})
 print(long_df)
 #+end_src
 
+#+RESULTS: limit_table_max_rows
+:results:
+| idx | A |  |
+|-----+---+----|
+|   0 | 0 |  |
+|   1 | 1 |  |
+|   2 | 2 |  |
+|   3 | 3 |  |
+|   4 | 4 |  |
+|   5 | 5 |  |
+|   6 | 6 |  |
+|   7 | 7 |  |
+|   8 | 8 |  |
+|   9 | 9 |    |
+:end:
+
 *** Problem -- hangs when printing large dataframes.
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session table_formatting_large_dtfs :timer-show no
+:header-args: :results output drawer :tangle :session table_formatting_large_dtfs :timer-show no
 :END:
 
 print_org_df sets max_rows to be 20 by default to avoid this issue.
@@ -109,6 +165,32 @@ long_df = pd.DataFrame({'A': range(400)})
 print(long_df)
 #+end_src
 
+#+RESULTS: print_long_table
+:results:
+| idx |  A |  |
+|-----+----+----|
+|   0 |  0 |  |
+|   1 |  1 |  |
+|   2 |  2 |  |
+|   3 |  3 |  |
+|   4 |  4 |  |
+|   5 |  5 |  |
+|   6 |  6 |  |
+|   7 |  7 |  |
+|   8 |  8 |  |
+|   9 |  9 |  |
+|  10 | 10 |  |
+|  11 | 11 |  |
+|  12 | 12 |  |
+|  13 | 13 |  |
+|  14 | 14 |  |
+|  15 | 15 |  |
+|  16 | 16 |  |
+|  17 | 17 |  |
+|  18 | 18 |  |
+|  19 | 19 |    |
+:end:
+
 If we make the max_rows even modestly large, we run into it, depending on computing resources.
 
 #+name: print_medium_table
@@ -118,6 +200,212 @@ long_df = pd.DataFrame({'A': range(200)})
 print(long_df)
 #+end_src
 
+#+RESULTS: print_medium_table
+:results:
+| idx |   A |  |
+|-----+-----+----|
+|   0 |   0 |  |
+|   1 |   1 |  |
+|   2 |   2 |  |
+|   3 |   3 |  |
+|   4 |   4 |  |
+|   5 |   5 |  |
+|   6 |   6 |  |
+|   7 |   7 |  |
+|   8 |   8 |  |
+|   9 |   9 |  |
+|  10 |  10 |  |
+|  11 |  11 |  |
+|  12 |  12 |  |
+|  13 |  13 |  |
+|  14 |  14 |  |
+|  15 |  15 |  |
+|  16 |  16 |  |
+|  17 |  17 |  |
+|  18 |  18 |  |
+|  19 |  19 |  |
+|  20 |  20 |  |
+|  21 |  21 |  |
+|  22 |  22 |  |
+|  23 |  23 |  |
+|  24 |  24 |  |
+|  25 |  25 |  |
+|  26 |  26 |  |
+|  27 |  27 |  |
+|  28 |  28 |  |
+|  29 |  29 |  |
+|  30 |  30 |  |
+|  31 |  31 |  |
+|  32 |  32 |  |
+|  33 |  33 |  |
+|  34 |  34 |  |
+|  35 |  35 |  |
+|  36 |  36 |  |
+|  37 |  37 |  |
+|  38 |  38 |  |
+|  39 |  39 |  |
+|  40 |  40 |  |
+|  41 |  41 |  |
+|  42 |  42 |  |
+|  43 |  43 |  |
+|  44 |  44 |  |
+|  45 |  45 |  |
+|  46 |  46 |  |
+|  47 |  47 |  |
+|  48 |  48 |  |
+|  49 |  49 |  |
+|  50 |  50 |  |
+|  51 |  51 |  |
+|  52 |  52 |  |
+|  53 |  53 |  |
+|  54 |  54 |  |
+|  55 |  55 |  |
+|  56 |  56 |  |
+|  57 |  57 |  |
+|  58 |  58 |  |
+|  59 |  59 |  |
+|  60 |  60 |  |
+|  61 |  61 |  |
+|  62 |  62 |  |
+|  63 |  63 |  |
+|  64 |  64 |  |
+|  65 |  65 |  |
+|  66 |  66 |  |
+|  67 |  67 |  |
+|  68 |  68 |  |
+|  69 |  69 |  |
+|  70 |  70 |  |
+|  71 |  71 |  |
+|  72 |  72 |  |
+|  73 |  73 |  |
+|  74 |  74 |  |
+|  75 |  75 |  |
+|  76 |  76 |  |
+|  77 |  77 |  |
+|  78 |  78 |  |
+|  79 |  79 |  |
+|  80 |  80 |  |
+|  81 |  81 |  |
+|  82 |  82 |  |
+|  83 |  83 |  |
+|  84 |  84 |  |
+|  85 |  85 |  |
+|  86 |  86 |  |
+|  87 |  87 |  |
+|  88 |  88 |  |
+|  89 |  89 |  |
+|  90 |  90 |  |
+|  91 |  91 |  |
+|  92 |  92 |  |
+|  93 |  93 |  |
+|  94 |  94 |  |
+|  95 |  95 |  |
+|  96 |  96 |  |
+|  97 |  97 |  |
+|  98 |  98 |  |
+|  99 |  99 |  |
+| 100 | 100 |  |
+| 101 | 101 |  |
+| 102 | 102 |  |
+| 103 | 103 |  |
+| 104 | 104 |  |
+| 105 | 105 |  |
+| 106 | 106 |  |
+| 107 | 107 |  |
+| 108 | 108 |  |
+| 109 | 109 |  |
+| 110 | 110 |  |
+| 111 | 111 |  |
+| 112 | 112 |  |
+| 113 | 113 |  |
+| 114 | 114 |  |
+| 115 | 115 |  |
+| 116 | 116 |  |
+| 117 | 117 |  |
+| 118 | 118 |  |
+| 119 | 119 |  |
+| 120 | 120 |  |
+| 121 | 121 |  |
+| 122 | 122 |  |
+| 123 | 123 |  |
+| 124 | 124 |  |
+| 125 | 125 |  |
+| 126 | 126 |  |
+| 127 | 127 |  |
+| 128 | 128 |  |
+| 129 | 129 |  |
+| 130 | 130 |  |
+| 131 | 131 |  |
+| 132 | 132 |  |
+| 133 | 133 |  |
+| 134 | 134 |  |
+| 135 | 135 |  |
+| 136 | 136 |  |
+| 137 | 137 |  |
+| 138 | 138 |  |
+| 139 | 139 |  |
+| 140 | 140 |  |
+| 141 | 141 |  |
+| 142 | 142 |  |
+| 143 | 143 |  |
+| 144 | 144 |  |
+| 145 | 145 |  |
+| 146 | 146 |  |
+| 147 | 147 |  |
+| 148 | 148 |  |
+| 149 | 149 |  |
+| 150 | 150 |  |
+| 151 | 151 |  |
+| 152 | 152 |  |
+| 153 | 153 |  |
+| 154 | 154 |  |
+| 155 | 155 |  |
+| 156 | 156 |  |
+| 157 | 157 |  |
+| 158 | 158 |  |
+| 159 | 159 |  |
+| 160 | 160 |  |
+| 161 | 161 |  |
+| 162 | 162 |  |
+| 163 | 163 |  |
+| 164 | 164 |  |
+| 165 | 165 |  |
+| 166 | 166 |  |
+| 167 | 167 |  |
+| 168 | 168 |  |
+| 169 | 169 |  |
+| 170 | 170 |  |
+| 171 | 171 |  |
+| 172 | 172 |  |
+| 173 | 173 |  |
+| 174 | 174 |  |
+| 175 | 175 |  |
+| 176 | 176 |  |
+| 177 | 177 |  |
+| 178 | 178 |  |
+| 179 | 179 |  |
+| 180 | 180 |  |
+| 181 | 181 |  |
+| 182 | 182 |  |
+| 183 | 183 |  |
+| 184 | 184 |  |
+| 185 | 185 |  |
+| 186 | 186 |  |
+| 187 | 187 |  |
+| 188 | 188 |  |
+| 189 | 189 |  |
+| 190 | 190 |  |
+| 191 | 191 |  |
+| 192 | 192 |  |
+| 193 | 193 |  |
+| 194 | 194 |  |
+| 195 | 195 |  |
+| 196 | 196 |  |
+| 197 | 197 |  |
+| 198 | 198 |  |
+| 199 | 199 |    |
+:end:
+
 *** Printing multiple dataframes:
 
 #+name: printing_multiple_dataframes
@@ -126,6 +414,25 @@ print(df)
 print("Space between dataframes")
 print(df)
 #+end_src
+
+#+RESULTS: printing_multiple_dataframes
+:results:
+| idx | Name    | Age | City          | Score |  |
+|-----+---------+-----+---------------+-------+----|
+|   0 | Joe     |  44 | New York      |  92.5 |  |
+|   1 | Eva     |  32 | San Francisco |  88.0 |  |
+|   2 | Charlie |  33 | Boston        |  95.2 |  |
+|   3 | David   |  33 | Paris         |  78.9 |  |
+|   4 | Eva     |  22 | Tokyo         |  90.1 |  |
+Space between dataframes
+| idx | Name    | Age | City          | Score |  |
+|-----+---------+-----+---------------+-------+----|
+|   0 | Joe     |  44 | New York      |  92.5 |  |
+|   1 | Eva     |  32 | San Francisco |  88.0 |  |
+|   2 | Charlie |  33 | Boston        |  95.2 |  |
+|   3 | David   |  33 | Paris         |  78.9 |  |
+|   4 | Eva     |  22 | Tokyo         |  90.1 |    |
+:end:
 
 
 In general space between dataframes requires ones below to be aligned.
@@ -138,9 +445,28 @@ print("Space between dataframes")
 print(df)
 #+end_src
 
+#+RESULTS: tables_auto_align_off
+:results:
+| idx | Name    | Age | City          | Score |  |
+|-----+---------+-----+---------------+-------+----|
+|   0 | Joe     |  44 | New York      |  92.5 |  |
+|   1 | Eva     |  32 | San Francisco |  88.0 |  |
+|   2 | Charlie |  33 | Boston        |  95.2 |  |
+|   3 | David   |  33 | Paris         |  78.9 |  |
+|   4 | Eva     |  22 | Tokyo         |  90.1 |  |
+Space between dataframes
+| idx  |Name|Age|City|Score |
+|-----------------------------------|
+| 0|Joe|44|New York|92.5 |
+| 1|Eva|32|San Francisco|88.0 |
+| 2|Charlie|33|Boston|95.2 |
+| 3|David|33|Paris|78.9 |
+| 4|Eva|22|Tokyo|90.1 |
+:end:
+
 *** Bug -- tables that contain | are buggy.
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python"  :tangle :session test_bug :timer-show no
+:header-args: :results output drawer :tangle :session test_bug :timer-show no
 :END:
 
 
@@ -157,14 +483,14 @@ print(df)
 
 #+RESULTS:
 :results:
-|   | names |
-|---+-------|
-| 0 | John  |
-ert            \
-| 1 | Mary       |
-| 2 | Bob  Rob   |
-| 3 | Alice John |
-| 4 | Tom        |
+| idx | names  |  |
+|-----+--------+----|
+|   0 | John |    |
+ert \
+| 1 | Mary       |  |
+| 2 | Bob  Rob   |  |
+| 3 | Alice John |  |
+| 4 | Tom        |    |
 :end:
 
 One work around is to call to_markdown directly, as ob-python-extras converts | that are not in dataframes into \ to prevent org from incorrectly recognizing text as tables.
@@ -178,13 +504,25 @@ print(df.to_markdown())
 
 #+RESULTS:
 :results:
-\    \ names      \
-\---:\:-----------\
-\  0 \ John       \
-\  1 \ Mary       \
-\  2 \ Bob\Rob    \
-\  3 \ Alice\John \
-\  4 \ Tom        \
+Traceback (most recent call last):
+File "/Users/elle/code/ob-python-extras/.venv/lib/python3.13/site-packages/pandas/compat/_optional.py", line 158, in import_optional_dependency
+module = importlib.import_module(name)
+File "/Users/elle/.local/share/uv/python/cpython-3.13.2-macos-aarch64-none/lib/python3.13/importlib/__init__.py", line 88, in import_module
+return _bootstrap._gcd_import(name[level:], package, level)
+~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'tabulate'
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+File "<babel-formatting: org babel source block> ", line 38, in <module>
+File "<org babel source block>", line 4, in <module>
+File "/Users/elle/code/ob-python-extras/.venv/lib/python3.13/site-packages/pandas/core/frame.py", line 2983, in to_markdown
+tabulate = import_optional_dependency("tabulate")
+File "/Users/elle/code/ob-python-extras/.venv/lib/python3.13/site-packages/pandas/compat/_optional.py", line 161, in import_optional_dependency
+raise ImportError(msg) from err
+ImportError: `Import tabulate` failed.  Use pip or conda to install the tabulate package.
 :end:
 
 ** Displaying styled dataframes as pngs
@@ -198,6 +536,11 @@ styled_df = df.style.background_gradient()
 print(styled_df)
 #+end_src
 
+#+RESULTS:
+:results:
+dd53c34f-ff6e-4ae5-8ea6-bdd853f00dc0
+:end:
+
 #+RESULTS: styled_dataframes
 :results:
 [[file:plots/babel-formatting/df_plot_20250309_233812_9163414.png]]
@@ -206,7 +549,7 @@ print(styled_df)
 
 ** Polars
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session polars :show-timer no
+:header-args: :results output drawer :tangle :session polars :show-timer no
 :END:
 
 Polars dataframes are always printed as an org table as well.
@@ -222,17 +565,17 @@ print(df)
 #+RESULTS: polars
 :results:
 (3, 2)
-| idx | x | y |
-|-----+---+---|
-|   0 | 1 | 2 |
-|   1 | 1 | 3 |
-|   2 | 3 | 1 |
+| idx | x | y |  |
+|-----+---+---+----|
+|   0 | 1 | 2 |  |
+|   1 | 1 | 3 |  |
+|   2 | 3 | 1 |  |
 Cell Timer: 0:00:00
 :end:
 
 * Testing Tabulate
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python"  :tangle :session test_tabulate :timer-show no
+:header-args: :results output drawer :tangle :session test_tabulate :timer-show no
 :END:
 
 If Tabulate is available we can use it directly to formate the dataframe. This is built into pandas and the safer option.
@@ -248,9 +591,21 @@ data = {
 df = pd.DataFrame(data)
 print(df)
 #+end_src
+
+#+RESULTS:
+:results:
+| idx | Name    | Age | City          |    Score |  |
+|-----+---------+-----+---------------+----------+----|
+|   0 | Joe     |  44 | New York      |     92.5 |  |
+|   1 | Eva     |  32 | San Francisco |     88.0 |  |
+|   2 | Charlie |  33 | Boston        |     95.2 |  |
+|   3 | David   |  33 | Paris         |     78.9 |  |
+|   4 | Eva     |  22 | Tokyo         | 90.11111 |    |
+:end:
+
 * Images
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session project_images :timer-show no
+:header-args: :results output drawer :tangle :session project_images :timer-show no
 :END:
 
 mocks out python plotting to allow plots to be interspersed with printing, and allows multiple to be made. :)
@@ -273,9 +628,25 @@ plt.show()
 print("tada!")
 #+end_src
 
+#+RESULTS: table_with_plot_and_text
+:results:
+look!
+| idx | x |  y |  |
+|-----+---+----+----|
+|   0 | 0 | 10 |  |
+|   1 | 2 | 11 |  |
+|   2 | 3 | 12 |  |
+|   3 | 4 | 13 |  |
+|   4 | 5 | 14 |  |
+|   5 | 6 | 15 |  |
+|   6 | 7 | 16 |  |
+[[file:plots/babel-formatting/plot_20260202_175605_1346249.png]]
+tada!
+:end:
+
 * HTML formatting
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session HTML_formatting :timer-show no
+:header-args: :results output drawer :tangle :session HTML_formatting :timer-show no
 :END:
 
 
@@ -328,17 +699,17 @@ print(html)
 - Data Analysis Results
 Here's a sample of our trigonometric functions:
 
-|   |       x |      sin |      cos |
-|---+---------+----------+----------|
-| 0 | 0.00000 | 0.000000 | 1.000000 |
-| 1 | 0.10101 | 0.100838 | 0.994903 |
-| 2 | 0.20202 | 0.200649 | 0.979663 |
-| 3 | 0.30303 | 0.298414 | 0.954437 |
-| 4 | 0.40404 | 0.393137 | 0.919480 |
+|   |       x |      sin |      cos |  |
+|---+---------+----------+----------+----|
+| 0 | 0.00000 | 0.000000 | 1.000000 |  |
+| 1 | 0.10101 | 0.100838 | 0.994903 |  |
+| 2 | 0.20202 | 0.200649 | 0.979663 |  |
+| 3 | 0.30303 | 0.298414 | 0.954437 |  |
+| 4 | 0.40404 | 0.393137 | 0.919480 |  |
 
 *Visualization:*
 
-[[file:plots/babel-formatting/78541c71669b81b9d48fdedd590bdea71af4f366.png]]
+[[file:plots/babel-formatting/aa998cf338aab4a386851d0dff713417f9d85a3a.png]]
 
 /Figure 1: First few periods of sine and cosine waves/
 :end:
@@ -346,7 +717,7 @@ Here's a sample of our trigonometric functions:
 SCHEDULED: <2025-03-09 Sun>
 * Error handling
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session errors :timer-show no
+:header-args: :results output drawer :tangle :session errors :timer-show no
 :END:
 
 
@@ -357,43 +728,83 @@ print(1 / 0)
 #+RESULTS:
 :results:
 ╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ in <module>:28                                                               │
+│ in <module>:38                                                               │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
 │ │          ast = <module 'ast' from                                        │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
-│ │            f = <_io.TextIOWrapper name='/tmp/babel-pnB2aZ/python-G3FRkP' │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
+│ │         attr = [                                                         │ │
+│ │                │   11010,                                                │ │
+│ │                │   3,                                                    │ │
+│ │                │   19200,                                                │ │
+│ │                │   1475,                                                 │ │
+│ │                │   9600,                                                 │ │
+│ │                │   9600,                                                 │ │
+│ │                │   [                                                     │ │
+│ │                │   │   b'\x04',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\x7f',                                          │ │
+│ │                │   │   b'\x17',                                          │ │
+│ │                │   │   b'\x15',                                          │ │
+│ │                │   │   b'\x12',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\x03',                                          │ │
+│ │                │   │   b'\x1c',                                          │ │
+│ │                │   │   ... +10                                           │ │
+│ │                │   ]                                                     │ │
+│ │                ]                                                         │ │
+│ │            f = <_io.TextIOWrapper                                        │ │
+│ │                name='/var/folders/wm/q6gwq3q56yj8rdyj_h_qhkd40000gn/T/p… │ │
 │ │                mode='r' encoding='UTF-8'>                                │ │
 │ │           os = <module 'os' (frozen)>                                    │ │
 │ │           re = <module 're' from                                         │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
-│ │     readline = <module 'readline' from                                   │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
+│ │     readline = <module 'readline' (built-in)>                            │ │
 │ │ rich_console = <console width=80 None>                                   │ │
 │ │   subprocess = <module 'subprocess' from                                 │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
 │ │          sys = <module 'sys' (built-in)>                                 │ │
+│ │      termios = <module 'termios' (built-in)>                             │ │
 │ │         time = <module 'time' (built-in)>                                │ │
-│ │          tty = <module 'tty' from                                        │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 │ in <module>:1                                                                │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
 │ │          ast = <module 'ast' from                                        │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
-│ │            f = <_io.TextIOWrapper name='/tmp/babel-pnB2aZ/python-G3FRkP' │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
+│ │         attr = [                                                         │ │
+│ │                │   11010,                                                │ │
+│ │                │   3,                                                    │ │
+│ │                │   19200,                                                │ │
+│ │                │   1475,                                                 │ │
+│ │                │   9600,                                                 │ │
+│ │                │   9600,                                                 │ │
+│ │                │   [                                                     │ │
+│ │                │   │   b'\x04',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\x7f',                                          │ │
+│ │                │   │   b'\x17',                                          │ │
+│ │                │   │   b'\x15',                                          │ │
+│ │                │   │   b'\x12',                                          │ │
+│ │                │   │   b'\xff',                                          │ │
+│ │                │   │   b'\x03',                                          │ │
+│ │                │   │   b'\x1c',                                          │ │
+│ │                │   │   ... +10                                           │ │
+│ │                │   ]                                                     │ │
+│ │                ]                                                         │ │
+│ │            f = <_io.TextIOWrapper                                        │ │
+│ │                name='/var/folders/wm/q6gwq3q56yj8rdyj_h_qhkd40000gn/T/p… │ │
 │ │                mode='r' encoding='UTF-8'>                                │ │
 │ │           os = <module 'os' (frozen)>                                    │ │
 │ │           re = <module 're' from                                         │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
-│ │     readline = <module 'readline' from                                   │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
+│ │     readline = <module 'readline' (built-in)>                            │ │
 │ │ rich_console = <console width=80 None>                                   │ │
 │ │   subprocess = <module 'subprocess' from                                 │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
+│ │                '/Users/elle/.local/share/uv/python/cpython-3.13.2-macos… │ │
 │ │          sys = <module 'sys' (built-in)>                                 │ │
+│ │      termios = <module 'termios' (built-in)>                             │ │
 │ │         time = <module 'time' (built-in)>                                │ │
-│ │          tty = <module 'tty' from                                        │ │
-│ │                '/nix/store/bm0zc89iq0aml2afkqq5j7sy0ax7cwp6-python3-3.1… │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ZeroDivisionError: division by zero
@@ -407,8 +818,8 @@ print(1 / 0)
 #+RESULTS:
 :results:
 ╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ in <module>:28                                                               │
-│ in <module>:1                                                                │
+│ in <module>:38                                                               │
+│ in <module>:2                                                                │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ZeroDivisionError: division by zero
 :end:
@@ -417,7 +828,7 @@ ZeroDivisionError: division by zero
 
 * Last line print
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell shell_with_tabulate.nix --run python" :session last_line_print :timer-show no :tangle yes
+:header-args: :results output drawer :session last_line_print :timer-show no :tangle yes
 :END:
 
 #+name testing_last_line_print
@@ -430,7 +841,6 @@ print(x)
 #+RESULTS:
 :results:
 1
-2001
 :end:
 
 ** Edge case handling
@@ -469,7 +879,7 @@ print(1)
 
 * Torch
 :PROPERTIES:
-:header-args: :results output drawer :python "nix-shell --run python"  :tangle :session torch :timer-show no
+:header-args: :results output drawer :tangle :session torch :timer-show no
 :END:
 
 
@@ -481,9 +891,9 @@ print(x)
 
   #+RESULTS:
   :results:
-  tensor([[-1.0608,  0.0756,  0.4520],
-  │   │   [-0.4603, -0.6774, -0.1871],
-  │   │   [-0.6745,  0.0472, -0.8954]])
+  tensor([[ 1.7013,  0.2442, -0.3779],
+  │   │   [-1.3147, -1.0700,  0.3803],
+  │   │   [ 0.6049, -1.1055, -1.6069]])
   :end:
 
 
@@ -513,9 +923,9 @@ print(100)
   #+RESULTS:
   :results:
   Tensor:
-  tensor([[-1.3200,  1.4083,  1.1319],
-  │   │   [-0.6430, -1.6252, -1.3978],
-  │   │   [ 1.0347,  1.5210,  1.5890]])
+  tensor([[-0.6013, -0.8538, -0.7658],
+  │   │   [ 0.7884,  1.4782, -2.2606],
+  │   │   [ 0.4915,  0.3718, -0.6818]])
   Dict:
   {'name': 'Alice', 'age': 30, 'city': 'New York', 'hobbies': ['reading', 'coding']}
   List:

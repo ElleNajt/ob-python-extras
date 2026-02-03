@@ -1,5 +1,5 @@
 #+title: Test Renamer
-#+PROPERTY: header-args:python :results output drawer :python "nix-shell --run python" :async t :tangle :session python_renamer
+#+PROPERTY: header-args:python :results output drawer :async t :tangle :session python_renamer
 #+PROPERTY: header-args:bash :results output :async t :tangle :session bash_renamer
 
 
