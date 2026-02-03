@@ -1029,6 +1029,20 @@ print = __original_print"
              (when (string= event "finished\n")
                (alert (format "Finished processing %s" file))))))))))
 
+(defun ob-python-extras-execute-org-file (file)
+  "Execute all Python blocks in FILE and save results.
+Can be called via emacsclient:
+  emacsclient --eval '(ob-python-extras-execute-org-file \"/path/to/file.org\")'"
+  (interactive "fOrg file: ")
+  (let ((file (expand-file-name file)))
+    (unless (file-exists-p file)
+      (error "File does not exist: %s" file))
+    (with-current-buffer (find-file-noselect file)
+      (setq org-confirm-babel-evaluate nil)
+      (org-babel-execute-buffer)
+      (save-buffer)
+      (message "Executed and saved: %s" file))))
+
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
 
