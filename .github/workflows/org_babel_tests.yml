@@ -56,7 +56,24 @@ jobs:
       env:
         NO_SANDBOX: "True"
       working-directory: tests
-      run: ./run_expect_tests.sh
+      run: |
+        set -x
+        echo "=== Python version ==="
+        ../../.venv/bin/python3 --version
+        echo "=== Running tests ==="
+        ./run_expect_tests.sh || {
+          echo "=== Test failed, showing diffs ==="
+          for f in golden/*.json; do
+            name=$(basename "$f" .json)
+            if [ -f "staging/babel-formatting.org" ]; then
+              echo "=== $name ===" 
+              cat "$f" | head -20
+              echo "---"
+            fi
+          done
+          cat test-results.xml
+          exit 1
+        }
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
