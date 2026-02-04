@@ -234,23 +234,33 @@ def image_repr(self, org_babel_filename, dpi=400):
     return f"[[file:{file_path}]]"
 
 
+# Global setting for index display
+_show_index = True
+
+
+def set_show_index(show: bool):
+    """Control whether DataFrame index is shown in org output."""
+    global _show_index
+    _show_index = show
+
+
 def org_repr(obj):
     # The DF_FLAG: business is to prevent |'s from being replaced with \, which
     # we do elsewhere to prevent things accidentally being parsed as org tables.
     if TABULATE_AVAILABLE:
-        markdown = obj.to_markdown()
+        markdown = obj.to_markdown(index=_show_index)
         lines = [f"DF_FLAG:{line}" for line in markdown.split("\n")]
         return "\n".join(lines)
 
     float_format = pd.get_option("display.float_format")
     output = io.StringIO()
     if isinstance(obj, pd.DataFrame):
-        obj.to_csv(output, sep="|", index=True, float_format=float_format)
+        obj.to_csv(output, sep="|", index=_show_index, float_format=float_format)
     elif isinstance(obj, pd.Series):
         pd.DataFrame(obj).to_csv(
             output,
             sep="|",
-            index=True,
+            index=_show_index,
             header=[obj.name or ""],
             float_format=float_format,
         )
@@ -258,12 +268,13 @@ def org_repr(obj):
 
     table = output.read().strip().split("\n")
 
-    header = table[0].split("|")
-    if obj.index.name:
-        header[0] = f" {obj.index.name} "
-    else:
-        header[0] = " idx  "
-    table[0] = "|".join(header)
+    if _show_index:
+        header = table[0].split("|")
+        if obj.index.name:
+            header[0] = f" {obj.index.name} "
+        else:
+            header[0] = " idx  "
+        table[0] = "|".join(header)
 
     table = [f"DF_FLAG:| {line.strip()} |" for line in table]
 
