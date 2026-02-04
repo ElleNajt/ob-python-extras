@@ -59,7 +59,9 @@ jobs:
       run: |
         set -x
         echo "=== Python version ==="
-        ../../.venv/bin/python3 --version
+        ../.venv/bin/python3 --version
+        echo "=== Venv location ==="
+        ls -la ../.venv/bin/ | head -5
         echo "=== Running tests ==="
         ./run_expect_tests.sh || {
           echo "=== Test failed, showing diffs ==="
