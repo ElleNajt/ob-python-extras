@@ -16,6 +16,7 @@ dependencies = [
     "plotly",
     "ipython",
     "torch",
+    "tabulate",
 ]
 
 [tool.uv]

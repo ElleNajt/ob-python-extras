@@ -226,7 +226,7 @@ def image_repr(self, org_babel_filename, dpi=400):
 
     dfi.export(
         # dfi.export doesn't handle series
-        self if self.type == pd.DataFrame else pd.DataFrame(self),
+        self if isinstance(self, pd.DataFrame) else pd.DataFrame(self),
         file_path,
         table_conversion="chrome",
         dpi=dpi,
