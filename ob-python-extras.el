@@ -1030,18 +1030,36 @@ print = __original_print"
                (alert (format "Finished processing %s" file))))))))))
 
 (defun ob-python-extras-execute-org-file (file)
-  "Execute all Python blocks in FILE and save results.
+  "Execute all Python blocks in FILE in a background Emacs process.
 Can be called via emacsclient:
   emacsclient --eval '(ob-python-extras-execute-org-file \"/path/to/file.org\")'"
   (interactive "fOrg file: ")
-  (let ((file (expand-file-name file)))
+  (let* ((file (expand-file-name file))
+         (ob-python-extras-lib (locate-library "ob-python-extras"))
+         (python-scripts-dir (ob-python-extras/find-python-scripts-dir))
+         (process-name (format "org-execute-%s" (file-name-base file))))
     (unless (file-exists-p file)
       (error "File does not exist: %s" file))
-    (with-current-buffer (find-file-noselect file)
-      (setq org-confirm-babel-evaluate nil)
-      (org-babel-execute-buffer)
-      (save-buffer)
-      (message "Executed and saved: %s" file))))
+    (message "Starting background execution of %s..." file)
+    (start-process
+     process-name "*org-execute*"
+     "emacs" "--batch"
+     "--eval" (format "(setq ob-python-extras-python-path \"%s\")" python-scripts-dir)
+     "-l" ob-python-extras-lib
+     "--eval"
+     (format "(progn
+               (require 'ob-python)
+               (setq org-confirm-babel-evaluate nil)
+               (find-file \"%s\")
+               (org-babel-execute-buffer)
+               (save-buffer)
+               (message \"Done: %s\")
+               (kill-emacs 0))" file file))
+    (set-process-sentinel
+     (get-process process-name)
+     (lambda (process event)
+       (when (string-match "finished" event)
+         (message "Finished executing: %s" file))))))
 
 (provide 'ob-python-extras)
 ;;; ob-python-extras.el ends here
