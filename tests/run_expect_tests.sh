@@ -92,7 +92,7 @@ get_emacs_args() {
 EOF
 }
 
-# TODO figure out how to only get the named tests to revaluate
+# TODO[tGxXIHAUTs] figure out how to only get the named tests to revaluate
 # (if (null ${test_names_str:-nil})
 #         (org-babel-execute-buffer)
 #       (dolist (name ${test_names_str:-nil})
@@ -117,9 +117,10 @@ compare_test() {
         # Normalize function to remove platform-specific differences:
         # - Remove \r characters (carriage returns from macOS)
         # - Remove trailing empty columns like "| \r |" or "|    |" from org tables
+        # - Remove trailing separator columns like "|----|" from table header separators
         normalize_filter='with_entries(
             select(.value | type == "string" and (contains(".png") | not)) |
-            .value |= (gsub("\\| \\\\r \\|$"; "|") | gsub("\\|    \\|$"; "|") | gsub("\\\\r"; ""))
+            .value |= (gsub("\\| \\\\r \\|$"; "|") | gsub("\\|    \\|$"; "|") | gsub("\\|----\\|$"; "|") | gsub("\\\\r"; ""))
         )'
         staging_test=$(echo "$staging_results" | jq --arg name "$test_name" "fromjson | .[\$name] | $normalize_filter")
         golden_test=$(cat "golden/${test_name}.json" | jq "$normalize_filter")
