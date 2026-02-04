@@ -114,8 +114,15 @@ compare_test() {
         has_failure=1
         difference="No golden file found for test ${test_name}"
     else
-        staging_test=$(echo "$staging_results" | jq --arg name "$test_name" 'fromjson | .[$name] | with_entries(select(.value | type == "string" and (contains(".png") | not)))')
-        golden_test=$(cat "golden/${test_name}.json" | jq 'with_entries(select(.value | type == "string" and (contains(".png") | not)))')
+        # Normalize function to remove platform-specific differences:
+        # - Remove \r characters (carriage returns from macOS)
+        # - Remove trailing empty columns like "| \r |" or "|    |" from org tables
+        normalize_filter='with_entries(
+            select(.value | type == "string" and (contains(".png") | not)) |
+            .value |= (gsub("\\| \\\\r \\|$"; "|") | gsub("\\|    \\|$"; "|") | gsub("\\\\r"; ""))
+        )'
+        staging_test=$(echo "$staging_results" | jq --arg name "$test_name" "fromjson | .[\$name] | $normalize_filter")
+        golden_test=$(cat "golden/${test_name}.json" | jq "$normalize_filter")
 
         # Compare non-PNG content
         if [ "$(echo "$golden_test" | jq -S .)" != "$(echo "$staging_test" | jq -S .)" ]; then
