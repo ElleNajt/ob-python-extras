@@ -115,13 +115,15 @@ compare_test() {
         difference="No golden file found for test ${test_name}"
     else
         # Normalize function to remove platform-specific differences:
-        # - Remove \r characters (carriage returns from macOS)
-        # - Remove trailing empty columns like "| \r |" or "|    |" from org tables
+        # - Remove carriage return characters (from macOS)
+        # - Remove trailing empty columns like "| <CR> |" or "|    |" from org tables
         # - Remove trailing separator columns like "|----|" from table header separators
-        normalize_filter='with_entries(
-            select(.value | type == "string" and (contains(".png") | not)) |
-            .value |= (gsub("\\| \\\\r \\|$"; "|") | gsub("\\|    \\|$"; "|") | gsub("\\|----\\|$"; "|") | gsub("\\\\r"; ""))
-        )'
+        # Note: Using $'\r' to insert actual CR character in the jq pattern
+        cr=$'\r'
+        normalize_filter="with_entries(
+            select(.value | type == \"string\" and (contains(\".png\") | not)) |
+            .value |= (gsub(\"\\\\| ${cr} \\\\|\$\"; \"|\") | gsub(\"\\\\|    \\\\|\$\"; \"|\") | gsub(\"\\\\|----\\\\|\$\"; \"|\") | gsub(\"${cr}\"; \"\"))
+        )"
         staging_test=$(echo "$staging_results" | jq --arg name "$test_name" "fromjson | .[\$name] | $normalize_filter")
         golden_test=$(cat "golden/${test_name}.json" | jq "$normalize_filter")
 
