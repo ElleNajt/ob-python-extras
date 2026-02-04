@@ -18,16 +18,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - name: Install dependencies
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      
+    - name: Set up Python and dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y imagemagick
-        python -m pip install --upgrade pip
-        pip install pandas tabulate
+        uv sync
+        
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@main
     

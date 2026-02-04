@@ -1,5 +1,5 @@
 #+title: Tests
-#+PROPERTY: header-args:python :results output drawer :python "../.venv/bin/python3" :tangle yes
+#+PROPERTY: header-args:python :results output drawer :python "../../.venv/bin/python3" :tangle yes
 
 * Testing sessions:
 :PROPERTIES:
