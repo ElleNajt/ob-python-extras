@@ -226,9 +226,16 @@ def image_repr(self, org_babel_filename, dpi=400):
         directory, f"df_plot_{timestamp}_{random.randint(0, 10000000)}.png"
     )
 
+    # dfi.export handles DataFrame and Styler, but not Series
+    if isinstance(self, pd.DataFrame):
+        obj = self
+    elif PandasStyler and isinstance(self, PandasStyler):
+        obj = self
+    else:
+        obj = pd.DataFrame(self)
+
     dfi.export(
-        # dfi.export doesn't handle series
-        self if isinstance(self, pd.DataFrame) else pd.DataFrame(self),
+        obj,
         file_path,
         table_conversion="chrome",
         dpi=dpi,
