@@ -100,36 +100,26 @@
 (defun ob-python-extras/run-cell-and-advance ()
   "Execute current source block and advance to next Python block."
   (interactive)
-  (org-babel-execute-src-block)
-  (let ((start-pos (point))
-        (found nil)
+  ;; Find next Python block BEFORE executing (so async doesn't interfere)
+  (let ((next-block-marker nil)
         (iterations 0))
     (save-excursion
-      (while (and (not found)
-                  (< iterations 10)  ; Safety limit
-                  (condition-case err
-                      (progn 
-                        (org-babel-next-src-block) 
-                        
-                        t)
-                    (error 
-                     
-                     nil)))
+      (while (and (not next-block-marker)
+                  (< iterations 10)
+                  (condition-case nil
+                      (progn (org-babel-next-src-block) t)
+                    (error nil)))
         (setq iterations (1+ iterations))
-        (let* ((element (org-element-at-point))
-               (element-type (org-element-type element))
-               (info (org-babel-get-src-block-info))
+        (let* ((info (org-babel-get-src-block-info))
                (lang (car info)))
-          
           (when (and lang (string= lang "python"))
-            
-            (setq found (point))))))
-    
-    (when found
-      
-      (goto-char found))
-    (unless found
-      )))
+            (setq next-block-marker (point-marker))))))
+    ;; Execute current block
+    (org-babel-execute-src-block)
+    ;; Move to next block if found
+    (when next-block-marker
+      (goto-char next-block-marker)
+      (set-marker next-block-marker nil))))
 
 ;;;; Cell timing and error handling
 
