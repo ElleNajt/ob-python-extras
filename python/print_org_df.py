@@ -62,11 +62,13 @@ except ImportError:
 
 try:
     import pandas as pd
+    from pandas.io.formats.style import Styler as PandasStyler
 
     pd.options.display.max_rows = 20
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
+    PandasStyler = None
     pass
 
 try:
@@ -317,20 +319,16 @@ def enable(repr_type, org_babel_filename=None, dpi=400):
         torch.Tensor.__str__ = tensor_repr
 
     if repr_type == "image":
-        for obj in [pd.DataFrame, pd.Series, pd.io.formats.style.Styler]:
+        for obj in [pd.DataFrame, pd.Series] + ([PandasStyler] if PandasStyler else []):
             if obj not in _original_repr:
                 _original_repr[obj] = obj.__repr__
                 _original_str[obj] = obj.__str__
 
-            obj.__str__ = (
-                lambda self, org_babel_filename=org_babel_filename, dpi=dpi: image_repr(
-                    self, org_babel_filename, dpi
-                )
+            obj.__str__ = lambda self, org_babel_filename=org_babel_filename, dpi=dpi: (
+                image_repr(self, org_babel_filename, dpi)
             )
-            obj.__repr__ = (
-                lambda self, org_babel_filename=org_babel_filename, dpi=dpi: image_repr(
-                    self, org_babel_filename, dpi
-                )
+            obj.__repr__ = lambda self, org_babel_filename=org_babel_filename, dpi=dpi: (
+                image_repr(self, org_babel_filename, dpi)
             )
 
 
