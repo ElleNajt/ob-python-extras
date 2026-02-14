@@ -301,8 +301,16 @@ def org_repr(obj):
 
 
 def enable(repr_type, org_babel_filename=None, dpi=400):
+    global PANDAS_AVAILABLE
+
+    # First, restore any previously modified reprs to original
+    if PANDAS_AVAILABLE:
+        for obj in [pd.DataFrame, pd.Series] + ([PandasStyler] if PandasStyler else []):
+            if obj in _original_repr:
+                obj.__repr__ = _original_repr[obj]
+                obj.__str__ = _original_str[obj]
+
     if repr_type == "org_table":
-        global PANDAS_AVAILABLE
         if not PANDAS_AVAILABLE:
             print(
                 "Pandas is not available in this environment. Org-mode representation cannot be enabled."

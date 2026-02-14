@@ -116,35 +116,65 @@
             (setq next-block-marker (point-marker))))))
     ;; Execute current block
     (org-babel-execute-src-block)
-    ;; Move to next block if found
+    ;; Move to next block after a tiny delay (lets async callbacks finish first)
     (when next-block-marker
-      (goto-char next-block-marker)
-      (set-marker next-block-marker nil))))
+      (run-with-timer 0.05 nil
+                      (lambda (marker)
+                        (when (marker-buffer marker)
+                          (with-current-buffer (marker-buffer marker)
+                            (goto-char marker)
+                            (set-marker marker nil))))
+                      next-block-marker))))
 
 ;;;; Cell timing and error handling
 
+(defun ob-python-extras/make-temp-file-for-dir (prefix dir)
+  "Create a temp file, on the remote host if DIR is a TRAMP path."
+  (if (and dir (file-remote-p dir))
+      ;; For remote, construct a temp file path manually
+      (let* ((remote-prefix (file-remote-p dir))
+             (temp-name (format "%s%s" prefix (make-temp-name "")))
+             (remote-path (concat remote-prefix "/tmp/" temp-name)))
+        ;; Touch the file to create it
+        (write-region "" nil remote-path nil 'silent)
+        remote-path)
+    (make-temp-file prefix)))
+
+(defun ob-python-extras/write-temp-file (file-path content)
+  "Write CONTENT to FILE-PATH, handling TRAMP paths correctly."
+  (with-temp-buffer
+    (insert content)
+    (write-region (point-min) (point-max) file-path nil 'silent)))
+
+(defun ob-python-extras/temp-file-local-path (file-path)
+  "Return the local path portion of FILE-PATH (strips TRAMP prefix if present)."
+  (if (file-remote-p file-path)
+      (file-remote-p file-path 'localname)
+    file-path))
 
 (defun ob-python-extras/wrap-org-babel-execute-python (orig body params &rest args)
-  (let* ( (exec-file (make-temp-file "execution-code"))
-          (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
-          (timer-string (cdr (assq :timer-string params)))
-          (last-executed (not (member (cdr (assq :last-executed params)) '(nil "no"))))
-          (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
-          (error-options (when-let ((err (cdr (assq :errors params))))
-                           (split-string err " " t)))
-          (use-rich (member "rich" error-options))
-          (show-locals (not (member "no-locals" error-options)))
-          (show-full-paths (member "full-paths" error-options))
-          (extra-lines (or (and-let* ((extra (member "extra" error-options))
-                                      (num (cadr extra)))
-                             (string-to-number num))
-                           3))
-          (max-frames (or (and-let* ((max (member "frames" error-options))
-                                     (num (cadr max)))
+  (let* ((dir (cdr (assq :dir params)))
+         (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
+         (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
+         (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
+         (timer-string (cdr (assq :timer-string params)))
+         (last-executed (not (member (cdr (assq :last-executed params)) '(nil "no"))))
+         (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
+         (error-options (when-let ((err (cdr (assq :errors params))))
+                          (split-string err " " t)))
+         (use-rich (member "rich" error-options))
+         (show-locals (not (member "no-locals" error-options)))
+         (show-full-paths (member "full-paths" error-options))
+         (extra-lines (or (and-let* ((extra (member "extra" error-options))
+                                     (num (cadr extra)))
                             (string-to-number num))
-                          100))
-          (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
-    (with-temp-file exec-file (insert body))
+                          3))
+         (max-frames (or (and-let* ((max (member "frames" error-options))
+                                    (num (cadr max)))
+                           (string-to-number num))
+                         100))
+         (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
+    (ob-python-extras/write-temp-file exec-file body)
     (let* ((body (format "\
 __exec_file = \"%s\"
 import time
@@ -215,7 +245,7 @@ finally:
     try:
         os.remove(__exec_file)
     except:
-        pass" exec-file
+        pass" exec-file-local
         (if use-rich "True" "False")
 
         (if show-locals "True" "False")
@@ -290,7 +320,10 @@ finally:
 ;;;;; mix printing images and text
 
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body params &rest args)
-  (let* ((exec-file (make-temp-file "execution-code"))
+  (let* ((dir (cdr (assq :dir params)))
+         (is-remote (and dir (file-remote-p dir)))
+         (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
+         (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
          (src-info (org-babel-get-src-block-info))
          (headers (nth 2 src-info))
@@ -300,14 +333,17 @@ finally:
          (max-lines (if (and (numberp max-lines) (> max-lines 0))
                         max-lines
                       
-                      "None")))
-    (with-temp-file exec-file (insert body))
+                      "None"))
+         ;; For remote: skip sys.path.append, assume pymockbabel is in cwd
+         (sys-path-code (if is-remote
+                            ""
+                          (format "sys.path.append(\"%s\")" pymockbabel-script-location))))
+    (ob-python-extras/write-temp-file exec-file body)
     (let* ((body (format "\
 __exec_file = \"%s\"
-__pymock_babel_script_location = \"%s\"
 import os
 import sys
-sys.path.append(__pymock_babel_script_location)
+%s
 import pymockbabel as __pymockbabel 
 __outputs_and_file_paths, __output_types, __list_writer = __pymockbabel.setup(\"%s\"%s)
 with open(__exec_file, 'r') as __file:
@@ -317,8 +353,8 @@ try:
     os.remove(__exec_file)
 except:
     pass "
-                         exec-file
-                         pymockbabel-script-location
+                         exec-file-local
+                         sys-path-code
                          file-base-name
                          
                          (concat ", transparent="
@@ -416,27 +452,34 @@ except:
 
 
 (defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body params &rest args)
-  (let* ((exec-file (make-temp-file "execution-code"))
+  (let* ((dir (cdr (assq :dir params)))
+         (is-remote (and dir (file-remote-p dir)))
+         (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
+         (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
          (buffer-filename (ob-python-extras/get-base-file-name))
          (dataframe_image_header (cdr (assq :dataframe_image params)))
          (dpi_header (cdr (assq :dpi params)))
-         (repr-type (if dataframe_image_header 
+         (repr-type (if (and dataframe_image_header 
+                             (string= dataframe_image_header "yes"))
                         "image" 
                       "org_table"))
-         (dpi (if dpi_header dpi_header 200)))
-    (with-temp-file exec-file (insert body))
+         (dpi (if dpi_header dpi_header 200))
+         ;; For remote: skip sys.path.append, assume print_org_df is in cwd
+         (sys-path-code (if is-remote
+                            ""
+                          (format "sys.path.append(\"%s\")" pymockbabel-script-location))))
+    (ob-python-extras/write-temp-file exec-file body)
     (let* ((body (format "\
 __exec_file = \"%s\"
-__pymockbabel_script_location = \"%s\"
 import sys
-sys.path.append(__pymockbabel_script_location)
+%s
 import print_org_df as __print_org_df
 __print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\", dpi = %s)
 with open(__exec_file, 'r') as __file:
      exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " 
-                         exec-file 
-                         pymockbabel-script-location
+                         exec-file-local 
+                         sys-path-code
                          repr-type
                          buffer-filename
                          dpi
