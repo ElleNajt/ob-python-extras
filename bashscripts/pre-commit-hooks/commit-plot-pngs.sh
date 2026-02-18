@@ -28,11 +28,11 @@ for file in $(git diff --cached --name-only --diff-filter=AM); do
             # We want this in case we rerun the notebook during staging
             git reset "$plots_dir"/*.png 2>/dev/null
 
-            # Add only referenced PNGs
+            # Add only referenced PNGs (force-add in case plots dir is gitignored)
             for png in $referenced_pngs; do
                 full_path="$dirname/$png"
                 if [[ -f "$full_path" ]]; then
-                    git add "$full_path"
+                    git add -f "$full_path"
                 fi
             done
         fi
