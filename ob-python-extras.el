@@ -1083,6 +1083,7 @@ Can be called via emacsclient:
      (format "(progn
                (require 'ob-python)
                (setq org-confirm-babel-evaluate nil)
+               (advice-add 'org-babel-comint-use-async :override #'ignore)
                (find-file \"%s\")
                (org-babel-execute-buffer)
                (save-buffer)
