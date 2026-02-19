@@ -152,7 +152,31 @@
       (file-remote-p file-path 'localname)
     file-path))
 
+(defun ob-python-extras/ensure-session-prompt-regexps (params)
+  "Ensure Python session has prompt regexps calculated.
+Over TRAMP, `python-shell-prompt-set-calculated-regexps' can fail
+silently during session startup, leaving the regexps nil and causing
+`python-shell-comint-end-of-output-p' to error with arrayp nil.
+When this happens, try the standard detection first; if that hangs
+or fails, fall back to default Python prompt regexps."
+  (when-let* ((session (cdr (assq :session params)))
+              (buf (get-buffer (format "*%s*" session)))
+              (proc (get-buffer-process buf))
+              ((process-live-p proc)))
+    (with-current-buffer buf
+      (when (null python-shell--prompt-calculated-output-regexp)
+        (condition-case nil
+            (with-timeout (5)
+              (python-shell-prompt-set-calculated-regexps))
+          (error
+           ;; Fall back to default Python prompt regexps
+           (setq-local python-shell--prompt-calculated-input-regexp
+                       (rx line-start (or ">>> " "... ")))
+           (setq-local python-shell--prompt-calculated-output-regexp
+                       "^$")))))))
+
 (defun ob-python-extras/wrap-org-babel-execute-python (orig body params &rest args)
+  (ob-python-extras/ensure-session-prompt-regexps params)
   (let* ((dir (cdr (assq :dir params)))
          (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
          (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
