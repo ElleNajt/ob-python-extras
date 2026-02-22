@@ -30,10 +30,10 @@ Cell Timer: 0:00:00
 
 * Timer formatting
 :PROPERTIES:
-:header-args: :results output drawer :tangle :session timer_formatting_tests
+:header-args: :results output drawer :tangle :session timer_formatting_tests :timer-show yes
 :END:
 
-Rounds by default, and shows by default:
+Timer is off by default. These tests enable it explicitly:
 
 #+name: timer
 #+begin_src python

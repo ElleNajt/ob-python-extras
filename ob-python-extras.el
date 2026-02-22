@@ -176,19 +176,48 @@ or fails, fall back to default Python prompt regexps."
                        "^$")))))))
 
 (defun ob-python-extras/wrap-org-babel-execute-python (orig body params &rest args)
+  "Unified wrapper for org-babel Python execution.
+Handles: DataFrame printing, matplotlib capture, error handling,
+implicit last-expression printing, and cell timing."
   (ob-python-extras/ensure-session-prompt-regexps params)
   (let* ((dir (cdr (assq :dir params)))
+         (is-remote (and dir (file-remote-p dir)))
          (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
          (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
-         (timer-show (not (equal "no" (cdr (assq :timer-show params)))))
+         ;; Scripts location
+         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
+         (sys-path-code (if is-remote ""
+                          (format "sys.path.append(\"%s\")" pymockbabel-script-location)))
+         ;; DataFrame printing params
+         (buffer-filename (ob-python-extras/get-base-file-name))
+         (dataframe_image_header (cdr (assq :dataframe_image params)))
+         (dpi_header (cdr (assq :dpi params)))
+         (repr-type (if (and dataframe_image_header
+                             (string= dataframe_image_header "yes"))
+                        "image" "org_table"))
+         (dpi (or dpi_header 200))
+         ;; Matplotlib params
+         (src-info (org-babel-get-src-block-info))
+         (headers (nth 2 src-info))
+         (transparent-header (assoc :transparent headers))
+         (transparent-val (if transparent-header
+                              (if (equal (cdr transparent-header) "nil") "False" "True")
+                            (if (and (boundp 'ob-python-extras/transparent-images)
+                                     ob-python-extras/transparent-images)
+                                "True" "False")))
+         (max-lines (cdr (assoc :max-lines params)))
+         (max-lines (if (and (numberp max-lines) (> max-lines 0)) max-lines "None"))
+         ;; Timer params
+         (timer-show (equal "yes" (cdr (assq :timer-show params))))
          (timer-string (cdr (assq :timer-string params)))
-         (last-executed (not (member (cdr (assq :last-executed params)) '(nil "no"))))
-         (timer-string-formatted (if (not timer-string) "Cell Timer:" timer-string))
+         (timer-string-formatted (or timer-string "Cell Timer:"))
+         (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params)))))
+         (last-executed (equal "yes" (cdr (assq :last-executed params))))
+         ;; Error handling params
          (error-options (when-let ((err (cdr (assq :errors params))))
                           (split-string err " " t)))
          (use-rich (member "rich" error-options))
          (show-locals (not (member "no-locals" error-options)))
-         (show-full-paths (member "full-paths" error-options))
          (extra-lines (or (and-let* ((extra (member "extra" error-options))
                                      (num (cadr extra)))
                             (string-to-number num))
@@ -196,55 +225,45 @@ or fails, fall back to default Python prompt regexps."
          (max-frames (or (and-let* ((max (member "frames" error-options))
                                     (num (cadr max)))
                            (string-to-number num))
-                         100))
-         (timer-rounded (not (equal "no" (cdr (assq :timer-rounded params))))))
+                         100)))
     (ob-python-extras/write-temp-file exec-file body)
     (let* ((body (format "\
 __exec_file = \"%s\"
-import time
-import ast
-# since this can cause collisions if something else in the python script gets named datetime
-from datetime import datetime as __org_babel_wrapper_datetime
-__start = __org_babel_wrapper_datetime.now()
-with open(__exec_file, 'r') as __file:
-    __lines = __file.readlines()
+import os, sys, ast
+%s
+from datetime import datetime as __org_babel_datetime
+import print_org_df as __print_org_df
+import pymockbabel as __pymockbabel
 
+# Setup DataFrame printing
+__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\", dpi=%s)
 
-# __all_but_last = ''.join([line.rstrip('\\\\n') + '\\\\n' for line in __lines[:-1]])
+# Setup stdout capture and matplotlib mock
+__outputs, __types, __writer = __pymockbabel.setup(\"%s\", transparent=%s)
+__start = __org_babel_datetime.now()
+
+# Read user code
+with open(__exec_file, 'r') as __f:
+    __source = __f.read()
+
 try:
-    # print('parsing all but')
-    __ = ast.parse(__all_but_last)
-    # specifically need to make sure printing the last line results in valid python, to avoid e.g. print( # acomment ) 
-
-    # print('parsing last')
-    # print(f\"print({__lines[-1]})\")
-    __ = ast.parse(f\"print({__lines[-1]})\")
-    __split_valid = True
-except:
-    __split_valid = False
-
-# for now this is broken, i think this is the wrong way to do this 
-__split_valid = False
-try:
-    if __split_valid:
-        print(__all_but_last)
-        # split up evaluation so we can capture the output of the last line and print it
-        # if parsing fails, exec the entire thing
-        if len(__lines) > 1:
-            exec(compile(__all_but_last, '<org babel source block>', 'exec'))
-        if __lines:
-            __last_result = eval(compile(__lines[-1], '<org babel source block>', 'single'))
-            if __last_result is not None and (hasattr(__last_result, '__str__') or hasattr(__last_result, '__repr__')):
-                print(__last_result)
+    # Parse and check if last statement is a bare expression
+    __tree = ast.parse(__source)
+    if __tree.body and isinstance(__tree.body[-1], ast.Expr):
+        __last_expr = __tree.body.pop()
+        if __tree.body:
+            exec(compile(__tree, '<org babel source block>', 'exec'))
+        __result = eval(compile(ast.Expression(__last_expr.value), '<org babel source block>', 'eval'))
+        if __result is not None:
+            print(__result)
     else:
-        exec(compile(''.join(__lines), '<org babel source block>', 'exec'))
+        exec(compile(__source, '<org babel source block>', 'exec'))
 except:
     if %s:
         try:
             from rich.console import Console as __Rich_Console
             from rich.traceback import Traceback as __Rich_Traceback
-            rich_console = __Rich_Console()
-            rich_console.print(__Rich_Traceback(
+            __Rich_Console().print(__Rich_Traceback(
                 show_locals=%s,
                 max_frames=%d,
                 extra_lines=%d,
@@ -257,30 +276,36 @@ except:
         import traceback
         print(traceback.format_exc())
 finally:
+    __pymockbabel.display(__outputs, __types, __writer, max_lines=%s)
     if %s:
         __timer_string = \"%s\"
         if %s:
-            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start)).split('.')[0]}\")
+            print(f\"{__timer_string} {str((__org_babel_datetime.now() - __start)).split('.')[0]}\")
         else:
-            print(f\"{__timer_string} {str((__org_babel_wrapper_datetime.now() - __start))}\")
+            print(f\"{__timer_string} {str((__org_babel_datetime.now() - __start))}\")
     if %s:
-        print(f\"Last run at: {__org_babel_wrapper_datetime.now().strftime('%%Y-%%m-%%d %%H:%%M:%%S')}\")
-    import os
+        print(f\"Last run at: {__org_babel_datetime.now().strftime('%%Y-%%m-%%d %%H:%%M:%%S')}\")
     try:
         os.remove(__exec_file)
     except:
-        pass" exec-file-local
-        (if use-rich "True" "False")
-
-        (if show-locals "True" "False")
-        max-frames
-        extra-lines
-        (if  timer-show "True" "False")
-        timer-string-formatted
-        (if  timer-rounded "True" "False")
-        (if last-executed "True" "False")))
+        pass"
+                         exec-file-local
+                         sys-path-code
+                         repr-type
+                         buffer-filename
+                         dpi
+                         buffer-filename
+                         transparent-val
+                         (if use-rich "True" "False")
+                         (if show-locals "True" "False")
+                         max-frames
+                         extra-lines
+                         max-lines
+                         (if timer-show "True" "False")
+                         timer-string-formatted
+                         (if timer-rounded "True" "False")
+                         (if last-executed "True" "False")))
            (result (apply orig body params args)))
-      ;; (message "%s" body)
       result)))
 
 (advice-add 'org-babel-execute:python
@@ -343,60 +368,7 @@ finally:
 
 ;;;;; mix printing images and text
 
-(defun ob-python-extras/wrap-org-babel-execute-python-mock-plt (orig body params &rest args)
-  (let* ((dir (cdr (assq :dir params)))
-         (is-remote (and dir (file-remote-p dir)))
-         (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
-         (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
-         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
-         (src-info (org-babel-get-src-block-info))
-         (headers (nth 2 src-info))
-         (transparent-header (assoc :transparent headers))
-         (file-base-name (ob-python-extras/get-base-file-name))
-         (max-lines (cdr (assoc :max-lines params)))
-         (max-lines (if (and (numberp max-lines) (> max-lines 0))
-                        max-lines
-                      
-                      "None"))
-         ;; For remote: skip sys.path.append, assume pymockbabel is in cwd
-         (sys-path-code (if is-remote
-                            ""
-                          (format "sys.path.append(\"%s\")" pymockbabel-script-location))))
-    (ob-python-extras/write-temp-file exec-file body)
-    (let* ((body (format "\
-__exec_file = \"%s\"
-import os
-import sys
-%s
-import pymockbabel as __pymockbabel 
-__outputs_and_file_paths, __output_types, __list_writer = __pymockbabel.setup(\"%s\"%s)
-with open(__exec_file, 'r') as __file:
-    exec(compile(__file.read(), '<org babel source block>', 'exec'))
-__pymockbabel.display(__outputs_and_file_paths, __output_types, __list_writer, max_lines = %s)
-try:
-    os.remove(__exec_file)
-except:
-    pass "
-                         exec-file-local
-                         sys-path-code
-                         file-base-name
-                         
-                         (concat ", transparent="
-                                 (if transparent-header (if (equal (cdr transparent-header) "nil") "False" "True")
-                                   (if (and (boundp 'ob-python-extras/transparent-images) ob-python-extras/transparent-images) "True" "False")))
 
-                         max-lines
-
-                         )))
-      (apply orig body params args))))
-
-
-
-(advice-add 'org-babel-execute:python
-            :around #'ob-python-extras/wrap-org-babel-execute-python-mock-plt
-            '((depth . -5)))
-
-;; TODO[CepTwbh6GU] Refactor these advice so that there is a single one!
 
 
 ;;;;;; Image Garbage collection
@@ -475,48 +447,7 @@ except:
 ;;;;; Pandas dataframe printing
 
 
-(defun ob-python-extras/wrap-org-babel-execute-python-mock-table (orig body params &rest args)
-  (let* ((dir (cdr (assq :dir params)))
-         (is-remote (and dir (file-remote-p dir)))
-         (exec-file (ob-python-extras/make-temp-file-for-dir "execution-code" dir))
-         (exec-file-local (ob-python-extras/temp-file-local-path exec-file))
-         (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
-         (buffer-filename (ob-python-extras/get-base-file-name))
-         (dataframe_image_header (cdr (assq :dataframe_image params)))
-         (dpi_header (cdr (assq :dpi params)))
-         (repr-type (if (and dataframe_image_header 
-                             (string= dataframe_image_header "yes"))
-                        "image" 
-                      "org_table"))
-         (dpi (if dpi_header dpi_header 200))
-         ;; For remote: skip sys.path.append, assume print_org_df is in cwd
-         (sys-path-code (if is-remote
-                            ""
-                          (format "sys.path.append(\"%s\")" pymockbabel-script-location))))
-    (ob-python-extras/write-temp-file exec-file body)
-    (let* ((body (format "\
-__exec_file = \"%s\"
-import sys
-%s
-import print_org_df as __print_org_df
-__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\", dpi = %s)
-with open(__exec_file, 'r') as __file:
-     exec(compile(__file.read(), '''<%s: org babel source block> ''', 'exec')) " 
-                         exec-file-local 
-                         sys-path-code
-                         repr-type
-                         buffer-filename
-                         dpi
-                         buffer-filename))
-           (result (apply orig body params args)))
-      result)))
 
-
-(advice-add
- 'org-babel-execute:python
- :around
- #'ob-python-extras/wrap-org-babel-execute-python-mock-table
- '((depth . -10)))
 
 (defun ob-python-extras/my-align-advice-function (args)
   (let ((top-of-src-block (nth 5 args)))
