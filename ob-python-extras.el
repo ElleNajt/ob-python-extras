@@ -366,12 +366,7 @@ finally:
       gpt-babel-home-file)))
 
 
-;;;;; mix printing images and text
-
-
-
-
-;;;;;; Image Garbage collection
+;;;;; Image Garbage collection
 
 (defun ob-python-extras/find-org-file-references ()
   "Find all file names referenced within [[]] in the current org buffer and return them as a list."
@@ -444,10 +439,7 @@ finally:
 
 (add-hook 'kill-emacs-hook #'ob-python-extras/delete-unused-pngs-in-all-org-files)
 
-;;;;; Pandas dataframe printing
-
-
-
+;;;;; Pandas dataframe table alignment
 
 (defun ob-python-extras/my-align-advice-function (args)
   (let ((top-of-src-block (nth 5 args)))
@@ -655,16 +647,13 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
 
 
   (defun ob-python-extras--format-src-block ()
-    "Format the current org babel Python source block using python-black and isort.
-Applies black in buffer, then uses temp file for isort."
+    "Format the current org babel Python source block using python-black and isort."
     (interactive)
-    
     (when ob-python-extras/auto-format
       (let* ((element (org-element-at-point))
              (language (org-element-property :language element))
              (orig-code (org-element-property :value element))
              (point-pos (point)))
-        
         (when (string= language "python")
           (let ((temp-file (make-temp-file "ob-python-extras-format-" nil ".py"))
                 (black-formatted
@@ -678,14 +667,13 @@ Applies black in buffer, then uses temp file for isort."
                   (with-temp-file temp-file
                     (insert black-formatted))
                   (call-process "isort" nil nil nil temp-file)
-                  (let ((final-code
-                         (with-temp-buffer
-                           (insert-file-contents temp-file)
-                           (buffer-string))))
+                  (let ((final-code (with-temp-buffer
+                                      (insert-file-contents temp-file)
+                                      (buffer-string))))
                     (save-excursion
                       (goto-char (org-element-property :begin element))
-                      (org-babel-update-block-body final-code))
-                    (goto-char point-pos)))
+                      (org-babel-update-block-body final-code)))
+                  (goto-char point-pos))
               (delete-file temp-file)))))))
 
   (add-hook 'org-babel-after-execute-hook 'ob-python-extras--format-src-block))
@@ -863,7 +851,7 @@ print('__COMPLETIONS_END__')
 ;;; renamer
 
 (defvar alternative-python-binary nil
-  "Alternative Python binary path. If set, used instead of default Python command, which is nix-shell --pure -p balck --run 'python ...'.")
+  "Alternative Python binary path. If set, used instead of 'uv run python'.")
 
 (defun dired-rename-python-vars ()
   "Run rename script on marked org file using marked json file."
@@ -873,16 +861,11 @@ print('__COMPLETIONS_END__')
          (json-file (cl-find-if (lambda (f) (string-match "\\.json$" f)) marked-files))
          (script-dir (ob-python-extras/find-python-scripts-dir))
          (rename-script (expand-file-name "renamer_utils.py" script-dir))
-         (python-command (if alternative-python-binary
-                             (format "%s %s %s %s"
-                                     alternative-python-binary
-                                     rename-script
-                                     org-file
-                                     json-file)
-                           (format "nix-shell --pure -p black --run 'python %s %s %s'"
-                                   rename-script
-                                   org-file
-                                   json-file))))
+         (python-command (format "%s %s %s %s"
+                                 (or alternative-python-binary "uv run python")
+                                 rename-script
+                                 org-file
+                                 json-file)))
     (when (and org-file json-file)
       (shell-command python-command)
       (revert-buffer nil t))))
@@ -890,12 +873,10 @@ print('__COMPLETIONS_END__')
 ;;; html conversion
 ;; support for automatically converting html output via pandoc
 
-(defun my/wrap-python-html-capture (orig body &rest args)
+(defun ob-python-extras/wrap-python-html-capture (orig body &rest args)
   (let ((wrapped-body (format "
 import re
 import subprocess
-from IPython.display import HTML
-
 def __is_likely_html(text):
     patterns = [
         r'<table.*?</table>',
@@ -948,7 +929,7 @@ print = __original_print"
 
 
 
-(advice-add 'org-babel-execute:python :around #'my/wrap-python-html-capture)
+(advice-add 'org-babel-execute:python :around #'ob-python-extras/wrap-python-html-capture)
 
 ;;; Run org notebook in new emacs process
 
