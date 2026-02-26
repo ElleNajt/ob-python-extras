@@ -485,6 +485,17 @@ finally:
 
 (advice-add 'org-babel-insert-result :after #'ob-python-extras/adjust-org-babel-results)
 
+(defun ob-python-extras/strip-cr-from-result (args)
+  "Strip pty-inserted carriage returns from babel results before insertion.
+The pty's onlcr setting translates LF to CRLF; comint captures the raw
+output including \\r, which shows up as ^M in org table cells."
+  (let ((result (car args)))
+    (if (stringp result)
+        (cons (replace-regexp-in-string "\r" "" result) (cdr args))
+      args)))
+
+(advice-add 'org-babel-insert-result :filter-args #'ob-python-extras/strip-cr-from-result)
+
 ;;; Enlarging images
 
 (defun org-view-image-full-size ()
