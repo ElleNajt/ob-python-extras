@@ -308,6 +308,12 @@ finally:
            (result (apply orig body params args)))
       result)))
 
+;; Remove stale advice from before the unification in 3ed60d3
+(dolist (fn '(ob-python-extras/wrap-org-babel-execute-python-mock-table
+             ob-python-extras/wrap-org-babel-execute-python-mock-plt
+             my/wrap-python-html-capture))
+  (advice-remove 'org-babel-execute:python fn))
+
 (advice-add 'org-babel-execute:python
             :around #'ob-python-extras/wrap-org-babel-execute-python
             '((depth . -100)))
