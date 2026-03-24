@@ -98,7 +98,7 @@ Tooling to safely rename variables in an org file across all python blocks that 
 
 To use, create a renamer.json in the same folder as your .org file, mark both with dired, and then run ob-python-extras/dired-rename-python-vars.
 
-By default this runs python via nix-shell. Set the variable `alternative-python-binary` to use a different python binary (e.g., from uv or system python).
+By default this runs python via =uv run python=. Set the variable =alternative-python-binary= to use a different python binary.
 
 ** Pandoc scripts:
 Configured scripts for converting org files in a directory to ipynb files, or ipynb files to org files. These rely on pandoc.

@@ -208,7 +208,6 @@ process_file() {
     echo "Processing file: $org_file"
 
     # Always run the tests in staging
-    cp *.nix "staging/"
     cp "$org_file" "staging/$org_file"
     eval "emacs $(get_emacs_args "staging/$org_file")"
 
@@ -275,7 +274,8 @@ else
             echo "# Last Successful test: $(date)"
             echo "## System Information"
             echo "Emacs version: $(emacs --version | head -n1)"
-            echo "Nixpkgs commit: $(nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version' 2>/dev/null || echo "Nixpkgs not found")"
+            echo "Python: $(python3 --version 2>/dev/null || echo "not found")"
+            echo "uv: $(uv --version 2>/dev/null || echo "not found")"
         } >last_successful_test_system_info.md
         exit 0
     else

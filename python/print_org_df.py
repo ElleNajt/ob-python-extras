@@ -62,14 +62,17 @@ except ImportError:
 
 try:
     import pandas as pd
-    from pandas.io.formats.style import Styler as PandasStyler
 
     pd.options.display.max_rows = 20
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
+    pd = None
+
+try:
+    from pandas.io.formats.style import Styler as PandasStyler
+except (ImportError, Exception):
     PandasStyler = None
-    pass
 
 try:
     import tabulate
