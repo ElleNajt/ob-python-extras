@@ -187,7 +187,7 @@ implicit last-expression printing, and cell timing."
          ;; Scripts location
          (pymockbabel-script-location (ob-python-extras/find-python-scripts-dir))
          (sys-path-code (if is-remote ""
-                          (format "sys.path.append(\"%s\")" pymockbabel-script-location)))
+                          (format "sys.path.append(%s)" (prin1-to-string pymockbabel-script-location))))
          ;; DataFrame printing params
          (buffer-filename (ob-python-extras/get-base-file-name))
          (dataframe_image_header (cdr (assq :dataframe_image params)))
@@ -228,7 +228,7 @@ implicit last-expression printing, and cell timing."
                          100)))
     (ob-python-extras/write-temp-file exec-file body)
     (let* ((body (format "\
-__exec_file = \"%s\"
+__exec_file = %s
 import os, sys, ast
 %s
 from datetime import datetime as __org_babel_datetime
@@ -236,10 +236,10 @@ import print_org_df as __print_org_df
 import pymockbabel as __pymockbabel
 
 # Setup DataFrame printing
-__print_org_df.enable(repr_type=\"%s\", org_babel_filename=\"%s\", dpi=%s)
+__print_org_df.enable(repr_type=\"%s\", org_babel_filename=%s, dpi=%s)
 
 # Setup stdout capture and matplotlib mock
-__outputs, __types, __writer = __pymockbabel.setup(\"%s\", transparent=%s)
+__outputs, __types, __writer = __pymockbabel.setup(%s, transparent=%s)
 __start = __org_babel_datetime.now()
 
 # Read user code
@@ -289,12 +289,12 @@ finally:
         os.remove(__exec_file)
     except:
         pass"
-                         exec-file-local
+                         (prin1-to-string exec-file-local)
                          sys-path-code
                          repr-type
-                         buffer-filename
+                         (prin1-to-string buffer-filename)
                          dpi
-                         buffer-filename
+                         (prin1-to-string buffer-filename)
                          transparent-val
                          (if use-rich "True" "False")
                          (if show-locals "True" "False")
@@ -618,7 +618,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (let* ((current-dir (dired-current-directory))
            (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
            (script-path (concat ob-python-extras-dir "bashscripts/convert_ipynb_to_org.sh" )))
-      (compile (concat "cd " current-dir " && "script-path " -c")))))
+      (compile (concat "cd " (shell-quote-argument current-dir) " && " (shell-quote-argument script-path) " -c")))))
 
 (defun run-ipynb-to-org-conversion-script-recursively ()
   (interactive)
@@ -626,7 +626,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (let* ((current-dir (dired-current-directory))
            (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
            (script-path (concat ob-python-extras-dir "bashscripts/convert_ipynb_to_org.sh" )))
-      (compile (concat "cd " current-dir " && "script-path " -cr")))))
+      (compile (concat "cd " (shell-quote-argument current-dir) " && " (shell-quote-argument script-path) " -cr")))))
 
 (defun run-org-to-ipynb-conversion-script ()
   (interactive)
@@ -634,7 +634,7 @@ In regular org-mode, tries to view image or executes normal C-c C-c."
     (let* ((current-dir (dired-current-directory))
            (ob-python-extras-dir (file-name-directory (locate-library "ob-python-extras")))
            (script-path (concat ob-python-extras-dir "bashscripts/convert_org_to_ipynb.sh" )))
-      (compile (concat "cd " current-dir " && "script-path)))))
+      (compile (concat "cd " (shell-quote-argument current-dir) " && " (shell-quote-argument script-path))))))
 
 ;;; Load other packages
 
@@ -880,9 +880,9 @@ print('__COMPLETIONS_END__')
          (rename-script (expand-file-name "renamer_utils.py" script-dir))
          (python-command (format "%s %s %s %s"
                                  (or alternative-python-binary "uv run python")
-                                 rename-script
-                                 org-file
-                                 json-file)))
+                                 (shell-quote-argument rename-script)
+                                 (shell-quote-argument org-file)
+                                 (shell-quote-argument json-file))))
     (when (and org-file json-file)
       (shell-command python-command)
       (revert-buffer nil t))))
@@ -985,30 +985,30 @@ print = __original_print"
           (start-process
            process-name "*org-export*"
            "emacs"
-           "--eval" (format "(setq ob-python-extras-python-path \"%s\")" python-scripts-dir)
+           "--eval" (format "(setq ob-python-extras-python-path %s)" (prin1-to-string python-scripts-dir))
            "-l" ob-python-extras-lib
            "--eval" 
            (format "(progn
                      (require 'ob-python)
                      (setq org-confirm-babel-evaluate nil)
-                     (find-file \"%s\")
+                     (find-file %s)
                      (let* ((counts (ob-python-extras--count-org-blocks))
                             (block-count (car counts))
                             (async-count (cdr counts))
                             (expected-completions (+ block-count (* 2 async-count)))
                             (blocks-completed 0))
-                       (message \"Expecting %%d completions (%%d sync + %%d async x2)\" 
+                       (message \"Expecting %%d completions (%%d sync + %%d async x2)\"
                                expected-completions block-count async-count)
                        (advice-add 'org-babel-insert-result :after
-                                (lambda (&rest args) 
+                                (lambda (&rest args)
                                   (setq blocks-completed (1+ blocks-completed))
-                                  (message \"Block completed %%d/%%d (args: %%S)\" 
+                                  (message \"Block completed %%d/%%d (args: %%S)\"
                                           blocks-completed expected-completions args)
                                   (when (= blocks-completed expected-completions)
                                     (save-buffer)
                                     (message \"Export complete\")
                                     (kill-emacs 0))))
-                       (org-babel-execute-buffer)))" file))
+                       (org-babel-execute-buffer)))" (prin1-to-string file)))
           (set-process-sentinel
            (get-process process-name)
            (lambda (process event)
@@ -1030,18 +1030,18 @@ Can be called via emacsclient:
     (start-process
      process-name "*org-execute*"
      "emacs" "--batch"
-     "--eval" (format "(setq ob-python-extras-python-path \"%s\")" python-scripts-dir)
+     "--eval" (format "(setq ob-python-extras-python-path %s)" (prin1-to-string python-scripts-dir))
      "-l" ob-python-extras-lib
      "--eval"
      (format "(progn
                (require 'ob-python)
                (setq org-confirm-babel-evaluate nil)
                (advice-add 'org-babel-comint-use-async :override #'ignore)
-               (find-file \"%s\")
+               (find-file %s)
                (org-babel-execute-buffer)
                (save-buffer)
-               (message \"Done: %s\")
-               (kill-emacs 0))" file file))
+               (message \"Done: %%s\" %s)
+               (kill-emacs 0))" (prin1-to-string file) (prin1-to-string file)))
     (set-process-sentinel
      (get-process process-name)
      (lambda (process event)
